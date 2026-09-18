@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data: https://fonts.gstatic.com; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'">
+  <meta name="description" content="颐和·智慧康养登录">
+  <meta name="theme-color" content="#F5EFE2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16120F" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239E3B2E%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%223%22/><text x=%2212%22 y=%2217%22 text-anchor=%22middle%22 font-size=%2212%22 fill=%22%239E3B2E%22 font-family=%22serif%22>颐</text></svg>">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <title>登录 · 颐和·智慧康养</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <!-- common.css removed for debug -->
+  <!-- 注意：不加载 xz.css，其 *{position:relative} 会破坏登录页 SVG 布局 -->
+  <style>
+    /* ====== 太极八卦登录页（完整中式设计） ====== */
+
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    /* ---- 顶部太极图标 ---- */
+    .taiji-top {
+      width: 72px;
+      height: 72px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+      animation: taijiSpin 24s linear infinite;
+    }
+    @keyframes taijiSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .taiji-top { animation: none; }
+    }
+
+    /* ---- 主标题 ---- */
+    .login-main-title {
+      font-family: "Ma Shan Zheng", "STXingkai", "华文行楷", "KaiTi", serif;
+      font-size: clamp(36px, 7vw, 56px);
+      font-weight: 400;
+      color: var(--t1);
+      letter-spacing: .12em;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    /* ---- 副标题 ---- */
+    .login-subtitle {
+      font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+      font-size: clamp(13px, 2vw, 15px);
+      color: var(--t3);
+      letter-spacing: .28em;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    /* ---- 内容区：左八卦 + 右卡片 ---- */
+    .login-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(32px, 6vw, 80px);
+      width: 100%;
+      max-width: 1100px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- 八卦背景区 ---- */
+    .bagua-area {
+      position: relative;
+      width: clamp(280px, 35vw, 420px);
+      height: clamp(280px, 35vw, 420px);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 八卦外圆 */
+    .bagua-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(158, 59, 46, .12);
+      pointer-events: none;
+    }
+    .bagua-ring::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border-radius: 50%;
+      border: 1px solid rgba(158, 59, 46, .08);
+    }
+
+    /* 中心太极 */
+    .taiji-center {
+      width: 38%;
+      aspect-ratio: 1;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,.10));
+    }
+
+    /* 八卦爻字 - 围绕中心排列 */
+    .bagua-trigram {
+      position: absolute;
+      font-family: "Noto Serif SC", "SimSun", serif;
+      font-size: clamp(11px, 1.4vw, 14px);
+      color: rgba(110, 101, 85, .35);
+      white-space: nowrap;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .bagua-trigram .g-name { font-size: clamp(9px, 1.1vw, 12px); letter-spacing: .15em; }
+    .bagua-trigram .g-lines { 
+      display: flex; gap: 1.5px; 
+      font-size: 0; line-height: 1;
+    }
+    .bagua-trigram .g-yao {
+      width: 10px; height: 2.5px; background: rgba(110, 101, 85, .25);
+      border-radius: 1px;
+    }
+    .bagua-trigram .g-yao--break {
+      width: 4px; margin-right: auto;
+    }
+    .bagua-trigram .g-yao--break + .g-yao--break { margin-left: auto; margin-right: 0; }
+
+    /* 八卦位置：上离下坎左兑右艮... */
+    .bg-qian { top: 4%; left: 50%; transform: translateX(-50%); }
+    .bg-kun  { bottom: 4%; left: 50%; transform: translateX(-50%); }
+    .bg-li   { top: 22%; right: 14%; }
+    .bg-kan  { bottom: 22%; left: 14%; }
+    .bg-dui  { top: 22%; left: 14%; }
+    .bg-gen  { bottom: 22%; right: 14%; }
+    .bg-zhen { top: 42%; right: 2%; }
+    .bg-xun  { top: 42%; left: 2%; }
+
+    /* 背景淡卦象装饰（页面四角） */
+    .deco-trigram {
+      position: fixed;
+      font-family: "Noto Serif SC", serif;
+      font-size: 0;
+      color: rgba(110, 101, 85, .07);
+      pointer-events: none;
+      z-index: 0;
+      display: flex;
+      gap: 3px;
+    }
+    .deco-trigram .d-yao {
+      width: 18px; height: 4px; background: currentColor;
+      border-radius: 1px;
+    }
+    .deco-trigram .d-yao--break { width: 7px; }
+    .dt-tl { top: 18%; left: 8%; }
+    .dt-tr { top: 18%; right: 8%; }
+    .dt-bl { bottom: 16%; left: 8%; }
+    .dt-br { bottom: 16%; right: 8%; }
+
+    /* ---- 右侧登录卡片 ---- */
+    .login-card-cn {
+      background: var(--card);
+      border: 1px solid var(--sep);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      padding: 44px 36px 36px;
+      width: min(380px, 100%);
+      text-align: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* 卡片内太极小图标 */
+    .card-taiji {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 16px;
+    }
+
+    /* 卡片右上角印章 */
+    .card-seal {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(160deg, #9E3B2E, color-mix(in srgb, #9E3B2E 70%, #000));
+      color: #FDF8EF;
+      display: grid;
+      place-items: center;
+      font-family: "Ma Shan Zheng", "STXingkai", "华文行楷", serif;
+      font-size: 26px;
+      box-shadow: 0 4px 14px rgba(158, 59, 46, .30), inset 0 0 0 1px rgba(255,255,255,.20);
+      z-index: 3;
+    }
+
+    /* 欢迎归来 */
+    .card-welcome {
+      font-family: "Ma Shan Zheng", "STXingkai", "华文行楷", serif;
+      font-size: 26px;
+      color: #9E3B2E;
+      margin-bottom: 8px;
+      letter-spacing: .08em;
+    }
+
+    /* 日期问候 */
+    .card-greeting {
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: 13px;
+      color: var(--t3);
+      margin-bottom: 28px;
+      letter-spacing: .06em;
+    }
+
+    /* 表单区域 */
+    .login-form-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .login-input-cn {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--card-tint);
+      border: 1px solid var(--sep);
+      border-radius: var(--rs);
+      color: var(--t1);
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: 14px;
+      letter-spacing: .03em;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .login-input-cn:focus {
+      border-color: #9E3B2E;
+      box-shadow: 0 0 0 3px rgba(158, 59, 46, .10);
+    }
+    .login-input-cn::placeholder {
+      color: var(--t3);
+      opacity: .7;
+    }
+
+    /* 进入按钮 */
+    .login-btn-cn {
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(160deg, #9E3B2E, #A23A2B);
+      color: #FFF;
+      border: none;
+      border-radius: var(--rs);
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: .2em;
+      cursor: pointer;
+      transition: transform .2s var(--ease-out), box-shadow .2s;
+      box-shadow: 0 4px 14px rgba(158, 59, 46, .25);
+    }
+    .login-btn-cn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(158, 59, 46, .35);
+    }
+    .login-btn-cn:active {
+      transform: translateY(0);
+    }
+
+    /* 提示文字 */
+    .login-hint-cn {
+      font-size: 12px;
+      color: var(--red);
+      min-height: 18px;
+      text-align: center;
+    }
+
+    /* ---- 底部八卦铭文 ---- */
+    .login-footer {
+      margin-top: 40px;
+      text-align: center;
+      max-width: 700px;
+    }
+    .footer-trigrams {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 28px;
+      font-family: "Noto Serif SC", "Songti SC", serif;
+      font-size: 12px;
+      color: rgba(110, 101, 85, .45);
+      letter-spacing: .04em;
+      margin-bottom: 16px;
+    }
+    .footer-trigrams span {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .footer-trigrams .ft-dot {
+      color: #9E3B2E;
+      opacity: .5;
+    }
+    .footer-year {
+      font-family: "Ma Shan Zheng", "STXingkai", serif;
+      font-size: 20px;
+      color: rgba(158, 59, 46, .40);
+      letter-spacing: .15em;
+    }
+
+    /* ---- 响应式 ---- */
+    @media (max-width: 768px) {
+      .login-content {
+        flex-direction: column;
+        gap: 40px;
+      }
+      .bagua-area {
+        width: 240px;
+        height: 240px;
+      }
+      .login-card-cn {
+        width: min(340px, 100%);
+        padding: 32px 24px 28px;
+      }
+      .deco-trigram { display: none; }
+      .footer-trigrams { gap: 6px 18px; font-size: 11px; }
+    }
+
+    @media (max-width: 400px) {
+      .login-page { padding: 24px 16px; }
+      .bagua-area { width: 200px; height: 200px; }
+      .taiji-top { width: 56px; height: 56px; }
+    }
+  </style>
+</head>
+<body class="light">
+
+<div class="login-page" id="loginOverlay">
+
+  <!-- 顶部太极 -->
+  <svg class="taiji-top" viewBox="0 0 100 100" fill="none" aria-label="太极">
+    <circle cx="50" cy="50" r="48" fill="#241F18"/>
+    <path d="M50 2 A48 48 0 0 1 50 98 A24 24 0 0 1 50 50 A24 24 0 0 0 50 2" fill="#F5EFE2"/>
+    <circle cx="50" cy="26" r="10" fill="#241F18"/>
+    <circle cx="50" cy="74" r="10" fill="#F5EFE2"/>
+  </svg>
+
+  <!-- 主标题 -->
+  <h1 class="login-main-title">颐和康养</h1>
+  <p class="login-subtitle">智慧康养 · 登录</p>
+
+  <!-- 左八卦 + 右卡片 -->
+  <div class="login-content">
+
+    <!-- 八卦区域 -->
+    <div class="bagua-area" aria-hidden="true">
+      <div class="bagua-ring"></div>
+
+      <!-- 中心太极 -->
+      <svg class="taiji-center" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="48" stroke="#241F18" stroke-width="1.5" fill="none" opacity=".7"/>
+        <circle cx="50" cy="50" r="48" fill="#241F18"/>
+        <path d="M50 2 A48 48 0 0 1 50 98 A24 24 0 0 1 50 50 A24 24 0 0 0 50 2" fill="#F5EFE2"/>
+        <circle cx="50" cy="26" r="10" fill="#241F18"/>
+        <circle cx="50" cy="74" r="10" fill="#F5EFE2"/>
+      </svg>
+
+      <!-- 八卦爻 -->
+      <div class="bagua-trigram bg-qian"><span class="g-lines"><span class="g-yao"></span><span class="g-yao"></span><span class="g-yao"></span></span><span class="g-name">乾</span></div>
+      <div class="bagua-trigram bg-kun"><span class="g-lines"><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span></span><span class="g-name">坤</span></div>
+      <div class="bagua-trigram bg-li"><span class="g-lines"><span class="g-yao"></span><span class="g-yao g-yao--break"></span><span class="g-yao"></span></span><span class="g-name">离</span></div>
+      <div class="bagua-trigram bg-kan"><span class="g-lines"><span class="g-yao g-yao--break"></span><span class="g-yao"></span><span class="g-yao g-yao--break"></span></span><span class="g-name">坎</span></div>
+      <div class="bagua-trigram bg-dui"><span class="g-lines"><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span><span class="g-yao"></span></span><span class="g-name">兑</span></div>
+      <div class="bagua-trigram bg-gen"><span class="g-lines"><span class="g-yao"></span><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span></span><span class="g-name">艮</span></div>
+      <div class="bagua-trigram bg-zhen"><span class="g-lines"><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span><span class="g-yao g-yao--break"></span></span><span class="g-name">震</span></div>
+      <div class="bagua-trigram bg-xun"><span class="g-lines"><span class="g-yao"></span><span class="g-yao"></span><span class="g-yao g-yao--break"></span></span><span class="g-name">巽</span></div>
+    </div>
+
+    <!-- 登录卡片 -->
+    <main class="login-card-cn">
+      <div class="card-seal" aria-label="颐和">颐</div>
+
+      <svg class="card-taiji" viewBox="0 0 100 100" fill="none" aria-label="太极">
+        <circle cx="50" cy="50" r="48" fill="#241F18"/>
+        <path d="M50 2 A48 48 0 0 1 50 98 A24 24 0 0 1 50 50 A24 24 0 0 0 50 2" fill="#F5EFE2"/>
+        <circle cx="50" cy="26" r="10" fill="#241F18"/>
+        <circle cx="50" cy="74" r="10" fill="#F5EFE2"/>
+      </svg>
+
+      <h2 class="card-welcome">欢迎归来</h2>
+      <p class="card-greeting" id="loginGreeting">丙午年 · 已为您开启康养之门</p>
+
+      <div class="login-form-inner">
+        <input type="text" class="login-input-cn" id="loginName" placeholder="请输入姓名" maxlength="20" autocomplete="username" aria-label="姓名">
+        <input type="password" class="login-input-cn" id="loginPassword" placeholder="请输入密码" maxlength="20" autocomplete="current-password" aria-label="密码">
+        <button class="login-btn-cn" id="loginSubmit" type="button">进入康养平台</button>
+      </div>
+
+      <p class="login-hint-cn" id="loginHint" hidden></p>
+    </main>
+
+  </div>
+
+  <!-- 底部铭文 -->
+  <footer class="login-footer">
+    <div class="footer-trigrams">
+      <span><span class="ft-dot">☰</span> 乾·天刚健</span>
+      <span><span class="ft-dot">☱</span> 兑·泽喜悦</span>
+      <span><span class="ft-dot">☲</span> 离·火丽照</span>
+      <span><span class="ft-dot">☳</span> 震·雷震动</span>
+      <span><span class="ft-dot">☴</span> 巽·风谦入</span>
+      <span><span class="ft-dot">☵</span> 坎·水陷随</span>
+      <span><span class="ft-dot">☶</span> 艮·山静止</span>
+      <span><span class="ft-dot">☷</span> 坤·地柔顺</span>
+    </div>
+    <p class="footer-year">丙午年</p>
+  </footer>
+
+</div>
+
+<!-- 四角装饰卦象 -->
+<div class="deco-trigram dt-tl" aria-hidden="true"><span class="d-yao"></span><span class="d-yao d-yao--break"></span><span class="d-yao"></span></div>
+<div class="deco-trigram dt-tr" aria-hidden="true"><span class="d-yao d-yao--break"></span><span class="d-yao d-yao--break"></span><span class="d-yao d-yao--break"></span></div>
+<div class="deco-trigram dt-bl" aria-hidden="true"><span class="d-yao"></span><span class="d-yao"></span><span class="d-yao d-yao--break"></span></div>
+<div class="deco-trigram dt-br" aria-hidden="true"><span class="d-yao d-yao--break"></span><span class="d-yao"></span><span class="d-yao d-yao--break"></span></div>
+
+<script src="data/schema.js"></script>
+<script src="data/residents.js"></script>
+</body>
+</html>

@@ -1,9 +1,0 @@
-初始化：颐和·智慧康养静态演示站
-
-纯前端 HTML/CSS/JS 演示站点，用于 GitHub Pages 部署。
-
-- 排除开发用文件（tools/ 开发截图 23MB、内部重构文档、调试页）
-- js/ai-chat.js：非 file: 协议时走 /api/chat 后端代理，Pages 上无该接口，
-  补上 github.io 判断改为直连 api.deepseek.com（CSP 已放行）
-- js/ws-client.js：同样补 github.io 判断，静态托管下直接降级轮询，
-  避免每次加载白等 3 秒 WebSocket 超时
