@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'">
+  <meta name="description" content="我的健康 — 个人健康数据监测，实时指标、用药提醒、一键呼救">
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23FF3B30%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z%22/></svg>">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <title>我的健康</title>
+  <link rel="preload" href="css/common.css" as="style">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/personal.css">
+  <link rel="stylesheet" href="css/personal-desktop.css">
+  <link rel="stylesheet" href="css/xz.css">
+</head>
+<body class="light">
+<!-- 登录界面（未登录时显示；登录后 localStorage 长期有效） -->
+<div class="login-overlay" id="loginOverlay" hidden>
+  <div class="login-card">
+    <div class="login-logo"><img src="" data-login-logo width="56" height="56" alt=""></div>
+    <h1 class="login-title">智慧养老服务平台</h1>
+    <p class="login-sub">登录后查看您的健康信息</p>
+    <input type="text" class="login-input" id="loginName" placeholder="请输入姓名" maxlength="20" autocomplete="username">
+    <input type="password" class="login-input" id="loginPassword" placeholder="请输入密码" maxlength="20" autocomplete="current-password">
+    <button class="login-btn" id="loginSubmit">登 录</button>
+    <p class="login-hint" id="loginHint" hidden></p>
+  </div>
+</div>
+<a href="#main-content" class="skip-link">跳到主要内容</a>
+
+<!-- 菜单已移除：功能入口已迁至"我的"页面 -->
+
+<!-- ====== Tab 1: 首页 ====== -->
+<main class="page" id="main-content">
+  <section class="tab-view active" id="tab-home">
+    <!-- 时钟 -->
+    <div class="clock-area">
+      <div class="clock-time" id="clockTime">00:00:00</div>
+      <div class="clock-date" id="clockDate">--</div>
+    </div>
+
+    <!-- 问候语（时钟下方） -->
+    <div class="home-greet">
+      <div class="greeting" id="greetingName">你好</div>
+    </div>
+
+    <!-- 顶部操作行：一键呼救 -->
+    <div class="home-top">
+      <button class="sos-top" id="btnSOS" aria-label="一键呼救"><img src="" data-sos-icon width="18" height="18" alt=""  class="ic-mid"><span>一键呼救</span></button>
+    </div>
+
+    <!-- 个人资料卡（紧凑版） -->
+    <section class="profile-card">
+      <div class="profile-top">
+        <div class="avatar-wrap" id="avatarWrap" title="点击更换头像">
+          <img id="avatarImg" alt=""><span class="av-fb" id="avatarFallback">王</span>
+          <span class="avatar-edit"><img src="" data-icon="edit" width="12" height="12" alt=""  class="ico-white"></span>
+        </div>
+        <div class="profile-text">
+          <div class="profile-name" id="profileNameDisplay">--</div>
+          <div class="profile-meta" id="profileMeta">--</div>
+          <div class="profile-tags-inline" id="profileTags"></div>
+        </div>
+      </div>
+    </section>
+    <input type="file" id="avatarFileInput" accept="image/*" hidden>
+
+    <!-- 今日健康数据一览（四项指标上方） -->
+    <div class="vitals-tit">今日健康数据一览</div>
+
+    <!-- 四指标 -->
+    <div class="vitals-row">
+      <div class="vital-card" id="heartCard">
+        <div class="vital-icon"><img src="" data-vital-icon="heart" width="24" height="24" alt=""></div><div class="vital-number" id="heartRateVal">--</div><div class="vital-label">心率<span class="vital-unit"> bpm</span></div><div class="vital-status"></div>
+      </div>
+      <div class="vital-card" id="oxygenCard">
+        <div class="vital-icon"><img src="" data-vital-icon="oxygen" width="24" height="24" alt=""></div><div class="vital-number" id="oxygenVal">--</div><div class="vital-label">血氧<span class="vital-unit"> %</span></div><div class="vital-status"></div>
+      </div>
+      <div class="vital-card" id="tempCard">
+        <div class="vital-icon"><img src="" data-vital-icon="temp" width="24" height="24" alt=""></div><div class="vital-number" id="tempVal">--</div><div class="vital-label">体温<span class="vital-unit"> °C</span></div><div class="vital-status"></div>
+      </div>
+      <div class="vital-card" id="bpCard">
+        <div class="vital-icon"><img src="" data-vital-icon="bp" width="24" height="24" alt=""></div><div class="vital-number" id="bpVal">--</div><div class="vital-label">血压<span class="vital-unit"> mmHg</span></div><div class="vital-status"></div>
+      </div>
+    </div>
+
+    <!-- 步数 + 位置 横向双卡 -->
+    <div class="home-grid">
+      <section class="steps-card">
+        <div class="steps-header"><span class="steps-title"><img src="" data-steps-icon width="16" height="16" alt=""  class="ic-mr4">步数</span><span class="steps-time" id="stepsUpdateTime">--</span></div>
+        <div class="steps-body">
+          <svg class="steps-ring" viewBox="0 0 100 100"><defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#34C759"/><stop offset="100%" stop-color="#30D158"/></linearGradient><filter id="ringGlow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="stepsRing" cx="50" cy="50" r="42" stroke="url(#ringGrad)" filter="url(#ringGlow)"/></svg>
+          <div class="steps-center"><div class="steps-count" id="stepsCount">0</div><div class="steps-goal">/ 8,000</div></div>
+        </div>
+        <div class="steps-bar-wrap"><div class="steps-bar" id="stepsBar"></div></div>
+      </section>
+      <section class="loc-card">
+        <div class="loc-icon"><img src="" data-icon="pin" width="28" height="28" alt=""></div>
+        <div class="loc-place" id="locPlace">--</div>
+        <div class="loc-time" id="locTime">--</div>
+        <!-- 一键呼救：已移至首页顶部问候行（.sos-top） -->
+      </section>
+    </div>
+
+    <!-- 饮食 + 用药 横向双卡 -->
+    <div class="home-grid">
+      <section class="home-half-card">
+        <div class="hhd"><img src="" data-sec-icon="diet" width="18" height="18" alt=""  class="ic-mr4">饮食建议</div>
+        <ul class="diet-list" id="dietList"><li class="diet-item">加载中…</li></ul>
+      </section>
+      <section class="home-half-card">
+        <div class="hhd"><img src="" data-sec-icon="pill" width="18" height="18" alt=""  class="ic-mr4">用药<span id="medCount"  class="fs12-light-t3">--</span></div>
+        <ul class="med-list" id="medList"><li class="med-row">加载中…</li></ul>
+      </section>
+    </div>
+
+    <!-- 用药打卡 -->
+    <section class="sec-card" id="medCheckinCard">
+      <div class="sec-hd"><span><img src="" data-sec-icon="check" width="18" height="18" alt=""  class="ic-mr4">今日服药打卡</span><span class="sec-sub" id="checkinDate">--</span></div>
+      <div class="checkin-slots" id="checkinSlots"></div>
+    </section>
+  </section>
+
+  <!-- ====== Tab 2: 聊天 ====== -->
+  <section class="tab-view" id="tab-chat">
+    <div class="chat-container">
+      <!-- 退出按钮（左上角，绝对定位） -->
+      <button class="chat-exit-btn" id="chatExitBtn" title="退出对话" aria-label="退出对话">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>退出</span>
+      </button>
+      <div class="chat-search-bar" id="chatSearchBar">
+        <input type="search" class="chat-search-input" id="chatSearchInput" placeholder="搜索聊天记录…">
+        <button class="chat-search-close" id="chatSearchClose" aria-label="关闭搜索"><img src="" data-icon="close" width="16" height="16" alt=""></button>
+      </div>
+      <div class="msg-contacts" id="msgContacts"></div>
+      <div class="chat-panel" id="chatPanel" hidden>
+        <div class="chat-hd">
+          <button class="chat-back" id="chatBack" aria-label="返回">‹</button>
+          <div class="chat-hd-info">
+            <span class="chat-name" id="chatName">--</span>
+            <span class="ai-status offline" id="aiStatus" title="AI未配置"></span>
+          </div>
+          <button class="chat-more" id="chatMore" title="更多" aria-label="更多">⋯</button>
+          <div class="chat-more-menu" id="chatMoreMenu" hidden>
+            <div class="more-menu-item" id="moreSearch" role="menuitem">
+              <span class="more-menu-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+              <span>搜索聊天记录</span>
+            </div>
+            <div class="more-menu-item" id="moreBatch" role="menuitem">
+              <span class="more-menu-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span>
+              <span>多选删除</span>
+            </div>
+            <div class="more-menu-item" id="moreBatchCancel" role="menuitem" hidden>
+              <span class="more-menu-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+              <span>取消多选</span>
+            </div>
+          </div>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-ft">
+          <div class="chat-quote-bar" id="chatQuoteBar" hidden>
+            <div class="quote-content" id="quoteContent"></div>
+            <button class="quote-close" id="quoteClose" aria-label="取消引用"><img src="" data-icon="close" width="14" height="14" alt=""></button>
+          </div>
+          <div class="chat-ctrls"><button class="chat-voice" id="chatVoice" title="语音输入" aria-label="语音输入"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></button><input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" maxlength="500"><button class="chat-send" id="chatSend">发送</button></div>
+          <div class="chat-tools" id="chatTools">
+            <button class="tool-btn" id="chatSearchBtn" title="搜索"><img src="" data-icon="search" width="16" height="16" alt="搜索"></button>
+            <button class="tool-btn" id="chatExport" title="导出"><img src="" data-icon="clipboard" width="16" height="16" alt="导出"></button>
+            <button class="tool-btn" id="chatBatch" title="多选"><img src="" data-icon="check" width="16" height="16" alt="多选"></button>
+          </div>
+        </div>
+        <div class="chat-quick-bar" id="chatQuickBar">
+          <button class="quick-btn" data-text="我今天吃药了">我今天吃药了</button>
+          <button class="quick-btn" data-text="血压多少">血压多少</button>
+          <button class="quick-btn" data-text="今天吃什么">今天吃什么</button>
+          <button class="quick-btn" data-text="帮我设提醒">帮我设提醒</button>
+          <button class="quick-btn" data-text="谢谢">谢谢</button>
+        </div>
+        <div class="batch-bar" id="batchBar" hidden><button class="btn" id="batchCancel">取消</button><span class="batch-info" id="batchInfo">已选 0 条</span><button class="btn btn-danger" id="batchDel">删除</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Tab 3: 健康 ====== -->
+  <section class="tab-view" id="tab-health">
+    <!-- 健康趋势（内联） -->
+    <section class="sec-card">
+      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4">今日趋势</span></div>
+      <div class="trend-body-inline" id="trendBodyInline"><p class="empty p-20" >数据收集中…</p></div>
+    </section>
+
+    <!-- 用药打卡记录 -->
+    <section class="sec-card">
+      <div class="sec-hd"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4">近期服药记录</span></div>
+      <div id="checkinHistory"><p class="empty p-20" >暂无服药记录</p></div>
+    </section>
+
+    <!-- 病历 -->
+    <section class="rec-card">
+      <div class="rec-hd" id="recordToggle"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4">我的病历</span><span class="rec-arrow open" id="recordArrow">›</span></div>
+      <div class="rec-body" id="recordBody"></div>
+    </section>
+
+    <!-- 健康报告 -->
+    <section class="sec-card">
+      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4">健康报告</span></div>
+      <div class="fg-row py-12" >
+        <button class="btn flex-1" id="genWeekTab" >本周报告</button>
+        <button class="btn flex-1" id="genMonthTab" >本月报告</button>
+      </div>
+      <div class="report-content" id="reportContentTab"><p class="empty">选择报告类型生成</p></div>
+      <button class="btn btn-sm mt-8" id="btnDownloadReport">下载报告</button>
+    </section>
+  </section>
+
+  <!-- ====== Tab 4: 我的 ====== -->
+  <section class="tab-view" id="tab-me">
+    <div class="me-hero">
+      <div class="avatar-wrap avatar-wrap-lg" id="avatarWrapMe" title="点击更换头像">
+        <img id="avatarImgMe" alt=""><span class="av-fb" id="avatarFallbackMe">王</span>
+        <span class="avatar-edit"><img src="" data-icon="edit" width="12" height="12" alt=""  class="ico-white"></span>
+      </div>
+      <div class="me-info">
+        <div class="me-name" id="meName">--</div>
+        <div class="me-meta" id="meMeta">--</div>
+      </div>
+      <button class="theme-toggle" id="themeToggleMe" title="切换深浅色" aria-label="切换深浅色主题"><img src="" data-theme-icon width="20" height="20" alt=""></button>
+    </div>
+
+    <div class="me-menu">
+      <div class="me-menu-item" data-action="editProfile"><span><img src="" data-me-icon="edit" width="22" height="22" alt=""></span><span>编辑资料</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="trends"><span><img src="" data-me-icon="chart" width="22" height="22" alt=""></span><span>健康趋势</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="healthReport"><span><img src="" data-me-icon="clipboard" width="22" height="22" alt=""></span><span>健康报告</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="medReminder"><span><img src="" data-me-icon="clock" width="22" height="22" alt=""></span><span>用药提醒</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="emergency"><span><img src="" data-me-icon="warn" width="22" height="22" alt=""></span><span>紧急联系人</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="appointments"><span><img src="" data-me-icon="calendar" width="22" height="22" alt=""></span><span>预约记录</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="aiSettings"><span><img src="" data-me-icon="ai" width="22" height="22" alt=""></span><span>AI 设置</span><span class="me-arrow">›</span></div>
+      <div class="me-menu-item" data-action="switchUser"><span><img src="" data-me-icon="users" width="22" height="22" alt=""></span><span>切换账号</span><span class="me-arrow">›</span></div>
+    </div>
+
+    <footer class="page-foot">演示数据 — 对接智能穿戴设备后替换为真实数据</footer>
+  </section>
+</main>
+
+<!-- 聊天右键菜单 -->
+<div class="ctx-menu" id="ctxMenu" hidden>
+  <div class="ctx-item" data-action="copy"><img src="" data-ctx-icon="clipboard" width="16" height="16" alt=""> 复制</div>
+  <div class="ctx-item" data-action="quote"><img src="" data-ctx-icon="quote" width="16" height="16" alt=""> 引用</div>
+  <div class="ctx-item" data-action="withdraw"><img src="" data-ctx-icon="refresh" width="16" height="16" alt=""> 撤回</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="remind"><img src="" data-ctx-icon="clock" width="16" height="16" alt=""> 提醒</div>
+  <div class="ctx-item ctx-danger" data-action="delete"><img src="" data-ctx-icon="trash" width="16" height="16" alt=""> 删除</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" data-action="multi"><img src="" data-ctx-icon="check" width="16" height="16" alt=""> 多选</div>
+</div>
+
+<!-- 底部导航栏 -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="nav-item active" data-tab="home"><span class="nav-icon"><img src="" data-icon="home" width="22" height="22" alt=""></span><span class="nav-label">首页</span></div>
+  <div class="nav-item" data-tab="chat"><span class="nav-icon"><img src="" data-icon="chat" width="22" height="22" alt=""></span><span class="nav-label">聊天</span></div>
+  <div class="nav-item" data-tab="health"><span class="nav-icon"><img src="" data-icon="health" width="22" height="22" alt=""></span><span class="nav-label">健康</span></div>
+  <div class="nav-item" data-tab="me"><span class="nav-icon"><img src="" data-icon="person" width="22" height="22" alt=""></span><span class="nav-label">我的</span></div>
+</nav>
+
+<!-- ====== 弹窗（与旧版相同） ====== -->
+<div class="overlay" id="editOverlay" hidden>
+  <div class="modal edit-modal">
+    <h2>编辑资料</h2>
+    <div class="fg"><div class="fg-tit">姓名</div><input type="text" class="input" id="editName" maxlength="20"></div>
+    <div class="fg"><div class="fg-tit">年龄</div><input type="number" class="input" id="editAge" min="1" max="150"></div>
+    <div class="fg-row">
+      <div class="fg-col"><div class="fg-tit">身高（cm）</div><input type="number" class="input" id="editHeight"></div>
+      <div class="fg-col"><div class="fg-tit">体重（kg）</div><input type="number" class="input" id="editWeight"></div>
+    </div>
+    <div class="fg"><div class="fg-tit">血型</div>
+      <div class="fg-row"><label class="radio"><input type="radio" name="editBlood" value="A"> A</label><label class="radio"><input type="radio" name="editBlood" value="B"> B</label><label class="radio"><input type="radio" name="editBlood" value="AB"> AB</label><label class="radio"><input type="radio" name="editBlood" value="O"> O</label></div>
+    </div>
+    <div class="fg-row mt-4" >
+      <button class="btn btn-primary btn-flex" id="btnSaveProfile" >保存</button>
+      <button class="btn btn-ghost btn-flex" id="btnCancelEdit" >取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="trendsOverlay" hidden>
+  <div class="modal trend-modal">
+    <div class="modal-hd"><h2><img src="" data-modal-icon="chart" width="20" height="20" alt=""  class="ic-mr6">近7天趋势</h2><button class="mclose" id="trendsClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt=""></button></div>
+    <div class="trend-body" id="trendBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="medRemindOverlay" hidden>
+  <div class="modal edit-modal">
+    <h2><img src="" data-modal-icon="pill" width="20" height="20" alt=""  class="ic-mr6">用药提醒</h2>
+    <div class="fg"><div class="fg-tit">服药时间</div>
+      <div class="tog"><span>早餐后</span><input type="time" class="input w-auto" id="medTime1" ></div>
+      <div class="tog"><span>午餐后</span><input type="time" class="input w-auto" id="medTime2" ></div>
+      <div class="tog"><span>晚餐后</span><input type="time" class="input w-auto" id="medTime3" ></div>
+      <div class="tog"><span>睡前</span><input type="time" class="input w-auto" id="medTime4" ></div>
+    </div>
+    <div class="fg-row mt-4" >
+      <button class="btn btn-primary btn-flex" id="saveMedTimes" >保存</button>
+      <button class="btn btn-ghost btn-flex" id="cancelMedTimes" >取消</button>
+    </div>
+    <p  class="fs11-hint-lh"><img src="" data-sec-icon="warn" width="14" height="14" alt=""  class="ic-v2"> 提醒仅在页面保持打开时生效，请勿关闭此页面或锁屏</p>
+  </div>
+</div>
+
+<div class="overlay" id="emergencyOverlay" hidden>
+  <div class="modal edit-modal">
+    <h2><img src="" data-modal-icon="bell" width="20" height="20" alt=""  class="ic-mr6">紧急联系人</h2>
+    <div class="fg"><div class="fg-tit">主治医生</div><input type="text" class="input" id="emName1" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone1" placeholder="电话" ></div>
+    <div class="fg"><div class="fg-tit">社区护士</div><input type="text" class="input" id="emName2" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone2" placeholder="电话" ></div>
+    <div class="fg"><div class="fg-tit">家属</div><input type="text" class="input" id="emName3" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone3" placeholder="电话" ></div>
+    <div class="fg-row mt-4" >
+      <button class="btn btn-primary btn-flex" id="saveEmergency" >保存</button>
+      <button class="btn btn-ghost btn-flex" id="cancelEmergency" >取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="apptOverlay" hidden>
+  <div class="modal edit-modal">
+    <div class="modal-hd"><h2><img src="" data-modal-icon="calendar" width="20" height="20" alt=""  class="ic-mr6">预约记录</h2><button class="mclose" id="apptClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt=""></button></div>
+    <div id="apptList"></div>
+    <div class="fg mt-16" ><div class="fg-tit">新增预约</div>
+      <input type="text" class="input mb-6" id="apptTitle" placeholder="例如：心内科复查" maxlength="50" >
+      <input type="date" class="input mb-6" id="apptDate" >
+      <input type="time" class="input" id="apptTime">
+    </div>
+    <button class="btn btn-primary btn-full mt-12" id="addAppt" >添加预约</button>
+  </div>
+</div>
+
+<div class="overlay" id="aiOverlay" hidden>
+  <div class="modal edit-modal">
+    <h2><img src="" data-modal-icon="ai" width="20" height="20" alt=""  class="ic-mr6">AI 对话设置</h2>
+    <div class="fg"><div class="fg-tit">AI人设</div>
+      <select class="input w-full" id="aiPersona" >
+        <option value="general">通用生活助手 — 多领域问答</option>
+        <option value="nurse">社区护士 — 温暖唠家常</option>
+        <option value="doctor">家庭医生 — 通俗解读健康</option>
+        <option value="nutritionist">营养师 — 饮食搭配建议</option>
+        <option value="fitness">健身教练 — 老年运动指导</option>
+        <option value="custom">自定义人设…</option>
+      </select>
+    </div>
+    <div class="fg" id="customPromptGroup" hidden>
+      <div class="fg-tit">自定义人设描述</div>
+      <textarea class="input ai-textarea" id="aiCustomPrompt" rows="3"  placeholder="描述AI应该扮演的角色和说话风格。例如：你是一个喜欢讲笑话的退休老教师，说话幽默风趣…"></textarea>
+    </div>
+    <div class="fg"><div class="fg-tit">DeepSeek API Key</div><input type="password" class="input" id="aiApiKey" placeholder="sk-xxx"></div>
+    <div class="fg"><label class="check"><input type="checkbox" id="aiPersistKey"> 记住API Key（存储在浏览器中）</label></div>
+    <p  class="fs11-hint">注册：platform.deepseek.com</p>
+    <div class="fg-row mt-4" >
+      <button class="btn btn-primary btn-flex" id="btnSaveAI" >保存</button>
+      <button class="btn btn-ghost btn-flex" id="btnCancelAI" >取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOS 危险强提醒（全屏） -->
+<div class="sos-overlay" id="sosOverlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="sosTitle">
+  <div class="sos-modal">
+    <div class="sos-icon"><img src="" data-sos-modal-icon width="48" height="48" alt=""></div>
+    <div class="sos-title" id="sosTitle">--</div>
+    <div class="sos-detail" id="sosDetail"></div>
+    <div class="sos-place" id="sosPlace"></div>
+    <div class="sos-notice"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17"/></svg> 演示模式：本页面不会实际发送通知。<br>真实系统将通知：张医生 · 王护士 · 家属</div>
+    <button class="sos-btn" id="sosOk">我已知晓</button>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/audit.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/sim-store.js"></script>
+<script src="data/schema.js"></script>
+<script src="data/residents.js"></script>
+<script src="js/seed-data.js"></script>
+<script src="js/app-state.js"></script>
+<script src="js/mock-api.js"></script>
+<script src="js/api-rest.js"></script>
+<script src="js/login.js"></script>
+<script src="js/audio-utils.js"></script>
+<script src="js/nlp.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/chat-engine.js"></script>
+  <script src="js/ai-chat.js"></script>
+  <script src="js/contact-greetings.js"></script>
+  <script src="js/chat.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/checkin.js"></script>
+<script src="js/solarlunar.min.js"></script>
+<script src="js/personal.js"></script>
+<script src="js/chat-more-menu.js"></script>
+</body>
+</html>

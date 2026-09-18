@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>登录 · 颐和康养</title>
+
+<!-- 字体：马善政 Ma Shan Zheng（粗笔行书）+ Noto Serif SC（正文宋）+ 完整 fallback -->
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+<style>
+  /* ====== 设计令牌 ====== */
+  :root {
+    --ink: #1A1611;           /* 墨色 */
+    --ink-soft: #2E2820;      /* 柔墨 */
+    --paper: #F5EFE2;         /* 宣纸底 */
+    --paper-light: #FCF9F1;   /* 宣纸亮 */
+    --vermilion: #9E3B2E;     /* 朱砂红 */
+    --vermilion-deep: #7A2D22;/* 朱砂深 */
+    --gold: #B8A078;          /* 古铜金 */
+    --gold-light: #D4C4A8;    /* 淡金 */
+    --line: #E3D9C6;          /* 发丝线 */
+    --shadow-ink: rgba(26,22,17,0.08);
+    --shadow-vermilion: rgba(158,59,46,0.15);
+  }
+
+  /* ====== Reset & Base ====== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(ellipse at 25% 15%, rgba(158,59,46,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 75% 85%, rgba(26,22,17,0.03) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(184,160,120,0.03) 0%, transparent 60%),
+      var(--paper);
+    color: var(--ink-soft);
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== Login Page Container ====== */
+  .login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 64px;
+    position: relative;
+  }
+
+  /* ═══ 标题：加粗毛笔书法，带墨韵深度 ═══ */
+  .login-main-title {
+    font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Long Cang", "STXingkai", "华文行楷", cursive;
+    font-size: 52px;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: 0.18em;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 0 rgba(184,160,120,0.3);
+    position: relative;
+  }
+  .login-main-title::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--vermilion), transparent);
+    margin: 8px auto 0;
+    border-radius: 1px;
+  }
+  .login-subtitle {
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 0.40em;
+    margin-bottom: 44px;
+    font-weight: 500;
+  }
+
+  /* ---- Main Content (Bagua + Card) ---- */
+  .login-content {
+    display: flex;
+    align-items: center;
+    gap: 64px;
+  }
+
+  /* ====== Bagua Area (Left) 精致矢量太极八卦图 ====== */
+  .bagua-area {
+    width: clamp(320px, 34vw, 420px);
+    height: clamp(320px, 34vw, 420px);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .bagua-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .bagua-name {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Long Cang", "STXingkai", cursive;
+    font-size: 21px; font-weight: 700; line-height: 1;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(245,239,226,0.85);
+    transition: transform 0.3s ease;
+  }
+  .bagua-name:hover { transform: translate(-50%, -50%) scale(1.14); }
+  /* 卦名统一墨色，克制不抢戏 */
+  .bagua-name { color: #1A1611; }
+
+  /* 四角装饰 — 极淡水印 */
+  .deco-trigram {
+    position: fixed;
+    font-size: 32px;
+    opacity: 0.035;
+    color: var(--ink);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .deco-tl { top: 24px; left: 28px; }
+  .deco-tr { top: 24px; right: 28px; }
+  .deco-bl { bottom: 24px; left: 28px; }
+  .deco-br { bottom: 24px; right: 28px; }
+
+  /* ====== Login Card (Right) ====== */
+  .login-card-cn {
+    background: linear-gradient(168deg, var(--paper-light) 0%, #F6F0E4 100%);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow:
+      0 1px 2px var(--shadow-ink),
+      0 6px 20px var(--shadow-ink),
+      0 16px 40px rgba(26,22,17,0.05);
+    padding: 42px 38px 36px;
+    width: 384px;
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .login-card-cn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background-image:
+      radial-gradient(circle at 18% 22%, rgba(158,59,46,0.018) 0%, transparent 45%),
+      radial-gradient(circle at 82% 78%, rgba(26,22,17,0.015) 0%, transparent 45%);
+    pointer-events: none;
+  }
+
+  /* 朱砂印章 */
+  .card-seal {
+    position: absolute;
+    top: -14px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #B83D2E, #8C2F22);
+    color: var(--paper-light);
+    display: grid;
+    place-items: center;
+    font-family: "Ma Shan Zheng", cursive;
+    font-size: 27px;
+    box-shadow:
+      0 3px 10px var(--shadow-vermilion),
+      inset 0 1px 0 rgba(255,255,255,0.18);
+    letter-spacing: 0;
+  }
+
+  /* 欢迎归来：马善政毛笔书法 加粗 */
+  .card-welcome {
+    font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Long Cang", "STXingkai", cursive;
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--vermilion);
+    margin-bottom: 2px;
+    letter-spacing: 0.08em;
+  }
+  .card-greeting {
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 32px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+
+  /* 表单输入 */
+  .login-form-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 26px;
+    text-align: left;
+  }
+  .login-input-cn {
+    width: 100%;
+    padding: 15px 18px;
+    background: linear-gradient(180deg, #FEFBF5, #F2EAD4);
+    border: 1px solid #DDD2BC;
+    border-radius: 10px;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.28s, box-shadow 0.28s, background 0.28s;
+  }
+  .login-input-cn::placeholder { color: #B5A98A; font-size: 13.5px; }
+  .login-input-cn:focus {
+    border-color: var(--vermilion);
+    box-shadow: 0 0 0 3.5px rgba(158, 59, 46, 0.10);
+    background: #FFF;
+  }
+
+  /* 进入康养平台按钮：加粗毛笔书法 */
+  .login-btn-cn {
+    width: 100%;
+    padding: 15px 24px;
+    background: linear-gradient(145deg, #A63D2E, #822820);
+    color: #FFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Long Cang", "STXingkai", cursive;
+    cursor: pointer;
+    transition: all 0.28s ease;
+    letter-spacing: 0.12em;
+    box-shadow: 0 4px 14px rgba(158, 59, 46, 0.28);
+    position: relative;
+    overflow: hidden;
+  }
+  .login-btn-cn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 7px 22px rgba(158, 59, 46, 0.36);
+    filter: brightness(1.03);
+  }
+  .login-btn-cn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(158, 59, 46, 0.2);
+  }
+
+  /* 登录错误提示（朱砂红，与品牌色统一） */
+  .login-hint {
+    margin: 4px 2px 0;
+    font-size: 13px;
+    color: #9E3B2E;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  .login-hint[hidden] { display: none; }
+
+  /* ====== Footer — 八卦铭文（后天八卦序） ====== */
+  .footer-trigrams {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 10px 36px;
+    justify-content: center;
+  }
+  .footer-tri-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--gold);
+    font-weight: 500;
+    transition: color 0.25s;
+  }
+  .footer-tri-item:hover { color: var(--ink-soft); }
+  .footer-tri-icon {
+    color: var(--vermilion);
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* 太极图保持静态，使阴阳与八卦方位（离南坎北）严格对齐，呈传统章法 */
+  @media (prefers-reduced-motion: reduce) {
+    .bagua-trigram { transition: none; }
+  }
+
+  /* ====== Responsive ====== */
+  @media (max-width: 920px) {
+    .login-content { flex-direction: column; gap: 44px; }
+    .bagua-area { width: 290px; height: 290px; }
+    .login-card-cn { width: 100%; max-width: 400px; }
+    .deco-trigram { display: none; }
+    .login-main-title { font-size: 44px; }
+  }
+  @media (max-width: 440px) {
+    .login-main-title { font-size: 38px; letter-spacing: 0.12em; }
+    .bagua-area { width: 250px; height: 250px; }
+    .footer-trigrams { grid-template-columns: repeat(2, auto); gap: 8px 22px; }
+    .login-card-cn { padding: 34px 26px 30px; }
+    .bagua-trigram .tri-symbol { font-size: 20px; }
+    .card-welcome { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 四角装饰水印 -->
+<span class="deco-trigram deco-tl">☰</span>
+<span class="deco-trigram deco-tr">☷</span>
+<span class="deco-trigram deco-bl">☲</span>
+<span class="deco-trigram deco-br">☵</span>
+
+<div class="login-page">
+
+  <!-- ═══ 标题：加粗马善政毛笔书法 + 朱砂下划线装饰 ═══ -->
+  <h1 class="login-main-title">颐和康养</h1>
+  <p class="login-subtitle">智慧康养 · 登录</p>
+
+  <div class="login-content">
+
+    <!-- 左侧：后天太极八卦图（文王八卦，矢量精绘） -->
+    <div class="bagua-area" aria-label="后天太极八卦图">
+
+      <svg class="bagua-svg" viewBox="0 0 400 400" fill="none" shape-rendering="geometricPrecision" aria-hidden="true"><circle cx="200" cy="200" r="196" stroke="#9E3B2E" stroke-width="1" opacity="0.10"/><circle cx="200" cy="200" r="190" stroke="#1A1611" stroke-width="1" opacity="0.12"/><circle cx="200" cy="200" r="182" stroke="#1A1611" stroke-width="1" opacity="0.07" stroke-dasharray="1.6 6.4"/><circle cx="200" cy="200" r="174" stroke="#9E3B2E" stroke-width="1" opacity="0.12"/><circle cx="200" cy="200" r="158" stroke="#1A1611" stroke-width="1" opacity="0.10"/><g transform="rotate(0 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(45 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(90 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(135 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(180 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(225 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(270 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(315 200 200)"><line x1="200" y1="80" x2="200" y2="104" stroke="#1A1611" stroke-width="1.4" opacity="0.13" stroke-linecap="round"/></g><g transform="rotate(0 200 200)"><rect x="178" y="46.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="44" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(45 200 200)"><rect x="178" y="46.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(90 200 200)"><rect x="178" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="44" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(135 200 200)"><rect x="178" y="46.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(180 200 200)"><rect x="178" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(225 200 200)"><rect x="178" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="57.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="68.5" width="18" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(270 200 200)"><rect x="178" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="204" y="46.5" width="18" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="44" height="5" rx="2.5" fill="#1A1611"/></g><g transform="rotate(315 200 200)"><rect x="178" y="46.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="57.5" width="44" height="5" rx="2.5" fill="#1A1611"/><rect x="178" y="68.5" width="44" height="5" rx="2.5" fill="#1A1611"/></g><circle cx="200" cy="200" r="68" fill="#1A1611"/><path d="M 200 132 A 68 68 0 0 1 200 268 Z" fill="#FCF9F1"/><circle cx="200" cy="166" r="34" fill="#FCF9F1"/><circle cx="200" cy="234" r="34" fill="#1A1611"/><circle cx="200" cy="166" r="13.6" fill="#1A1611"/><circle cx="200" cy="234" r="13.6" fill="#FCF9F1"/><circle cx="200" cy="200" r="68" fill="none" stroke="#1A1611" stroke-width="0.6" opacity="0.4"/></svg>
+
+      <div class="bagua-name bn-li" style="left:50%; top:8%;">离</div>
+      <div class="bagua-name bn-gen" style="left:79.75%; top:20.25%;">艮</div>
+      <div class="bagua-name bn-zhen" style="left:92%; top:50%;">震</div>
+      <div class="bagua-name bn-xun" style="left:79.75%; top:79.75%;">巽</div>
+      <div class="bagua-name bn-kan" style="left:50%; top:92%;">坎</div>
+      <div class="bagua-name bn-kun" style="left:20.25%; top:79.75%;">坤</div>
+      <div class="bagua-name bn-dui" style="left:8%; top:50%;">兑</div>
+      <div class="bagua-name bn-qian" style="left:20.25%; top:20.25%;">乾</div>
+
+    </div>
+
+
+    <main class="login-card-cn">
+      <div class="card-seal" aria-hidden="true">颐</div>
+
+      <!-- 欢迎归来：加粗马善政毛笔书法 -->
+      <h2 class="card-welcome">欢迎归来</h2>
+      <p class="card-greeting">丙午年 · 已为您开启康养之门</p>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="login-form-inner">
+          <input class="login-input-cn" type="text" id="loginName" placeholder="请输入姓名" required>
+          <input class="login-input-cn" type="password" id="loginPassword" placeholder="请输入密码" required>
+          <button type="submit" class="login-btn-cn" id="loginSubmit">进入康养平台</button>
+          <p class="login-hint" id="loginHint" hidden></p>
+        </div>
+      </form>
+    </main>
+
+  </div>
+
+  <!-- 底部八卦铭文（后天八卦序：坎一坤二震三巽四乾六兑七艮八离九） -->
+  <footer class="footer-trigrams" aria-label="后天八卦铭文">
+    <div class="footer-tri-item"><span class="footer-tri-icon">☵</span>坎·水润下</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☷</span>坤·地厚载</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☳</span>震·雷发动</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☴</span>巽·风顺入</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☰</span>乾·天健行</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☱</span>兑·泽愉悦</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☶</span>艮·山止安</div>
+    <div class="footer-tri-item"><span class="footer-tri-icon">☲</span>离·火明照</div>
+  </footer>
+
+</div>
+
+<!-- 登录页专用脚本：对接全站唯一数据源，校验后写入会话并跳转个人端 -->
+<script src="data/residents.js"></script>
+<script src="js/login-page.js"></script>
+<script src="js/common.js"></script>
+</body>
+</html>

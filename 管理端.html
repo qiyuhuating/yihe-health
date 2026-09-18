@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'">
+  <meta name="description" content="智慧养老服务平台看板 — 实时监测老人健康指标、电子围栏定位、危险预警">
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23007AFF%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z%22/><line x1=%229%22 y1=%2222%22 x2=%229%22 y2=%2212%22/><line x1=%2215%22 y1=%2222%22 x2=%2215%22 y2=%2212%22/><line x1=%2212%22 y1=%2222%22 x2=%2212%22 y2=%2212%22/></svg>">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>智慧养老服务平台</title>
+  <link rel="preload" href="css/common.css" as="style">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/xz.css">
+</head>
+<body class="light">
+<!-- 管理端登录（未登录时显示；阶段 B 权限角色门禁） -->
+<div class="login-overlay" id="adminLoginOverlay" hidden>
+  <div class="login-card">
+    <div class="login-logo"><img src="" data-admin-login-logo width="56" height="56" alt=""></div>
+    <h1 class="login-title">管理端登录</h1>
+    <p class="login-sub">管理员账号登录后查看全院数据</p>
+    <input type="text" class="login-input" id="adminLoginName" placeholder="请输入账号" maxlength="20" autocomplete="username">
+    <input type="password" class="login-input" id="adminLoginPassword" placeholder="请输入密码" maxlength="20" autocomplete="current-password">
+    <button class="login-btn" id="adminLoginSubmit">登 录</button>
+    <p class="login-hint" id="adminLoginHint" hidden></p>
+  </div>
+</div>
+<a href="#main-content" class="skip-link">跳到主要内容</a>
+
+<header class="topbar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="菜单" aria-expanded="false"><span class="lines"><span></span><span></span><span></span></span><b>菜单</b></button>
+  <h1 class="topbar-title" id="topbarTitle">概览</h1>
+  <div class="topbar-right">
+    <span class="topbar-hint"><span class="live-dot"></span>模拟</span>
+    <label class="switch"><input type="checkbox" id="simToggle" checked><span class="slider"></span></label>
+    <span class="topbar-clock" id="adminClock">--:--</span>
+    <button class="btn btn-sm" id="btnSimWander">模拟走失</button>
+    <button class="btn btn-sm" id="btnSimDanger">模拟危险</button>
+    <span class="topbar-time" id="lastUpdate" aria-live="polite">--</span>
+    <button class="btn btn-sm" id="btnAdminLogout">退出</button>
+  </div>
+</header>
+
+<!-- 菜单 -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<nav class="menu-panel" id="menuPanel" role="navigation" aria-label="主导航">
+  <div class="menu-head">
+    <span>功能</span>
+    <button class="menu-close" id="menuClose" aria-label="关闭"><img src="" data-admin-icon="close" width="18" height="18" alt=""></button>
+  </div>
+  <ul class="menu-list">
+    <li class="menu-item active" data-view="summary">
+      <span class="menu-icon"><img src="" data-menu-icon="chart" width="22" height="22" alt=""></span><div><span class="menu-label">概览</span><span class="menu-sub">监测看板 · 实时预警</span></div>
+    </li>
+    <li class="menu-item" data-view="map">
+      <span class="menu-icon"><img src="" data-menu-icon="map" width="22" height="22" alt=""></span><div><span class="menu-label">地图</span><span class="menu-sub">实时定位 · 电子围栏</span></div>
+    </li>
+    <li class="menu-item" data-view="sharing">
+      <span class="menu-icon"><img src="" data-menu-icon="export" width="22" height="22" alt=""></span><div><span class="menu-label">导出</span><span class="menu-sub">下载健康数据报告</span></div>
+    </li>
+    <li class="menu-item" data-view="browse">
+      <span class="menu-icon"><img src="" data-menu-icon="search" width="22" height="22" alt=""></span><div><span class="menu-label">档案</span><span class="menu-sub">查看居民健康详情</span></div>
+    </li>
+    <li class="menu-item" data-view="profile">
+      <span class="menu-icon"><img src="" data-menu-icon="person" width="22" height="22" alt=""></span><div><span class="menu-label">账户</span><span class="menu-sub">个人设置与偏好</span></div>
+    </li>
+    <li class="menu-item" data-view="admission">
+      <span class="menu-icon"><img src="" data-menu-icon="hospital" width="22" height="22" alt=""></span><div><span class="menu-label">入院</span><span class="menu-sub">登记住院 · 冻结监测</span></div>
+    </li>
+    <li class="menu-item" data-view="discharge">
+      <span class="menu-icon"><img src="" data-menu-icon="walk" width="22" height="22" alt=""></span><div><span class="menu-label">出院</span><span class="menu-sub">办理出院 · 恢复监测</span></div>
+    </li>
+    <li class="menu-item" data-view="audit">
+      <span class="menu-icon"><img src="" data-menu-icon="clipboard" width="22" height="22" alt=""></span><div><span class="menu-label">审计</span><span class="menu-sub">操作留痕 · 可追溯</span></div>
+    </li>
+  </ul>
+</nav>
+
+<main class="main" id="main-content">
+
+  <!-- ===== 概览 ===== -->
+  <section class="view active" id="view-summary">
+    <div class="stats-row">
+      <div class="stat-card stat-total"><div class="stat-icon"><img src="" data-stat-icon="users" width="24" height="24" alt=""></div><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">监测人数</div></div>
+      <div class="stat-card stat-normal"><div class="stat-icon"><img src="" data-stat-icon="check" width="24" height="24" alt=""></div><div class="stat-val s-green" id="statNormal">0</div><div class="stat-lbl">正常</div></div>
+      <div class="stat-card stat-warning"><div class="stat-icon"><img src="" data-stat-icon="warn" width="24" height="24" alt=""></div><div class="stat-val s-orange" id="statWarning">0</div><div class="stat-lbl">异常</div></div>
+      <div class="stat-card stat-danger"><div class="stat-icon"><img src="" data-stat-icon="bell" width="24" height="24" alt=""></div><div class="stat-val s-red" id="statDanger">0</div><div class="stat-lbl">危险</div></div>
+    </div>
+    <div class="main-grid">
+      <div class="panel">
+        <h2 class="panel-title">预警<span class="alert-stats" id="alertStats"></span></h2>
+        <div class="alert-list" id="alertList"><p class="empty">暂无危险预警</p></div>
+      </div>
+      <div class="panel">
+        <h2 class="panel-title">监测列表<button class="btn btn-sm" id="btnRefresh">刷新</button></h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>姓名</th><th>性别</th><th>年龄</th><th>心率</th><th>血氧</th><th>体温</th><th>血压</th><th>血糖</th><th>状态</th></tr></thead>
+            <tbody id="patientTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 地图 ===== -->
+  <section class="view" id="view-map">
+    <div class="panel">
+      <h2 class="panel-title">社区实时定位
+        <span class="map-legend-hint">点击点位查看居民详情</span>
+      </h2>
+      <div class="map-stats" id="mapStats">
+        <span class="ms-item"><i style="background:#34C759"></i>正常 <b id="msNormal">0</b></span>
+        <span class="ms-item"><i style="background:#FF9500"></i>异常 <b id="msWarn">0</b></span>
+        <span class="ms-item"><i style="background:#FF3B30"></i>危险 <b id="msDanger">0</b></span>
+        <span class="ms-item"><i style="background:#AF52DE"></i>越界 <b id="msOut">0</b></span>
+      </div>
+      <div class="map-alert" id="mapAlert" hidden>⚠ 越界预警：<span id="mapAlertList"></span></div>
+      <div class="map-wrap" id="mapContainer"></div>
+      <p class="map-foot" id="mapFoot">定位刷新中…</p>
+    </div>
+  </section>
+
+  <!-- ===== 导出 ===== -->
+  <section class="view" id="view-sharing">
+    <div class="panel panel-form">
+      <h2 class="panel-title">导出健康报告</h2>
+      <div class="fg"><div class="fg-tit">日期范围</div><div class="fg-row"><div class="fg-col"><label>开始</label><input type="date" id="exportDateStart"></div><div class="fg-col"><label>结束</label><input type="date" id="exportDateEnd"></div></div></div>
+      <div class="fg"><div class="fg-tit">居民</div><div class="cb-grid" id="exportResidents"></div><div class="fg-row mt-8"><button class="btn btn-sm" id="btnSelectAll">全选</button><button class="btn btn-sm" id="btnDeselectAll">取消</button></div></div>
+      <div class="fg"><div class="fg-tit">格式</div><div class="fg-row"><label class="radio"><input type="radio" name="exportFormat" value="csv" checked> CSV</label><label class="radio"><input type="radio" name="exportFormat" value="pdf"> PDF</label></div></div>
+      <button class="btn btn-primary btn-full" id="btnExport">生成并下载</button>
+      <p class="hint" id="exportHint"></p>
+    </div>
+  </section>
+
+  <!-- ===== 档案 ===== -->
+  <section class="view" id="view-browse">
+    <div class="panel">
+      <div class="browse-bar">
+        <input type="search" class="input" id="browseSearch" placeholder="搜索…">
+        <select class="input" id="browseFilter"><option value="all">全部</option><option value="normal">正常</option><option value="warning">异常</option><option value="danger">危险</option><option value="admitted">住院中</option></select>
+      </div>
+      <div class="browse-grid" id="browseGrid"></div>
+      <p class="empty" id="browseEmpty" hidden>没有匹配的居民</p>
+    </div>
+  </section>
+
+  <!-- ===== 账户 ===== -->
+  <section class="view" id="view-profile">
+    <div class="panel panel-form">
+      <div class="pf-hero">
+        <div class="pf-avatar" id="profileAvatarWrap" title="点击更换头像">
+          <img id="profileAvatarImg" alt=""><span id="profileAvatarFallback">👩‍⚕️</span>
+          <span class="pf-avatar-badge"><img src="" data-admin-icon="edit" width="10" height="10" alt="" class="ico-white"></span>
+        </div>
+        <div class="pf-info">
+          <input class="pf-input pf-name" id="profileName" value="张护士" placeholder="姓名">
+          <input class="pf-input pf-role" id="profileRole" value="社区健康管理员" placeholder="职务">
+        </div>
+      </div>
+      <input type="file" id="avatarFileInput" accept="image/*" hidden>
+      <div class="fg"><div class="fg-tit">通知</div>
+        <div class="tog"><span><img src="" data-admin-icon="bell" width="16" height="16" alt="" class="ico">推送通知</span><label class="switch"><input type="checkbox" id="settingPush" checked><span class="slider"></span></label></div>
+        <div class="tog"><span><img src="" data-admin-icon="phone" width="16" height="16" alt="" class="ico">短信通知</span><label class="switch"><input type="checkbox" id="settingSMS" checked><span class="slider"></span></label></div>
+        <div class="tog"><span><img src="" data-admin-icon="mail" width="16" height="16" alt="" class="ico">邮件通知</span><label class="switch"><input type="checkbox" id="settingEmail"><span class="slider"></span></label></div>
+      </div>
+      <div class="fg"><div class="fg-tit">外观</div>
+        <div class="tog"><span><img src="" data-admin-icon="moon" width="16" height="16" alt="" class="ico">深色模式</span><label class="switch"><input type="checkbox" id="settingDarkMode"><span class="slider"></span></label></div>
+        <div class="fg-row spread mt-12"><span>字体大小</span><select class="input" id="settingFontSize"><option value="small">小</option><option value="medium" selected>中</option><option value="large">大</option></select></div>
+      </div>
+      <div class="fg"><div class="fg-tit">数据</div>
+        <div class="fg-row spread"><span>刷新频率</span><select class="input" id="settingRefreshRate"><option value="5000">5 秒</option><option value="10000">10 秒</option><option value="30000">30 秒</option><option value="60000">60 秒</option></select></div>
+      </div>
+      <p class="pf-note">设置自动保存</p>
+    </div>
+  </section>
+
+  <!-- ===== 入院 ===== -->
+  <section class="view" id="view-admission">
+    <div class="panel panel-form">
+      <h2 class="panel-title">入院登记</h2>
+      <div class="fg"><div class="fg-tit">居民</div><select class="input input-full" id="admissionPatient"><option value="">-- 请选择 --</option></select></div>
+      <div class="fg"><div class="fg-tit">日期</div><input type="date" id="admissionDate" class="input input-full"></div>
+      <div class="fg"><div class="fg-tit">医院</div><input type="text" id="admissionHospital" class="input input-full" placeholder="例如：市第一中心医院" maxlength="100"></div>
+      <div class="fg"><div class="fg-tit">原因</div><textarea id="admissionReason" class="input textarea" rows="3" placeholder="简述入院原因…" maxlength="500"></textarea></div>
+      <div class="fg"><label class="check"><input type="checkbox" id="admissionNotify" checked> 同时短信通知医生</label></div>
+      <button class="btn btn-primary btn-full" id="btnAdmit">确认入院</button>
+      <p class="hint" id="admissionHint"></p>
+      <div class="fg mt-24"><div class="fg-tit">入院记录</div><div id="admissionRecords"><p class="empty">暂无</p></div></div>
+    </div>
+  </section>
+
+  <!-- ===== 出院 ===== -->
+  <section class="view" id="view-discharge">
+    <div class="panel panel-form">
+      <h2 class="panel-title">出院管理</h2>
+      <div class="fg"><div class="fg-tit">住院中</div><div id="admittedList"><p class="empty">暂无</p></div></div>
+      <div id="dischargeForm" hidden>
+        <div class="fg"><div class="fg-tit">日期</div><input type="date" id="dischargeDate" class="input input-full"></div>
+        <div class="fg"><div class="fg-tit">小结</div><textarea id="dischargeSummary" class="input textarea" rows="3" placeholder="住院情况与出院建议…" maxlength="500"></textarea></div>
+        <button class="btn btn-primary btn-full" id="btnDischarge">确认出院</button>
+        <p class="hint" id="dischargeHint"></p>
+      </div>
+      <div class="fg mt-24"><div class="fg-tit">出院记录</div><div id="dischargeRecords"><p class="empty">暂无</p></div></div>
+    </div>
+  </section>
+
+  <!-- ===== 审计日志 ===== -->
+  <section class="view" id="view-audit">
+    <div class="panel">
+      <h2 class="panel-title">审计日志<button class="btn btn-sm" id="btnAuditRefresh">刷新</button></h2>
+      <div class="table-wrap" id="auditList"><p class="empty">暂无审计记录</p></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 详情面板 -->
+<div class="overlay" id="sidePanelOverlay"></div>
+<aside class="drawer" id="sidePanel" role="dialog" aria-modal="true" aria-label="居民详情">
+  <div class="drawer-head"><h2>居民详情</h2><button class="drawer-close" id="panelClose" aria-label="关闭"><img src="" data-admin-icon="close" width="18" height="18" alt=""></button></div>
+  <div class="drawer-body" id="panelBody"></div>
+</aside>
+
+<!-- 危险弹窗 -->
+<div class="overlay" id="dangerModal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon"><img src="" data-modal-bell width="48" height="48" alt=""></div>
+    <h2 id="modalTitle">危险预警</h2>
+    <p class="modal-name" id="modalPatientName"></p>
+    <p class="modal-info" id="modalDetail"></p>
+    <p class="modal-place" id="modalPlace"></p>
+    <p class="modal-urgent" id="modalUrgent">请立即联系医生确认情况</p>
+    <p class="modal-queue" id="modalQueue" hidden></p>
+    <button class="btn btn-danger btn-full" id="btnSendSMS"><img src="" data-admin-icon="phone" width="16" height="16" alt="" class="ico ico-white">发送短信通知医生</button>
+    <button class="btn btn-ghost btn-full mt-8" id="btnAcknowledge">已知晓，正在处理</button>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/audit.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/sim-store.js"></script>
+  <script src="data/schema.js"></script>
+  <script src="data/residents.js"></script>
+  <script src="js/seed-data.js"></script>
+<script src="js/mock-api.js"></script>
+<script src="js/api-rest.js"></script>
+<script src="js/audio-utils.js"></script>
+<script src="js/alert.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/map.js"></script>
+<script src="js/admin-state.js"></script>
+<script src="js/admin-panel.js"></script>
+<script src="js/csv.js"></script>
+<script src="js/admin-export.js"></script>
+<script src="js/admin-views.js"></script>
+<script src="js/ws-client.js"></script>
+<script src="js/admin-login.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

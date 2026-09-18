@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>颐和 · 智慧康养</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:oklch(95% .014 82);
+    --paper-2:oklch(91% .018 82);
+    --surface:oklch(97.5% .008 82);
+    --ink:oklch(30% .022 60);
+    --ink-soft:oklch(46% .022 62);
+    --ink-faint:oklch(62% .018 64);
+    --seal:oklch(52% .158 27);
+    --seal-deep:oklch(45% .158 27);
+    --jade:oklch(54% .068 155);
+    --gold:oklch(70% .088 74);
+    --line:oklch(82% .018 72);
+    --line-strong:oklch(72% .022 66);
+    --shadow-sm:0 1px 2px oklch(30% .02 60 /.10);
+    --shadow:0 8px 24px -12px oklch(30% .04 50 /.28),0 2px 6px -3px oklch(30% .04 50 /.18);
+    --r-card:4px;
+    --font-body:"Noto Serif SC",serif;
+    --font-brush:"Ma Shan Zheng",cursive;
+  }
+  :root[data-theme="dark"]{
+    --paper:oklch(19% .012 70);
+    --paper-2:oklch(23% .014 70);
+    --surface:oklch(25% .012 70);
+    --ink:oklch(92% .01 85);
+    --ink-soft:oklch(76% .014 80);
+    --ink-faint:oklch(60% .014 78);
+    --seal:oklch(63% .168 27);
+    --seal-deep:oklch(70% .168 27);
+    --jade:oklch(68% .078 155);
+    --gold:oklch(74% .09 74);
+    --line:oklch(34% .014 72);
+    --line-strong:oklch(42% .016 70);
+    --shadow-sm:0 1px 2px oklch(0% 0 0 /.4);
+    --shadow:0 10px 30px -14px oklch(0% 0 0 /.7);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:17px}
+  body{
+    font-family:var(--font-body);color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 12% -8%, oklch(96% .02 90 /.7), transparent 60%),
+      radial-gradient(90% 70% at 100% 0%, oklch(94% .03 60 /.5), transparent 55%),
+      radial-gradient(80% 60% at 50% 120%, oklch(92% .03 155 /.35), transparent 60%),
+      var(--paper);
+    background-attachment:fixed;line-height:1.7;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;min-height:100vh;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(oklch(30% .02 60 /.05) 1px,transparent 1.4px);
+    background-size:22px 22px;opacity:.5;
+  }
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:clamp(20px,5vw,56px) clamp(16px,4vw,40px) 72px}
+  /* ---- 图标符号：水墨笔触（currentColor 驱动，沿用 tint 着色） ---- */
+  .ic{width:46px;height:46px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+      background:var(--paper-2);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+  .ic svg{width:24px;height:24px;display:block}
+  .ic.seal{color:var(--seal-deep);background:oklch(52% .158 27 /.12);border-color:oklch(52% .158 27 /.3)}
+  .ic.jade{color:var(--jade);background:oklch(54% .068 155 /.12);border-color:oklch(54% .068 155 /.3)}
+  .ic.gold{color:var(--gold);background:oklch(70% .088 74 /.16);border-color:oklch(70% .088 74 /.34)}
+  /* 顶栏：方印 + 圆 avatar，方圆并置 */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(24px,5vw,44px)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .seal{
+    width:54px;height:54px;flex:0 0 auto;border-radius:8px;
+    background:linear-gradient(160deg,var(--seal),var(--seal-deep));color:oklch(98% .01 80);
+    display:grid;place-items:center;font-family:var(--font-brush);font-size:30px;line-height:1;
+    box-shadow:var(--shadow),inset 0 0 0 1px oklch(100% .01 80 /.25);
+  }
+  .brand-txt b{font-weight:700;font-size:1.35rem;letter-spacing:.06em;display:block}
+  .brand-txt span{font-size:.82rem;color:var(--ink-soft);letter-spacing:.18em}
+  .avatar{
+    width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--paper-2);
+    border:2px solid var(--line-strong);box-shadow:var(--shadow-sm);display:grid;place-items:center;
+    font-size:1.5rem;color:var(--ink-soft);
+  }
+  /* 节气方卡 + 圆月装饰 */
+  .hero{
+    position:relative;overflow:hidden;border-radius:var(--r-card);
+    background:linear-gradient(155deg,var(--surface),var(--paper-2));
+    border:1px solid var(--line);box-shadow:var(--shadow);
+    padding:clamp(24px,4vw,40px);
+    display:grid;grid-template-columns:1.2fr .8fr;gap:clamp(20px,4vw,40px);align-items:center;
+    margin-bottom:clamp(22px,4vw,38px);
+  }
+  .hero::after{font-family:var(--font-brush);content:"養";position:absolute;right:-12px;bottom:-34px;
+    font-size:200px;color:var(--seal);opacity:.06;line-height:1;pointer-events:none}
+  /* 回纹边饰（曲水纹） */
+  .hero::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='10' viewBox='0 0 28 10'%3E%3Cpath d='M0 9V2h9v6h-5V5h3' fill='none' stroke='%239E3B2E' stroke-opacity='.26' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x center/28px 10px}
+  .eyebrow{font-size:.82rem;letter-spacing:.34em;color:var(--seal-deep);font-weight:600;margin-bottom:10px}
+  .term-row{display:flex;align-items:flex-start;gap:14px}
+  .term{font-family:var(--font-brush);font-size:clamp(3.4rem,9vw,5.4rem);line-height:.95;color:var(--ink);letter-spacing:.04em}
+  .yin{margin-top:10px;width:42px;height:42px;flex:0 0 auto;border-radius:6px;background:linear-gradient(160deg,var(--seal),var(--seal-deep));
+    color:oklch(98% .01 80);display:grid;place-items:center;font-family:var(--font-brush);font-size:15px;line-height:1.05;
+    writing-mode:vertical-rl;letter-spacing:.05em;box-shadow:var(--shadow-sm);transform:rotate(0deg)}
+  .term-meta{margin-top:14px;color:var(--ink-soft);font-size:1rem;letter-spacing:.04em}
+  .term-lunar{margin-top:6px;color:var(--seal-deep);font-size:.95rem;letter-spacing:.1em}
+  .term-note{margin-top:16px;max-width:30ch;color:var(--ink-soft);font-size:.96rem;line-height:1.8}
+  /* 水墨月相 */
+  .moon{
+    justify-self:center;width:clamp(130px,22vw,170px);aspect-ratio:1;border-radius:50%;
+    background:radial-gradient(circle at 38% 34%,oklch(98% .02 90),oklch(90% .03 80));
+    border:1px solid var(--line-strong);box-shadow:inset -10px -12px 26px oklch(80% .03 75 /.5),var(--shadow);
+    display:grid;place-items:center;position:relative;overflow:hidden;
+  }
+  .moon::after{content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 64% 60%, transparent 52%, oklch(55% .03 70 /.4));
+    mix-blend-mode:multiply}
+  .moon span{font-family:var(--font-brush);font-size:clamp(2.4rem,6vw,3.2rem);color:var(--jade);position:relative}
+  .moon::before{content:"";position:absolute;inset:-14px;border-radius:50%;border:1px solid var(--line);opacity:.7}
+  /* 区块标题 + 云纹分隔 */
+  .sec-hd{display:flex;align-items:baseline;gap:14px;margin:clamp(26px,4vw,40px) 2px 18px}
+  .sec-hd h2{font-family:var(--font-brush);font-weight:700;font-size:1.3rem;letter-spacing:.14em;
+    border-left:4px solid var(--seal);padding-left:12px}
+  .sec-hd .rule{flex:1;height:8px;border:none;opacity:.95;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='8' viewBox='0 0 48 8'%3E%3Cpath d='M2 6q4-5 8 0q4-5 8 0q4-5 8 0q4-5 8 0q4-5 8 0' fill='none' stroke='%239E3B2E' stroke-opacity='.22' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x center/48px 8px}
+  .sec-hd em{font-style:normal;font-size:.8rem;color:var(--ink-faint);letter-spacing:.16em}
+  /* 指标：方卡 + 圆 icon */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:clamp(12px,2.4vw,18px)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:clamp(18px,2.6vw,24px);box-shadow:var(--shadow-sm);position:relative;
+    transition:transform .5s cubic-bezier(.16,1,.3,1),box-shadow .5s cubic-bezier(.16,1,.3,1)}
+  .card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+  .card-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .card-top span{font-size:.96rem;color:var(--ink-soft);letter-spacing:.06em}
+  .val{font-size:clamp(1.9rem,4.4vw,2.5rem);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em;line-height:1}
+  .val small{font-size:.95rem;font-weight:500;color:var(--ink-faint);margin-left:4px}
+  .trend{margin-top:10px;font-size:.84rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--jade);flex:0 0 auto}
+  .dot.warn{background:var(--seal)}
+  /* 圆钮快捷操作 */
+  .actions{display:flex;flex-wrap:wrap;gap:clamp(16px,4vw,30px);justify-content:center;margin-top:8px}
+  .act{display:flex;flex-direction:column;align-items:center;gap:10px;background:none;border:0;cursor:pointer;color:var(--ink);font-family:var(--font-body)}
+  .act .ring{width:clamp(72px,16vw,86px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;
+    background:var(--surface);border:1px solid var(--line-strong);box-shadow:var(--shadow);
+    transition:transform .5s cubic-bezier(.16,1,.3,1),background .3s}
+  .act .ring svg{width:34px;height:34px}
+  .act:hover .ring{transform:translateY(-5px) scale(1.03)}
+  .act:active .ring{transform:scale(.94)}
+  .act.seal .ring{background:linear-gradient(160deg,var(--seal),var(--seal-deep));color:oklch(98% .01 80);border-color:transparent}
+  .act span{font-size:.92rem;letter-spacing:.1em;color:var(--ink-soft)}
+  /* 节气 · 物候 卡片（三候） */
+  .pheno{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:clamp(18px,2.6vw,24px);box-shadow:var(--shadow-sm);margin-top:clamp(12px,2.4vw,18px)}
+  .pheno-h{font-family:var(--font-brush);font-size:1.15rem;letter-spacing:.14em;border-left:4px solid var(--seal);padding-left:12px;margin-bottom:14px;color:var(--ink)}
+  .hou{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .hou:last-child{border-bottom:none}
+  .hou b{font-family:var(--font-brush);font-size:1.05rem;color:var(--seal-deep);min-width:5.5em;letter-spacing:.08em}
+  .hou span{color:var(--ink-soft);font-size:.95rem;letter-spacing:.03em}
+  /* 圆点装饰留白 */
+  .decor{display:flex;justify-content:center;gap:14px;margin:clamp(30px,6vw,52px) 0 8px}
+  .decor i{width:9px;height:9px;border-radius:50%;background:var(--line-strong)}
+  .decor i:nth-child(2){background:var(--seal);opacity:.7}
+  footer{text-align:center;color:var(--ink-faint);font-size:.82rem;letter-spacing:.14em;margin-top:24px;
+    padding-top:18px;border-top:1px solid var(--line)}
+  @media(max-width:620px){
+    .hero{grid-template-columns:1fr;text-align:left}
+    .moon{justify-self:start;margin-top:8px}
+    .brand-txt b{font-size:1.15rem}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .rise{opacity:0;transform:translateY(18px);animation:rise .9s cubic-bezier(.16,1,.3,1) forwards}
+  .rise:nth-child(2){animation-delay:.08s}.rise:nth-child(3){animation-delay:.16s}
+  .rise:nth-child(4){animation-delay:.24s}.rise:nth-child(5){animation-delay:.32s}
+  @keyframes rise{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<!-- 水墨笔触图标符号库（currentColor 驱动，与三页 ICONS 同源） -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><path d="M12 20.4C5 15.4 3 12 3 8.8 3 6 5 4 7.6 4c1.7 0 3.3.9 4.4 2.4C13 4.9 14.7 4 16.4 4 19 4 21 6 21 8.8c0 3.2-2 6.6-9 11.6z" fill="currentColor" fill-opacity=".14" stroke-width="1.8"/></symbol>
+  <symbol id="i-bp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M5 13h3l2-4 2 7 2-5h5"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><path d="M20 14.6A8.6 8.6 0 1 1 9.4 4 6.6 6.6 0 0 0 20 14.6z"/><circle cx="16.5" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="18.6" cy="10.5" r=".6" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-steps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><path d="M8.4 6.2c1.7 0 2.8 1.4 2.8 3.1S10.1 12.4 8.4 12.4 5.6 11 5.6 9.3 6.7 6.2 8.4 6.2z"/><path d="M15.6 12.4c1.7 0 2.8 1.4 2.8 3.1s-1.1 3.1-2.8 3.1-2.8-1.4-2.8-3.1 1.1-3.1 2.8-3.1z"/></symbol>
+  <symbol id="i-sos" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><circle cx="12" cy="12" r="9.4"/><path d="M12 7v6" stroke-width="2.5"/><circle cx="12" cy="17.2" r="1.3" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><path d="M5.5 14.5 14.5 5.5a4.2 4.2 0 0 1 6 6L11.5 20.5a4.2 4.2 0 0 1-6-6z"/><path d="M8.5 11.5l5 5"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3.2H9z"/><path d="M9 12h6M9 16h4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10.6" stroke-opacity=".14" fill="currentColor" fill-opacity=".05"/><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M4 7.2l8 6 8-6"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="seal">颐</div>
+      <div class="brand-txt"><b>颐和康养</b><span>智 慧 养 老 平 台</span></div>
+    </div>
+    <div class="avatar" aria-label="用户头像">☯</div>
+  </header>
+
+  <section class="hero rise">
+    <div>
+      <div class="eyebrow">今 日 节 气</div>
+      <div class="term-row">
+        <div class="term">处暑</div>
+        <div class="yin">頤和</div>
+      </div>
+      <div class="term-meta">八月廿九 · 宜润燥 · 忌贪凉</div>
+      <div class="term-lunar">农 历 丙午年 七月廿九</div>
+      <p class="term-note">暑气渐消，秋意初生。早晚添衣，饮食清淡，以养肺气、安神志。</p>
+    </div>
+    <div class="moon"><span>秋</span></div>
+  </section>
+
+  <div class="sec-hd"><h2>健康概览</h2><div class="rule"></div><em>实时监测</em></div>
+  <div class="grid">
+    <article class="card rise"><div class="card-top"><div class="ic seal"><svg><use href="#i-heart"/></svg></div><span>心率</span></div><div class="val">72<small>次/分</small></div><div class="trend"><i class="dot"></i>平稳 · 正常范围</div></article>
+    <article class="card rise"><div class="card-top"><div class="ic seal"><svg><use href="#i-bp"/></svg></div><span>血压</span></div><div class="val">126/80<small>mmHg</small></div><div class="trend"><i class="dot"></i>控制良好</div></article>
+    <article class="card rise"><div class="card-top"><div class="ic jade"><svg><use href="#i-moon"/></svg></div><span>睡眠</span></div><div class="val">7.2<small>小时</small></div><div class="trend"><i class="dot"></i>深睡充足</div></article>
+    <article class="card rise"><div class="card-top"><div class="ic jade"><svg><use href="#i-steps"/></svg></div><span>步数</span></div><div class="val">3,480<small>步</small></div><div class="trend"><i class="dot warn"></i>略低于目标</div></article>
+  </div>
+
+  <div class="sec-hd"><h2>节气 · 物候</h2><div class="rule"></div><em>处暑三候</em></div>
+  <div class="pheno rise">
+    <div class="hou"><b>初候</b><span>鹰乃祭鸟 — 鹰击长空，捕鸟陈祭，示秋肃之气始盛</span></div>
+    <div class="hou"><b>二候</b><span>天地始肃 — 清气上升，暑退凉生，万物收敛其华</span></div>
+    <div class="hou"><b>三候</b><span>禾乃登 — 黍稷稻粱渐次成熟，农人望岁而喜</span></div>
+  </div>
+
+  <div class="sec-hd"><h2>常用服务</h2><div class="rule"></div><em>一键可达</em></div>
+  <div class="actions rise">
+    <button class="act seal"><div class="ring"><svg><use href="#i-sos"/></svg></div><span>紧急呼叫</span></button>
+    <button class="act"><div class="ring"><svg><use href="#i-pill"/></svg></div><span>用药提醒</span></button>
+    <button class="act"><div class="ring"><svg><use href="#i-clipboard"/></svg></div><span>健康巡检</span></button>
+    <button class="act"><div class="ring"><svg><use href="#i-mail"/></svg></div><span>家人留言</span></button>
+  </div>
+
+  <div class="decor"><i></i><i></i><i></i></div>
+  <footer>颐 和 · 顺 四 时 而 养 &nbsp;|&nbsp; 农历丙午年 · 数据仅供演示</footer>
+</div>
+</body>
+</html>

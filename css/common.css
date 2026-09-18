@@ -1,0 +1,112 @@
+/* ==========================================
+   共享设计系统 · Design Tokens（配色保持原样）
+   优化方向：更柔和的层叠阴影 · 统一圆角节奏 · 精细排版 · 焦点/滚动条/Toast 质感
+   ========================================== */
+
+/* ---- 浅色主题 · Apple Health 原色系（不变） ---- */
+body.light{
+  --bg:#F2F2F7; --card:#FFFFFF; --card-tint:#F9F9FB;
+  --t1:#1C1C1E; --t2:#5C5C64; --t3:#8A8A8E;
+  --sep:#ECECF0; --hover:#F4F4F8; --menu-bg:#FFFFFF;
+  --blue:#007AFF; --green:#34C759; --orange:#FF9500; --red:#FF3B30; --purple:#AF52DE;
+  --ok-text:#1B7D36; --warn-text:#B45309; --danger-text:#CC1A1A;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+  --shadow:0 2px 8px rgba(16,24,40,.05), 0 8px 24px rgba(16,24,40,.06);
+  --shadow-lg:0 12px 32px rgba(16,24,40,.10), 0 4px 12px rgba(16,24,40,.06);
+  --shadow-card:0 1px 3px rgba(16,24,40,.04), 0 10px 30px rgba(16,24,40,.07);
+  --card-secondary:#F6F6FA;
+  --ring:rgba(0,122,255,.16);
+}
+/* ---- 深色主题（不变） ---- */
+body.dark{
+  --bg:#0F172A; --card:#1E293B; --card-tint:#2A3A52;
+  --t1:#F1F5F9; --t2:#A7B4C6; --t3:#7C8DA0;
+  --sep:#2C3A52; --hover:#243349; --menu-bg:#0F172A;
+  --blue:#22D3EE; --green:#34D399; --orange:#FBBF24; --red:#F87171; --purple:#A78BFA;
+  --ok-text:#34D759; --warn-text:#FBBF24; --danger-text:#F87171;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow:0 2px 10px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.28);
+  --shadow-lg:0 16px 40px rgba(0,0,0,.5);
+  --shadow-card:0 2px 12px rgba(0,0,0,.32);
+  --card-secondary:#243349;
+  --ring:rgba(34,211,238,.18);
+}
+
+/* ---- 全局 Reset ---- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ---- 可访问性 ---- */
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.skip-link{position:absolute;top:-100%;left:16px;z-index:9999;padding:12px 20px;background:var(--blue);color:#fff;font-weight:600;font-size:14px;border-radius:10px;text-decoration:none;transition:top .2s}
+.skip-link:focus{top:8px}
+
+/* ---- 减弱动画 ---- */
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* ---- 滚动条（纤细精致） ---- */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(140,140,150,.35);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(140,140,150,.55);background-clip:padding-box}
+body.dark ::-webkit-scrollbar-thumb{background:rgba(160,170,190,.3);background-clip:padding-box}
+
+/* ---- 基础排版 ---- */
+body{
+  --r:18px; --rs:14px; --rss:10px;
+  --ease-out:cubic-bezier(.16,1,.3,1); --ease-in-out:cubic-bezier(.65,0,.35,1);
+  --dur-fast:140ms; --dur:260ms;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --font-num:"SF Pro Display",-apple-system,"PingFang SC",sans-serif;
+  font-family:var(--font);
+  background:var(--bg); color:var(--t1);
+  min-height:100vh; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility; line-height:1.5; letter-spacing:-.005em;
+  transition:background var(--dur),color var(--dur);
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+h1,h2,h3,h4{letter-spacing:-.02em;line-height:1.2;font-weight:700}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+/* ---- 性能优化 ---- */
+.view:not(.active){content-visibility:hidden;contain-intrinsic-size:auto}
+.chat-body,.drawer-body,.menu-list,.report-content{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+img[loading="lazy"]{min-height:1px}
+
+/* ---- Toast（更克制） ---- */
+.error-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:13px 24px;border-radius:14px;font-size:14px;font-weight:550;z-index:9999;box-shadow:0 8px 30px rgba(255,59,48,.35);animation:toastIn .32s var(--ease-out),toastOut .32s var(--ease-out) 3.5s forwards;max-width:92vw;text-align:center;letter-spacing:-.01em}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-14px)}}
+
+/* 深色主内容卡片微边框（保留） */
+body.dark .panel,body.dark .stat-card,body.dark .browse-card,body.dark .profile-card,
+body.dark .steps-card,body.dark .loc-card,body.dark .home-half-card,body.dark .sec-card,
+body.dark .rec-card,body.dark .msg-contacts,body.dark .me-menu,body.dark .login-card{
+  border:0.5px solid rgba(255,255,255,.08);
+}
+body.dark .vital-card:not(.warn):not(.danger){border-color:rgba(255,255,255,.08)}
+
+/* ===== 通用工具类 ===== */
+.flex-1{flex:1}
+.btn-flex{flex:1;padding:12px}
+.w-full{width:100%}.w-auto{width:auto}
+.mt-2{margin-top:2px}.mt-4{margin-top:4px}.mt-6{margin-top:6px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}
+.mb-6{margin-bottom:6px}
+.p-20{padding:20px}.py-12{padding:12px 0}
+.ic-mr4{vertical-align:-2px;margin-right:4px}.ic-mr6{vertical-align:-4px;margin-right:6px}
+.ic-v2{vertical-align:-2px}.ic-mid{vertical-align:middle}
+.d-block{display:block}.br50{border-radius:50%}
+.t3{color:var(--t3)}.t2{color:var(--t2)}
+.fs11-t3{font-size:12px;color:var(--t3)}.fs11-blue{font-size:12px;color:var(--blue)}
+.fs12-t3{font-size:13px;color:var(--t3)}.fs12-t2{font-size:13px;color:var(--t2)}
+.fs12-red{font-size:13px;color:var(--red)}
+.fs12-light-t3{font-weight:400;font-size:12px;color:var(--t3)}
+.fs11-hint{font-size:12px;color:var(--t3);margin:4px 0;text-align:center}
+.fs11-hint-lh{font-size:12px;color:var(--t3);text-align:center;margin-top:12px;line-height:1.55}
+.hr{border:none;border-top:1px solid var(--sep);margin:12px 0}
+.ai-textarea{resize:vertical;min-height:60px}
+.ico-white{filter:brightness(0)invert(1)}
+.panel-empty{color:var(--t3);text-align:center;padding:48px 0}
+.report-card{background:var(--card-tint);border-radius:14px;padding:16px}
+.report-title{font-weight:600;margin-bottom:8px}
+.crash-banner{position:fixed;top:0;left:0;right:0;background:var(--red);color:#fff;padding:12px;z-index:99999;font-size:14px;text-align:center}
+.st-txt.danger{color:var(--danger-text)}.st-txt.warning{color:var(--warn-text)}.st-txt.normal{color:var(--ok-text)}

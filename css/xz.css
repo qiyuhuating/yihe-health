@@ -1,0 +1,803 @@
+/* ============================================================
+   新中式设计系统 · 覆盖层（加载于 common/personal/style 之后）
+   理念：该圆的圆（头像/图标/按钮/激活杠），该方的方（卡片/分栏/边框）
+   配色含蓄内敛：宣纸暖底 · 墨色文字 · 朱砂点缀（≈10%）· 松绿/赭金辅色
+   仅覆盖视觉，不改动任何 DOM 结构与 JS 逻辑
+   ============================================================ */
+
+/* ---------- A. 主题变量覆盖（浅色） ---------- */
+body.light{
+  --bg:#F5EFE2; --card:#FCF8F0; --card-tint:#EFE7D6;
+  --t1:#2E2820; --t2:#6E6555; --t3:#9C9079;
+  --sep:#E3D9C6; --hover:#F0E8D7; --menu-bg:#FCF8F0;
+  --blue:#9E3B2E; --green:#5E7B57; --orange:#B07A2E; --red:#A23A2B; --purple:#6E5A82;
+  --ok-text:#3F6B43; --warn-text:#9A6B1E; --danger-text:#A23A2B;
+  --shadow-sm:0 1px 2px rgba(60,45,25,.06),0 1px 3px rgba(60,45,25,.05);
+  --shadow:0 2px 10px rgba(60,45,25,.06),0 10px 28px rgba(60,45,25,.07);
+  --shadow-lg:0 14px 40px rgba(60,45,25,.14),0 4px 14px rgba(60,45,25,.08);
+  --shadow-card:0 1px 3px rgba(60,45,25,.05),0 10px 30px rgba(60,45,25,.07);
+  --card-secondary:#EFE7D6;
+  --ring:rgba(158,59,46,.20);
+}
+/* ---------- A. 主题变量覆盖（深色 · 墨夜） ---------- */
+body.dark{
+  --bg:#16120F; --card:#242019; --card-tint:#2C251C;
+  --t1:#F7EFE3; --t2:#C4B8A0; --t3:#958875;
+  --sep:#43392E; --hover:#2E2720; --menu-bg:#1E1914;
+  --blue:#D8735A; --green:#8FB387; --orange:#DDB16A; --red:#E56E5A; --purple:#A892BC;
+  --ok-text:#8FB387; --warn-text:#DDB16A; --danger-text:#E56E5A;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.25);
+  --shadow:0 2px 10px rgba(0,0,0,.28),0 8px 22px rgba(0,0,0,.22);
+  --shadow-lg:0 12px 34px rgba(0,0,0,.42);
+  --shadow-card:0 2px 8px rgba(0,0,0,.26);
+  --card-secondary:#2C251C;
+  --ring:rgba(216,115,90,.22);
+}
+
+/* ---------- B. 基础：衬线字体 · 方角节奏 · 宣纸肌理 ---------- */
+body{
+  --r:10px; --rs:8px; --rss:6px;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --font:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+  --font-num:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  background:
+    radial-gradient(120% 80% at 12% -8%, rgba(176,122,46,.10), transparent 60%),
+    radial-gradient(90% 70% at 100% 0%, rgba(94,123,87,.08), transparent 55%),
+    radial-gradient(80% 60% at 50% 120%, rgba(158,59,46,.06), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--t1);
+  line-height:1.65; letter-spacing:.02em; font-weight:500;
+}
+
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.45;
+  background-image:radial-gradient(rgba(60,45,25,.05) 1px,transparent 1.4px);
+  background-size:22px 22px;
+}
+*{position:relative}
+h1,h2,h3,h4{letter-spacing:.02em;font-weight:700}
+a{color:var(--blue)}
+
+/* ---------- C. 登录 ---------- */
+.login-overlay{background:rgba(29,24,19,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.login-card{
+  background:var(--card);border:1px solid var(--sep);border-radius:var(--r);
+  box-shadow:var(--shadow-lg);padding:40px 32px;
+}
+.login-logo{margin-bottom:16px;display:flex;justify-content:center}
+.login-seal{
+  width:64px;height:64px;border-radius:16px;
+  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 72%,#000));
+  color:#FDF8EF;display:grid;place-items:center;
+  font-family:"Ma Shan Zheng","STXingkai","华文行楷","KaiTi","STKaiti","楷体",serif;font-size:38px;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 35%,transparent),inset 0 0 0 1px rgba(255,255,255,.25);
+}
+.login-title{color:var(--t1);letter-spacing:.1em;font-weight:700}
+.login-sub{color:var(--t3);letter-spacing:.04em}
+.login-input{
+  background:var(--card-tint);border:1px solid var(--sep);border-radius:var(--rs);
+  color:var(--t1);font-family:var(--font);transition:border-color .2s,box-shadow .2s;
+}
+.login-input::placeholder{color:var(--t3)}
+.login-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--ring)}
+.login-btn{
+  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 78%,#000));
+  color:#F7EFE2;border-radius:var(--rs);letter-spacing:.3em;font-family:var(--font);
+  border:none;box-shadow:0 6px 18px color-mix(in srgb,var(--blue) 35%,transparent);
+  transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s;
+}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px color-mix(in srgb,var(--blue) 42%,transparent)}
+.login-btn:active{transform:scale(.97)}
+.login-hint{color:var(--red);font-size:.86rem;margin-top:12px;letter-spacing:.02em}
+
+/* ---------- D. 个人端底部导航（方卡 + 圆激活杠 + 圆图标块） ---------- */
+.bottom-nav{
+  background:color-mix(in srgb,var(--card) 90%,transparent);
+  backdrop-filter:blur(16px) saturate(1.1);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--sep);box-shadow:0 -2px 18px rgba(60,45,25,.06);
+}
+.nav-item .nav-label{color:var(--t3);transition:color .25s}
+.nav-item.active .nav-label{color:var(--blue)}
+.nav-item .nav-icon{display:grid;place-items:center;width:40px;height:34px;border-radius:14px;transition:transform .3s cubic-bezier(.16,1,.3,1),background .3s}
+.nav-item.active .nav-icon{background:color-mix(in srgb,var(--blue) 14%,transparent);transform:translateY(-2px)}
+.nav-item:active{transform:scale(.93)}
+.nav-item::before{
+  content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  width:22px;height:4px;border-radius:4px;background:transparent;transition:width .3s,background .3s,box-shadow .3s;
+}
+.nav-item.active::before{width:28px;background:var(--blue);box-shadow:0 0 10px color-mix(in srgb,var(--blue) 60%,transparent)}
+
+/* ---------- E. 卡片家族（方 · 发丝描边 · 宣纸面） ---------- */
+.vital-card,.sec-card,.rec-card,.home-half-card,.steps-card,.loc-card,.profile-card,
+.panel,.stat-card,.browse-card,.modal,.login-card{
+  background:var(--card);border:1px solid var(--sep);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);
+}
+.home-grid,.vitals-row,.main-grid{gap:14px}
+.vitals-tit,.sec-hd,.sec-hd span,.fg-tit,.panel-title,.topbar-title{
+  color:var(--t1);letter-spacing:.06em;font-weight:700;
+}
+.vitals-tit{font-size:15px;margin:18px 2px 10px}
+.sec-hd{border-bottom:1px solid var(--sep);padding-bottom:12px;margin-bottom:14px}
+.sec-sub{color:var(--t3)}
+.vital-number,.stat-val,.steps-count,.clock-time,.topbar-clock{
+  font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--t1);letter-spacing:.01em;
+}
+.vital-label,.stat-lbl{color:var(--t2)}
+.empty{color:var(--t3)}
+
+/* ---------- F. 圆形 tint 图标（方圆对比） ---------- */
+.vital-icon,.stat-icon,.loc-icon{
+  width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+  background:color-mix(in srgb,var(--blue) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--blue) 28%,transparent);
+  overflow:hidden;
+}
+.stat-icon{background:color-mix(in srgb,var(--green) 14%,transparent);border-color:color-mix(in srgb,var(--green) 30%,transparent)}
+.loc-icon{background:color-mix(in srgb,var(--blue) 12%,transparent);border-color:color-mix(in srgb,var(--blue) 28%,transparent)}
+.vital-icon img,.stat-icon img,.loc-icon img{width:24px;height:24px}
+
+/* ---------- G. 按钮 / 输入 / 开关 ---------- */
+.btn{
+  background:var(--card-tint);border:1px solid var(--sep);color:var(--t1);
+  border-radius:var(--rs);font-family:var(--font);letter-spacing:.04em;
+  transition:transform .2s,box-shadow .2s,background .2s;min-height:46px;
+}
+.btn:hover{background:var(--hover);transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 80%,#000));color:#F7EFE2;border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 30%,transparent)}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-danger{background:var(--red);color:#F7EFE2;border-color:transparent}
+.btn-sm{border-radius:var(--rss);min-height:40px}
+.input{
+  background:var(--card-tint);border:1px solid var(--sep);border-radius:var(--rs);
+  color:var(--t1);font-family:var(--font);transition:border-color .2s,box-shadow .2s;
+}
+.input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px var(--ring)}
+.radio input,.check input{accent-color:var(--blue)}
+.slider{background:var(--sep)}
+.switch input:checked+.slider{background:var(--green)}
+
+/* ---------- H. 弹窗 / 浮层 ---------- */
+.overlay{background:rgba(29,24,19,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.modal{background:var(--card);border:1px solid var(--sep);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:28px}
+.modal h2{color:var(--t1);letter-spacing:.06em;font-weight:700}
+.mclose{border-radius:50%;background:var(--card-tint);border:1px solid var(--sep);transition:transform .2s,background .2s}
+.mclose:hover{background:var(--hover);transform:rotate(90deg)}
+
+/* ---------- I. 聊天 ---------- */
+.chat-msg{display:flex;gap:10px;margin:14px 0;align-items:flex-start}
+.chat-msg .msg-text{
+  background:var(--card-tint);border:1px solid var(--sep);border-radius:var(--rs);
+  padding:10px 14px;font-family:var(--font);color:var(--t1);line-height:1.7;max-width:74%;
+}
+.chat-msg.out{flex-direction:row-reverse}
+.chat-msg.out .msg-text{
+  background:color-mix(in srgb,var(--blue) 14%,var(--card));
+  border-color:color-mix(in srgb,var(--blue) 30%,transparent);color:var(--t1);
+}
+.typing-bubble{background:var(--card-tint);border:1px solid var(--sep);border-radius:var(--rs);padding:12px 16px}
+.chat-input{background:var(--card-tint);border:1px solid var(--sep);border-radius:var(--rs);color:var(--t1);font-family:var(--font)}
+.chat-send{background:var(--blue);color:#F7EFE2;border:none;border-radius:var(--rs);font-family:var(--font)}
+.chat-panel,.msg-contacts{background:var(--card)}
+.chat-hd{border-bottom:1px solid var(--sep)}
+
+/* ---------- J. 管理端：顶栏 / 侧栏 / 表格 / 抽屉 ---------- */
+.topbar{
+  background:color-mix(in srgb,var(--card) 92%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--sep);
+}
+.topbar-title{letter-spacing:.08em}
+.menu-list{background:var(--menu-bg);border-right:1px solid var(--sep)}
+.menu-item{border-radius:var(--rs);color:var(--t1);transition:background .2s,color .2s}
+.menu-item:hover{background:var(--hover)}
+.menu-item.active{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue);font-weight:600}
+.menu-item.active::before{display:none}
+.table-wrap{border:1px solid var(--sep);border-radius:var(--r);background:var(--card)}
+.table-wrap table{width:100%;border-collapse:collapse}
+.table-wrap th,.table-wrap td{padding:12px 14px;border-bottom:1px solid var(--sep);color:var(--t1);font-size:14px}
+.table-wrap th{color:var(--t2);font-weight:600;letter-spacing:.04em;background:var(--card-tint)}
+.table-wrap tr:last-child td{border-bottom:none}
+.drawer{background:var(--card);border-left:1px solid var(--sep);box-shadow:-10px 0 36px rgba(29,24,19,.18)}
+.view.active{animation:fadeUp .5s cubic-bezier(.16,1,.3,1)}
+.live-dot{background:var(--green)!important}
+
+/* ---------- K. SOS 紧急（深色降刺眼） ---------- */
+.sos-top{background:var(--red);color:#F7EFE2;border:none;border-radius:var(--rs);font-family:var(--font);letter-spacing:.1em;box-shadow:0 6px 18px color-mix(in srgb,var(--red) 35%,transparent);transition:transform .2s}
+.sos-top:active{transform:scale(.96)}
+.sos-overlay{background:rgba(29,24,19,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.sos-modal{background:var(--card);border:2px solid var(--red);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:36px 28px}
+.sos-icon{filter:none}
+.sos-title{color:var(--red);letter-spacing:.06em;font-weight:700}
+/* 深色 SOS：降低饱和度与亮度，避免暗光刺眼 */
+body.dark .sos-top{
+  background:#8B3D2E;
+  box-shadow:0 4px 14px rgba(139,61,46,.35),0 0 40px rgba(139,61,46,.12);
+}
+body.dark .sos-top:hover{background:#A04A38}
+body.dark .home-sos{
+  background:linear-gradient(160deg,#8B3D2E,#6B2E22);
+  box-shadow:0 4px 16px rgba(139,61,46,.35),inset 0 0 0 1px rgba(255,255,255,.15);
+}
+body.dark #tab-home .home-sos::before{border-color:rgba(200,90,72,.45)}
+body.dark .sos-bar{
+  background:linear-gradient(155deg,rgba(139,61,46,.08),var(--card));
+  border-color:rgba(200,90,72,.25);
+}
+
+/* ---------- L. 趋势柱 / 步数环 / 我的菜单 ---------- */
+.trend-bar{background:linear-gradient(to top,var(--blue),color-mix(in srgb,var(--blue) 35%,transparent));border-radius:6px 6px 0 0}
+#tab-health .trend-bar{background:linear-gradient(to top,var(--blue),color-mix(in srgb,var(--blue) 30%,transparent))}
+.trend-bar:last-child:not(.empty),.trend-bar.active{background:linear-gradient(to top,var(--orange),color-mix(in srgb,var(--orange) 30%,transparent))}
+.steps-ring stop,#ringGrad stop{stop-color:var(--green)}
+.steps-bar{background:var(--green);border-radius:3px}
+.me-menu{background:var(--card);border:1px solid var(--sep);border-radius:var(--r)}
+.me-menu-item{border-bottom:1px solid var(--sep);color:var(--t1);font-size:15px;transition:background .18s}
+.me-menu-item:last-child{border-bottom:none}
+.me-menu-item:hover{background:var(--hover)}
+.me-arrow{color:var(--t3)}
+.clock-time{font-size:clamp(2.4rem,8vw,3.4rem);font-weight:700;letter-spacing:.02em}
+.clock-date{color:var(--t2);letter-spacing:.08em}
+
+/* ---------- M. 焦点 / 点击区 / 字体大小档 ---------- */
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px;border-radius:var(--rss)}
+body.font-large{font-size:17px}
+body.font-small{font-size:14px}
+
+/* ---------- 减弱动画守卫 ---------- */
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------- N. 粗衬线标题字（全站统一：Noto Serif SC 700 · CSP 内可用） ---------- */
+body{
+  --font-brush:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+}
+/* 装饰性大标题、问候语、导航标签统一使用粗宋体，呼应截图中的“你好，王国栋” */
+.login-title,.topbar-title,.sec-hd h2,.vitals-tit{
+  font-family:var(--font-brush);letter-spacing:.14em;font-weight:700;
+}
+/* 典籍章节眉：朱砂竖印，呼应印章 */
+.sec-hd h2,.vitals-tit{
+  border-left:4px solid var(--blue);padding-left:12px;
+}
+.sec-hd{margin:clamp(28px,5vw,42px) 2px 16px}
+.vitals-tit{margin:20px 2px 10px}
+
+/* ---------- O. 传统纹样：云纹分隔 · 回纹边饰 ---------- */
+/* 云纹（如意卷云）—— 区块分隔线肌理，替代平直细线 */
+.sec-hd .rule{
+  height:8px;border:none;opacity:.95;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='8' viewBox='0 0 48 8'%3E%3Cpath d='M2 6q4-5 8 0q4-5 8 0q4-5 8 0q4-5 8 0q4-5 8 0' fill='none' stroke='%239E3B2E' stroke-opacity='.22' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x center/48px 8px;
+}
+/* 回纹（曲水纹）—— 管理端顶栏下缘，东方秩序感 */
+.topbar::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:10px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='10' viewBox='0 0 28 10'%3E%3Cpath d='M0 9V2h9v6h-5V5h3' fill='none' stroke='%239E3B2E' stroke-opacity='.28' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x center/28px 10px;
+}
+/* 图标：墨落宣纸 —— 在 tint 圆块上补一道极淡水墨晕，强化笔意 */
+.vital-icon,.stat-icon,.loc-icon{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--blue) 12%,transparent),0 2px 6px rgba(60,45,25,.08);
+}
+
+/* ============================================================
+   P. 全站字体统一：使用 Noto Serif SC 粗衬线宋体（截图“你好，王国栋”同款）
+   ============================================================ */
+body{
+  --font:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+  --font-brush:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+}
+/* 标题性文字统一使用粗宋体，与问候语视觉一致 */
+.login-title,.topbar-title,.sec-hd h2,.vitals-tit,.clock-date,.home-greet .greeting,
+.me-name,.profile-name,.sos-title,.modal h2,.panel-title,.stat-lbl,.fg-tit{
+  font-family:var(--font-brush);letter-spacing:.16em;font-weight:700;
+}
+.nav-label,.me-menu-item span,.chat-name,.msg-ct-name{font-family:var(--font-brush);letter-spacing:.1em;font-weight:700}
+
+/* ============================================================
+   Q. 头像首字化：圆形印章式头像（替代 emoji）
+   ============================================================ */
+.avatar-wrap .av-fb{
+  font-family:var(--font-brush);font-size:28px;color:#FDF8EF;letter-spacing:0;font-weight:700;
+  background:transparent!important;
+}
+.avatar-wrap .av-fb.hidden{display:none}
+.avatar-wrap,.msg-ct-av,.msg-avatar{
+  border-radius:50%;overflow:hidden;
+  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
+  border:1.5px solid color-mix(in srgb,var(--blue) 35%,transparent);
+  box-shadow:0 2px 8px rgba(60,45,25,.12);
+}
+.msg-ct-av,.msg-avatar{border-radius:50%}
+.msg-ct-av img,.msg-avatar img,.avatar-wrap img{border-radius:50%}
+#tab-home .avatar-wrap{width:52px;height:52px}
+.avatar-wrap-lg{width:72px;height:72px}
+.avatar-wrap-lg .av-fb{font-size:32px}
+
+/* 真字体书法头像（马善政毛笔字体，内联 SVG 覆盖） */
+.avatar-wrap.has-calligraphy{position:relative;border-radius:6px;background:transparent;border-color:transparent}
+.calligraphy-avatar{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2}
+.calligraphy-avatar svg{width:100%;height:100%;display:block}
+
+/* ============================================================
+   R. 正式版首页（#tab-home）：二十四节气 · 农历 · 宜忌 · SOS
+   ============================================================ */
+#tab-home{
+  padding:clamp(18px,4vw,32px) clamp(14px,4vw,28px) 120px;
+}
+#tab-home .home-wrap{max-width:1080px;margin:0 auto;position:relative;z-index:1}
+/* 顶栏 */
+#tab-home .home-topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:clamp(22px,5vw,38px)
+}
+#tab-home .home-brand{display:flex;align-items:center;gap:14px}
+#tab-home .home-seal{
+  width:54px;height:54px;flex:0 0 auto;border-radius:8px;
+  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
+  color:#FDF8EF;display:grid;place-items:center;font-family:var(--font-brush);font-size:30px;line-height:1;font-weight:700;
+  box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.25);
+}
+#tab-home .home-brand b{font-family:var(--font-brush);font-weight:700;font-size:1.35rem;letter-spacing:.12em;display:block}
+#tab-home .home-brand span{font-size:.82rem;color:var(--t2);letter-spacing:.18em}
+#tab-home .home-taiji{
+  width:50px;height:50px;border-radius:50%;flex:0 0 auto;
+  background:radial-gradient(circle at 50% 0%,var(--card),var(--card-tint));
+  border:2px solid var(--sep);box-shadow:var(--shadow-sm);
+  display:grid;place-items:center;
+}
+#tab-home .home-taiji svg{width:28px;height:28px}
+/* 节气主卡 */
+#tab-home .home-hero{
+  position:relative;overflow:hidden;border-radius:var(--r);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 130' preserveAspectRatio='none'%3E%3Cpath d='M0 130 L70 76 L130 104 L200 56 L270 100 L340 66 L400 104 L400 130 Z' fill='%239E3B2E' fill-opacity='.06'/%3E%3C/svg%3E") no-repeat bottom left/100% 62%,
+    linear-gradient(155deg,var(--card),var(--card-tint));
+  border:1px solid var(--sep);box-shadow:var(--shadow-card);
+  padding:clamp(24px,5vw,40px);
+  display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(18px,4vw,36px);align-items:center;
+  margin-bottom:22px;
+}
+#tab-home .home-hero::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='10' viewBox='0 0 28 10'%3E%3Cpath d='M0 9V2h8v6h-4V5h2' fill='none' stroke='%239E3B2E' stroke-opacity='.28' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x center/28px 10px}
+#tab-home .home-hero::after{font-family:var(--font-brush);content:"養";position:absolute;right:-10px;bottom:-38px;
+  font-size:clamp(150px,30vw,220px);color:var(--blue);opacity:.05;line-height:1;pointer-events:none;transform:rotate(-6deg);font-weight:700}
+#tab-home .home-eyebrow{font-size:.8rem;letter-spacing:.36em;color:var(--blue);font-weight:600;margin-bottom:10px}
+#tab-home .home-term{font-family:var(--font-brush);font-size:clamp(3.8rem,12vw,6rem);line-height:.9;color:var(--t1);letter-spacing:.12em;-webkit-text-stroke:.6px currentColor;font-weight:700}
+#tab-home .home-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px;color:var(--t2);font-size:.98rem;letter-spacing:.04em}
+#tab-home .home-meta .dot{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:.7}
+#tab-home .home-season{font-family:var(--font-brush);font-size:1.05rem;color:var(--blue);letter-spacing:.12em;margin-top:8px;font-weight:700}
+#tab-home .home-note{margin-top:16px;max-width:34ch;color:var(--t2);font-size:.96rem;line-height:1.85}
+#tab-home .home-roundel{
+  justify-self:center;width:clamp(124px,26vw,170px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,#FDF8EF,oklch(90% .03 80));
+  border:1.5px solid var(--sep);box-shadow:inset -10px -12px 26px rgba(60,45,25,.12),var(--shadow);
+  display:grid;place-items:center;position:relative;overflow:hidden;
+}
+#tab-home .home-roundel::before{content:"";position:absolute;inset:10px;border-radius:50%;border:1px dashed var(--sep);opacity:.5}
+#tab-home .home-roundel::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 64% 60%, transparent 52%, rgba(60,45,25,.25));mix-blend-mode:multiply}
+#tab-home .home-roundel span{font-family:var(--font-brush);font-size:clamp(2.6rem,7vw,3.6rem);color:var(--green);position:relative;z-index:1;font-weight:700}
+/* 农历信息条 */
+#tab-home .lunar-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;
+}
+#tab-home .lunar-cell{
+  background:var(--card);border:1px solid var(--sep);border-radius:var(--r);
+  padding:14px 10px;text-align:center;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+}
+#tab-home .lunar-cell::after{content:"";position:absolute;inset:auto auto 6px 50%;transform:translateX(-50%);
+  width:24px;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:.35}
+#tab-home .lunar-cell .label{font-size:.7rem;color:var(--t3);letter-spacing:.16em;margin-bottom:4px}
+#tab-home .lunar-cell .value{font-size:.98rem;color:var(--t1);font-weight:600;letter-spacing:.04em}
+#tab-home .lunar-cell .sub{font-size:.75rem;color:var(--t2);margin-top:2px}
+/* 宜忌 */
+#tab-home .yi-ji{
+  background:linear-gradient(155deg,var(--card),var(--card-tint));
+  border:1px solid var(--sep);border-radius:var(--r);box-shadow:var(--shadow-sm);
+  padding:18px 20px;margin-bottom:22px;display:flex;align-items:center;gap:18px;
+}
+#tab-home .yi-ji-pole{writing-mode:vertical-rl;font-family:var(--font-brush);font-size:1.15rem;color:var(--blue);letter-spacing:.18em;padding:4px 0;border-left:1px solid var(--sep);border-right:1px solid var(--sep);font-weight:700}
+#tab-home .yi-ji-body{flex:1}
+#tab-home .yi-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+#tab-home .yi-row:last-child{margin-bottom:0}
+#tab-home .yi-tag{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-brush);font-size:.9rem;color:#fff;font-weight:700}
+#tab-home .yi-tag.yi{background:linear-gradient(160deg,var(--green),color-mix(in srgb,var(--green) 70%,#000))}
+#tab-home .yi-tag.ji{background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000))}
+#tab-home .yi-txt{font-size:.94rem;color:var(--t2);line-height:1.6}
+#tab-home .yi-txt b{color:var(--t1);font-weight:600;margin-right:4px}
+/* 快捷入口 */
+#tab-home .quick-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;
+}
+#tab-home .quick-item{
+  background:var(--card);border:1px solid var(--sep);border-radius:var(--r);
+  padding:16px 8px;text-align:center;box-shadow:var(--shadow-sm);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  transition:transform .18s ease,box-shadow .18s ease;text-decoration:none;color:inherit;
+}
+#tab-home .quick-item:active{transform:scale(.96)}
+#tab-home .quick-ic{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:var(--card-tint);border:1px solid var(--sep);box-shadow:var(--shadow-sm);color:var(--t2);
+}
+#tab-home .quick-ic svg{width:24px;height:24px}
+#tab-home .quick-item span{font-size:.82rem;color:var(--t1);letter-spacing:.02em}
+/* 首页 SOS 按钮：改为健康模块内的固定位置条，不再浮动 */
+#tab-home .sos-bar{
+  display:flex;align-items:center;gap:14px;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--red) 10%,var(--card)),var(--card));
+  border:1px solid color-mix(in srgb,var(--red) 35%,var(--sep));
+  border-radius:var(--r);padding:12px 16px;margin-bottom:18px;
+  box-shadow:var(--shadow-sm);
+}
+#tab-home .home-sos{
+  flex:0 0 auto;
+  width:56px;height:56px;border-radius:50%;border:none;
+  background:linear-gradient(160deg,var(--red),color-mix(in srgb,var(--red) 72%,#000));
+  color:#FDF8EF;font-family:var(--font-brush);font-size:1.25rem;letter-spacing:.06em;font-weight:700;
+  box-shadow:0 6px 16px color-mix(in srgb,var(--red) 45%,transparent),inset 0 0 0 1px rgba(255,255,255,.25);
+  display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+#tab-home .home-sos::before{
+  content:"";position:absolute;inset:-8px;border-radius:50%;
+  border:1.5px solid var(--red);opacity:.32;animation:sosPulse 2.2s ease-in-out infinite;
+}
+#tab-home .home-sos:active{transform:scale(.93)}
+#tab-home .home-sos span{position:relative;z-index:1}
+#tab-home .sos-bar-hint{font-size:.9rem;color:var(--t2);letter-spacing:.02em}
+@keyframes sosPulse{0%,100%{transform:scale(1);opacity:.32}50%{transform:scale(1.08);opacity:.10}}
+
+/* ============================================================
+   S. 底部导航新中式优化（与首页一致）
+   ============================================================ */
+.bottom-nav{
+  background:color-mix(in srgb,var(--card) 92%,transparent);
+  backdrop-filter:saturate(1.15) blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--sep);
+  box-shadow:0 -4px 18px -6px rgba(60,45,25,.1);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--t3);font-size:.72rem;letter-spacing:.04em;cursor:pointer;position:relative;transition:color .2s ease}
+.nav-item.active{color:var(--blue)}
+.nav-item .nav-icon{width:38px;height:34px;border-radius:14px;display:grid;place-items:center;transition:transform .25s cubic-bezier(.16,1,.3,1),background .25s}
+.nav-item.active .nav-icon{background:color-mix(in srgb,var(--blue) 14%,transparent);transform:translateY(-2px)}
+.nav-item::before{content:"";position:absolute;top:4px;left:50%;transform:translateX(-50%);width:22px;height:3px;border-radius:2px;background:transparent;transition:width .25s,background .25s,box-shadow .25s}
+.nav-item.active::before{width:28px;background:var(--blue);box-shadow:0 0 10px color-mix(in srgb,var(--blue) 60%,transparent)}
+.nav-item:active{transform:scale(.93)}
+.nav-label{font-family:var(--font-brush);font-size:.72rem;letter-spacing:.06em;font-weight:700}
+
+/* ============================================================
+   T. 聊天联系人头像首字统一
+   ============================================================ */
+.msg-ct-av,.msg-avatar{
+  display:grid;place-items:center;
+}
+.msg-ct-av img,.msg-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+
+/* 减弱动画 */
+@media(prefers-reduced-motion:reduce){
+  #tab-home .home-sos::before,#tab-home .home-sos::after{animation:none}
+}
+
+/* ============================================================
+   U. 深化：入场动效 · 标签切换 · 导航交互 · 内容分区 · 响应式
+   动效动机：层级揭示（home 错峰入场）、状态过渡（标签切换淡入）、
+   反馈（导航激活图标轻弹）。全部置于 no-preference 守卫，尊重减弱动画。
+   ============================================================ */
+@media(prefers-reduced-motion:no-preference){
+  #tab-home.active .home-hero{animation:fadeUp .55s cubic-bezier(.16,1,.3,1) both}
+  #tab-home.active .lunar-strip{animation:fadeUp .55s .08s cubic-bezier(.16,1,.3,1) both}
+  #tab-home.active .yi-ji{animation:fadeUp .55s .16s cubic-bezier(.16,1,.3,1) both}
+  #tab-home.active .quick-grid{animation:fadeUp .55s .24s cubic-bezier(.16,1,.3,1) both}
+  #tab-home.active .home-food{animation:fadeUp .55s .32s cubic-bezier(.16,1,.3,1) both}
+  #tab-home.active .home-class{animation:fadeUp .55s .40s cubic-bezier(.16,1,.3,1) both}
+  .tab-view.active:not(#tab-home){animation:fadeUp .42s cubic-bezier(.16,1,.3,1) both}
+  .nav-item.active .nav-icon{animation:navPop .42s cubic-bezier(.16,1,.3,1)}
+}
+@keyframes navPop{0%{transform:translateY(-2px) scale(.88)}55%{transform:translateY(-5px) scale(1.07)}100%{transform:translateY(-2px) scale(1)}}
+
+/* 首页新增：节气食养（方角卡片 + 圆形 tint 图标，与全站方圆对比一致） */
+#tab-home .home-food{margin-bottom:22px}
+#tab-home .home-food .sec-hd,#tab-home .home-class .sec-hd{display:flex;justify-content:space-between;align-items:baseline}
+#tab-home .hd-sub{font-size:.72rem;color:var(--t3);letter-spacing:.12em;font-weight:500}
+#tab-home .hd-more{font-size:.76rem;color:var(--blue);letter-spacing:.06em;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:2px}
+#tab-home .hd-more:active{opacity:.7}
+#tab-home .food-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+#tab-home .food-item{background:var(--card);border:1px solid var(--sep);border-radius:var(--r);padding:14px 10px;text-align:center;box-shadow:var(--shadow-sm);transition:transform .18s ease,box-shadow .18s ease}
+#tab-home .food-item:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+#tab-home .food-item:active{transform:scale(.96)}
+#tab-home .food-ic{width:42px;height:42px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-brush);font-size:1.1rem;color:#FDF8EF;background:linear-gradient(160deg,var(--green),color-mix(in srgb,var(--green) 70%,#000));box-shadow:var(--shadow-sm)}
+#tab-home .food-name{font-size:.9rem;color:var(--t1);font-weight:600;letter-spacing:.02em}
+#tab-home .food-desc{font-size:.74rem;color:var(--t2);margin-top:3px;line-height:1.5}
+
+/* 首页新增：养生课堂（横向滑动卡片，内容分区 + 轻交互） */
+#tab-home .home-class{margin-bottom:22px}
+#tab-home .class-scroll{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+#tab-home .class-scroll::-webkit-scrollbar{height:6px}
+#tab-home .class-scroll::-webkit-scrollbar-thumb{background:var(--sep);border-radius:6px}
+#tab-home .class-card{flex:0 0 80%;max-width:300px;scroll-snap-align:start;background:linear-gradient(155deg,var(--card),var(--card-tint));border:1px solid var(--sep);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow-sm)}
+#tab-home .class-tag{display:inline-block;font-size:.7rem;letter-spacing:.14em;color:#FDF8EF;background:var(--blue);padding:2px 10px;border-radius:var(--rss);margin-bottom:10px}
+#tab-home .class-card h3{font-family:var(--font-brush);font-size:1.05rem;color:var(--t1);letter-spacing:.04em;margin-bottom:8px;font-weight:700}
+#tab-home .class-card p{font-size:.86rem;color:var(--t2);line-height:1.7}
+
+/* 桌面端：其余标签内容居中收束，与首页视觉一致（响应式收口） */
+@media(min-width:768px){
+  #tab-chat .chat-container,#tab-health,#tab-me{
+    max-width:1080px;margin:0 auto;
+    padding-left:max(16px,calc((100vw - 1080px)/2 + 16px));
+    padding-right:max(16px,calc((100vw - 1080px)/2 + 16px));
+  }
+  #tab-health,#tab-me{padding-bottom:120px}
+  #tab-home .class-card{flex-basis:46%}
+}
+@media(max-width:520px){
+  #tab-home .food-grid{grid-template-columns:repeat(2,1fr)}
+  #tab-home .class-card{flex-basis:86%}
+}
+@media(max-width:400px){
+  #tab-home .food-grid{grid-template-columns:repeat(2,1fr)}
+  #tab-home .home-hero{grid-template-columns:1fr .9fr;padding:22px 18px}
+  #tab-home .lunar-strip{grid-template-columns:1fr;gap:8px}
+  #tab-home .lunar-cell{display:grid;grid-template-columns:80px 1fr 1fr;align-items:center;text-align:left;gap:10px;padding:12px 14px}
+  #tab-home .lunar-cell::after{display:none}
+  #tab-home .lunar-cell .label{margin-bottom:0}
+}
+
+/* ============================================================
+   V. 今日健康迁移到首页后的样式补强
+   ============================================================ */
+#tab-home .home-health{
+  background:var(--card);border:1px solid var(--sep);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);padding:18px 20px 22px;margin-bottom:22px;
+}
+#tab-home .home-health .vitals-tit{margin-top:0}
+#tab-home .home-health .vitals-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+#tab-home .home-health .vital-card{padding:14px 8px;text-align:center}
+#tab-home .home-health .vital-number{font-size:1.35rem;font-weight:700}
+#tab-home .home-health .vital-label{font-size:.74rem}
+#tab-home .home-health .home-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:16px}
+#tab-home .home-health .hhd{margin:0 0 10px}
+#tab-home .home-health .med-list{margin:0;padding:0}
+
+/* 快捷入口：根据数量自适应，现只保留家人留言/我的两入口 */
+#tab-home .quick-grid{grid-template-columns:repeat(2,1fr);max-width:420px;margin:0 auto 22px}
+
+/* 健康页空状态 */
+#tab-health .health-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;text-align:center;padding:40px 24px;color:var(--t2);
+}
+#tab-health .health-empty-icon{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(160deg,var(--green),color-mix(in srgb,var(--green) 70%,#000));
+  color:#FDF8EF;display:grid;place-items:center;
+  font-family:var(--font-brush);font-size:2.2rem;font-weight:700;margin-bottom:20px;
+  box-shadow:var(--shadow);
+}
+#tab-health .health-empty h2{font-size:1.25rem;color:var(--t1);letter-spacing:.08em;margin-bottom:8px}
+#tab-health .health-empty p{max-width:32ch;line-height:1.8;margin-bottom:22px}
+#tab-health .health-empty .btn{min-width:140px}
+
+@media(max-width:520px){
+  #tab-home .home-health .vitals-row{grid-template-columns:repeat(2,1fr)}
+  #tab-home .home-health .home-grid{grid-template-columns:1fr}
+}
+#tab-health.active{display:flex;flex-direction:column}
+
+/* ============================================================
+   新中式精修层 · 融合 refine.css 之精华
+   去 Apple 蓝（rgba(0,122,255)/#0A84FF），全部改用本系统 token；
+   保留：发丝描边 / 毛玻璃高光边 / 焦点环 / 等宽数字 / 卡片轻浮 /
+   图标 tint 徽章 / 浮层精致 / 纤细滚动条 / 减弱动画。
+   ============================================================ */
+
+/* 1. 排版精修（CJK 不设负字距，避免汉字挤压） */
+*{font-optical-sizing:auto;text-rendering:optimizeLegibility}
+h1,h2,h3{text-wrap:balance}
+h1,h2,h3,h4,h5{line-height:1.2;font-weight:700;color:var(--t1)}
+p{line-height:1.62}
+
+/* 2. 数据读数等宽（老年可读、对齐整齐） */
+.stat-val,.vital-number,.clock-time,.topbar-clock,.num,
+tbody td,.vital-val,.steps-count,.me-name,.profile-name,
+.alert-stats,.big-num,.bar-val,.bar-day{
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;letter-spacing:-.01em;
+}
+
+/* 3. 焦点环统一（无障碍，复用 --ring） */
+:focus-visible{outline:2.5px solid var(--blue);outline-offset:2px}
+.btn:focus-visible,.input:focus-visible,.login-input:focus-visible,.chat-input:focus-visible,
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:2px solid var(--blue);outline-offset:2px;box-shadow:0 0 0 4px var(--ring);
+}
+
+/* 4. 毛玻璃顶 / 底栏：宣纸暖色高光边 */
+.topbar{
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  box-shadow:inset 0 .5px 0 rgba(255,255,255,.5),0 1px 0 rgba(60,45,25,.05);
+}
+.bottom-nav{
+  background:color-mix(in srgb,var(--bg) 84%,transparent);
+  box-shadow:inset 0 .5px 0 rgba(255,255,255,.45),0 -10px 24px rgba(60,45,25,.05);
+}
+
+/* 5. 发丝描边：关键卡片 */
+body.light .panel,body.light .stat-card,body.light .browse-card,body.light .home-half-card,
+body.light .sec-card,body.light .rec-card,body.light .loc-card,body.light .report-card,
+body.light .profile-card,body.light .steps-card,body.light .msg-contacts,body.light .me-menu,
+body.light .vital-card{border:.5px solid var(--sep)}
+body.dark .panel,body.dark .stat-card,body.dark .browse-card,body.dark .home-half-card,
+body.dark .sec-card,body.dark .rec-card,body.dark .loc-card,body.dark .report-card,
+body.dark .profile-card,body.dark .steps-card,body.dark .msg-contacts,body.dark .me-menu,
+body.dark .vital-card{border:.5px solid rgba(255,255,255,.10)}
+
+/* 6. 卡片层次与 hover（保留直角，轻浮 + 朱砂边） */
+.panel,.stat-card,.browse-card,.profile-card,.steps-card,.loc-card,
+.home-half-card,.sec-card,.rec-card,.vital-card,.report-card,.msg-contacts,.me-menu{
+  transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out),background .2s,border-color .2s var(--ease-out);
+}
+@media(hover:hover){
+  .panel:hover,.stat-card:hover,.browse-card:hover,.profile-card:hover,.steps-card:hover,
+  .loc-card:hover,.home-half-card:hover,.sec-card:hover,.rec-card:hover,.vital-card:hover,
+  .report-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:color-mix(in srgb,var(--blue) 25%,transparent)}
+}
+.stat-card:hover{transform:translateY(-3px)}
+
+/* 7. 按钮回弹 */
+.btn{transition:background .15s var(--ease-out),transform .12s var(--ease-out),box-shadow .15s var(--ease-out),opacity .15s;min-height:48px}
+.btn:active{transform:scale(.965)}
+.btn-sm{min-height:42px}
+.btn-ghost:hover{background:var(--hover)}
+
+/* 8. 输入框聚焦 */
+.input,.login-input,.chat-input{transition:box-shadow .18s var(--ease-out),border-color .18s var(--ease-out),background .18s}
+.input:focus,.login-input:focus{box-shadow:0 0 0 3px var(--ring);border-color:var(--blue)}
+
+/* 9. 入场动效：view / tab 柔和 fade-up */
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.view.active{animation:viewIn .40s var(--ease-out) both}
+.tab-view.active{animation:viewIn .40s var(--ease-out) both}
+
+/* 10. 表头精致 */
+thead th{font-size:12px;letter-spacing:.06em}
+tbody tr{transition:background .12s var(--ease-out)}
+tbody td{font-size:14px;color:var(--t1)}
+
+/* 11. 细分隔线 */
+.hr{border:none;border-top:.5px solid var(--sep);margin:18px 0;opacity:.9}
+
+/* 12. 文本选区（朱砂淡染，不引入新色） */
+::selection{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--t1)}
+
+/* 13. 纤细统一滚动条（暖褐，呼应墨色） */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(140,120,90,.30);border-radius:8px;border:2px solid transparent;background-clip:padding-box;transition:background .2s}
+::-webkit-scrollbar-thumb:hover{background:rgba(140,120,90,.5);background-clip:padding-box}
+body.dark ::-webkit-scrollbar-thumb{background:rgba(180,160,130,.26);background-clip:padding-box}
+body.dark ::-webkit-scrollbar-thumb:hover{background:rgba(180,160,130,.45);background-clip:padding-box}
+html{scrollbar-color:rgba(140,120,90,.30) transparent;scrollbar-width:thin}
+
+/* 14. 图标容器统一 tint 徽章（squircle 圆角块，朱砂淡染） */
+.stat-icon{width:44px;height:44px;border-radius:12px;box-shadow:inset 0 .5px 0 rgba(255,255,255,.5)}
+body.dark .stat-icon{box-shadow:inset 0 .5px 0 rgba(255,255,255,.12)}
+.stat-icon img{opacity:.95}
+.vital-icon{width:48px;height:48px;border-radius:14px;background:color-mix(in srgb,var(--blue) 12%,transparent);box-shadow:inset 0 .5px 0 rgba(255,255,255,.5)}
+body.dark .vital-icon{background:color-mix(in srgb,var(--blue) 14%,transparent);box-shadow:inset 0 .5px 0 rgba(255,255,255,.12)}
+.vital-card.warn .vital-icon{background:color-mix(in srgb,var(--orange) 16%,transparent)}
+.vital-card.danger .vital-icon{background:color-mix(in srgb,var(--red) 16%,transparent)}
+.vital-icon img{opacity:.95}
+.loc-icon{width:52px;height:52px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--blue) 12%,transparent);box-shadow:inset 0 .5px 0 rgba(255,255,255,.5)}
+body.dark .loc-icon{background:color-mix(in srgb,var(--blue) 14%,transparent);box-shadow:inset 0 .5px 0 rgba(255,255,255,.12)}
+.loc-icon img{opacity:.95}
+.menu-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--blue) 12%,transparent);flex-shrink:0;transition:background .2s var(--ease-out),transform .2s var(--ease-out)}
+body.dark .menu-icon{background:color-mix(in srgb,var(--blue) 14%,transparent)}
+.menu-icon img{opacity:.92}
+
+/* 15. 底部导航激活指示（朱砂药丸 + 柔光） */
+.nav-item{transition:transform .2s var(--ease-out),background .2s var(--ease-out)}
+.nav-item:active{transform:scale(.93)}
+.nav-item .nav-icon{border-radius:14px;transition:transform .22s var(--ease-out),background .22s var(--ease-out),box-shadow .22s var(--ease-out)}
+.nav-item.active .nav-icon{transform:translateY(-3px);background:color-mix(in srgb,var(--blue) 14%,transparent);box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 30%,transparent)}
+.nav-item::before{width:22px;height:4px;border-radius:4px;background:transparent;transition:background .25s var(--ease-out),box-shadow .25s var(--ease-out),width .25s var(--ease-out)}
+.nav-item.active::before{background:var(--blue);width:28px;box-shadow:0 1px 8px color-mix(in srgb,var(--blue) 50%,transparent)}
+.nav-item.active .nav-label{transform:translateY(-1px)}
+
+/* 16. 趋势图柱体精修 */
+.trend-bars{border-bottom:.5px solid var(--sep);padding-bottom:40px;margin-bottom:2px;align-items:flex-end}
+.trend-bar{border-radius:7px 7px 0 0;transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out),filter .2s var(--ease-out)}
+.trend-bar.empty{border-radius:7px}
+@media(hover:hover){.trend-bar:hover{filter:brightness(1.06)}}
+.bar-val{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:-.01em}
+.bar-day{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--t3)}
+.trend-bar:last-child:not(.empty),.trend-bar.active{background:linear-gradient(to top,var(--blue),color-mix(in srgb,var(--blue) 72%,#fff));box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 38%,transparent)}
+.trend-bar:last-child:not(.empty) .bar-day,.trend-bar.active .bar-day{color:var(--blue);font-weight:700}
+.trend-bar:last-child:not(.empty)::after,.trend-bar.active::after{content:"";position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);width:20px;height:4px;border-radius:4px;background:var(--blue);box-shadow:0 2px 6px color-mix(in srgb,var(--blue) 50%,transparent)}
+
+/* 17. 浮层精致化 */
+.modal{border:.5px solid var(--sep);box-shadow:0 1px 3px rgba(60,45,25,.06),0 12px 32px rgba(60,45,25,.10),0 32px 64px rgba(60,45,25,.08)}
+body.dark .modal{border:.5px solid rgba(255,255,255,.10);box-shadow:0 1px 3px rgba(0,0,0,.30),0 12px 36px rgba(0,0,0,.40),0 32px 64px rgba(0,0,0,.34)}
+.mclose,.drawer-close{transition:background .15s var(--ease-out),transform .12s var(--ease-out),color .15s}
+.mclose:hover,.drawer-close:hover{background:color-mix(in srgb,var(--blue) 14%,var(--hover));color:var(--blue)}
+.mclose:active,.drawer-close:active{transform:scale(.9)}
+.drawer{border-left:.5px solid var(--sep);box-shadow:-10px 0 40px rgba(60,45,25,.12)}
+body.dark .drawer{box-shadow:-10px 0 44px rgba(0,0,0,.42)}
+
+/* 18. 控件细节 */
+.switch .slider{box-shadow:inset 0 .5px 0 rgba(255,255,255,.45)}
+.switch .slider::before{box-shadow:0 3px 6px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.12)}
+.menu-item:hover{background:var(--hover)}
+.menu-item.active{background:color-mix(in srgb,var(--blue) 12%,transparent)}
+.menu-item.active .menu-label{color:var(--blue);font-weight:600}
+.me-menu-item.active{font-weight:600}
+.avatar-wrap{border:.5px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(60,45,25,.14),inset 0 .5px 0 rgba(255,255,255,.4)}
+.pf-avatar{border:.5px solid rgba(255,255,255,.55);box-shadow:0 3px 10px rgba(60,45,25,.16),inset 0 .5px 0 rgba(255,255,255,.4)}
+.steps-bar{box-shadow:0 0 8px color-mix(in srgb,var(--green) 55%,transparent)}
+.sos-icon{filter:drop-shadow(0 0 14px color-mix(in srgb,var(--red) 50%,transparent))}
+
+/* 19. 标签 / 徽章 */
+.tag{transition:background .15s,color .15s,transform .12s var(--ease-out)}
+.tag:active{transform:scale(.96)}
+.badge{padding:4px 12px;transition:background .15s;box-shadow:inset 0 .5px 0 rgba(255,255,255,.4)}
+
+/* 20. 减弱动画：尊重系统设置 */
+@media(prefers-reduced-motion:reduce){
+  .view.active,.tab-view.active{animation:none!important}
+  *{transition-duration:.01ms!important}
+}
+
+/* ============================================================
+   健康页（#tab-health）模块样式
+   档案 / 趋势(SVG 柱状) / 服药打卡 / 健康小结 —— 全用本系统 token
+   ============================================================ */
+#tab-health{padding:0 2px}
+.hk-head{display:flex;align-items:baseline;justify-content:space-between;margin:clamp(20px,4vw,30px) 2px 14px}
+.hk-head b{font-family:var(--font-brush);font-size:1.3rem;letter-spacing:.08em;color:var(--t1)}
+.hk-head span{font-size:.78rem;color:var(--t3);letter-spacing:.04em}
+.hk-card{margin-bottom:16px;padding:18px 18px 20px}
+.hk-card-tit{font-size:.82rem;letter-spacing:.14em;color:var(--t2);margin-bottom:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.hk-card-tit::before{content:"";width:3px;height:14px;background:var(--blue);border-radius:2px;display:inline-block}
+.hk-empty{color:var(--t3);font-size:.86rem;padding:8px 0}
+.hk-loading{color:var(--t3);text-align:center;padding:60px 0;font-size:.9rem}
+
+/* 档案 */
+.hk-profile{display:flex;flex-direction:column;gap:2px}
+.hk-p-row{display:flex;gap:12px;padding:9px 0;border-bottom:.5px solid var(--sep);font-size:.9rem}
+.hk-p-row:last-of-type{border-bottom:none}
+.hk-p-k{color:var(--t3);min-width:84px;letter-spacing:.02em;flex:0 0 auto}
+.hk-p-v{color:var(--t1);flex:1}
+.hk-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.hk-tag{font-size:.74rem;color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent);border-radius:999px;padding:4px 12px;letter-spacing:.04em}
+
+/* 趋势图 */
+.hk-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.hk-chip{flex:0 0 auto;padding:7px 13px;border:1px solid var(--sep);border-radius:999px;background:var(--card);color:var(--t2);font-family:var(--font);font-size:.8rem;cursor:pointer;transition:background .18s,color .18s,border-color .18s}
+.hk-chip.active{background:color-mix(in srgb,var(--blue) 14%,transparent);color:var(--blue);border-color:color-mix(in srgb,var(--blue) 40%,transparent);font-weight:600}
+.hk-chart{width:100%}
+.hk-trend{width:100%;height:auto;display:block}
+.hk-trend .bar{fill:color-mix(in srgb,var(--blue) 82%,transparent);transition:fill .2s}
+.hk-trend .bar.last{fill:var(--blue)}
+.hk-trend .bval{fill:var(--t1);font-size:9px;font-weight:700;font-family:var(--font-num,var(--font))}
+.hk-trend .blab{fill:var(--t3);font-size:9px;font-family:var(--font)}
+
+/* 服药打卡 */
+.hk-meds{display:flex;flex-direction:column;gap:10px}
+.hk-med{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--sep);border-radius:var(--rs);background:var(--card-tint);transition:background .18s,border-color .18s}
+.hk-med.on{background:color-mix(in srgb,var(--green) 12%,transparent);border-color:color-mix(in srgb,var(--green) 36%,transparent)}
+.hk-med-ic{width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--blue) 12%,transparent);display:grid;place-items:center;flex:0 0 auto}
+.hk-med-ic img{width:18px;height:18px}
+.hk-med-name{flex:1;font-size:.9rem;color:var(--t1)}
+.hk-med-do{width:36px;height:36px;border-radius:50%;border:1px solid var(--sep);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:0 0 auto;transition:background .18s,transform .12s,border-color .18s}
+.hk-med-do:active{transform:scale(.9)}
+.hk-med-do img{width:16px;height:16px;opacity:.4}
+.hk-med.on .hk-med-do{background:var(--green);border-color:var(--green)}
+.hk-med.on .hk-med-do img{opacity:1;filter:brightness(0) invert(1)}
+.hk-med.on .hk-med-name{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--green) 50%,transparent)}
+
+/* 健康小结 */
+.hk-span{display:flex;gap:8px;margin-bottom:14px}
+.hk-report-body{overflow:visible}
+.hk-report-body p{font-size:.9rem;color:var(--t2);line-height:1.8;margin:0 0 10px;text-wrap:pretty;overflow:visible}
