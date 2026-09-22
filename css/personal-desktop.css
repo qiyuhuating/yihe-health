@@ -1,0 +1,14 @@
+/* Desktop composition only. Components and state are defined in xz.css. */
+@media(min-width:768px){
+ #tab-chat.active .chat-container{display:grid;grid-template-columns:270px minmax(0,1fr);grid-template-rows:auto auto minmax(500px,65vh);}
+ #tab-chat .chat-exit-btn{grid-column:1/-1;grid-row:1;justify-self:start}
+ #tab-chat .chat-disclosure{grid-column:1/-1;grid-row:2}
+ #tab-chat .msg-contacts{grid-column:1;grid-row:3;border-right:1px solid var(--sep);overflow:auto}
+ #tab-chat .chat-panel,#tab-chat .chat-empty{grid-column:2;grid-row:3}
+ #tab-chat .chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center}
+ #tab-chat .chat-container:has(.chat-panel:not([hidden])) .chat-empty{display:none}
+ #tab-chat .chat-panel:not([hidden]){min-height:0}
+ #tab-chat .chat-body{min-height:0}
+ #tab-chat .chat-search-bar{grid-column:1/-1;grid-row:4}
+ #tab-chat .msg-contacts[hidden]{display:block}
+}

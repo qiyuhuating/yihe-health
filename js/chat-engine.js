@@ -1,0 +1,259 @@
+var ChatEngine = function() {
+    "use strict";
+
+    function t() {
+        this.intent = null, this.lastReply = null, this.drugAsked = null, this.topicDrug = null, this.lastIntent = null, this.topicCount = 0, this.lastMetric = null, this.lastDrug = null
+    }
+    var n = {},
+        e = ["别慌，马上打120，让家人或护士陪着你。先躺下别动，电话里说清楚你在哪个房间。", "赶紧打120，喊家人到身边，平躺别动，电话打通后说清你的位置。"],
+        r = ["不客气，你别这么客气。", "应该的，有事你随时说话。", "这有啥，应该的。", "不谢不谢，你好好的我就高兴。"],
+        i = ["好嘞，你保重身体啊。", "拜拜，有事随时找我，别客气。", "嗯嗯，下次再聊，你慢点。"];
+
+    function u(t, n) {
+        if (!t || !t.length) return null;
+        var e = n ? t.filter(function(t) {
+            return t !== n
+        }) : t;
+        return e.length || (e = t), e[Math.floor(Math.random() * e.length)]
+    }
+    var l = {
+            EMERGENCY: function(t) {
+                return t.p, u(e, null)
+            },
+            MEDICATION: function(t) {
+                return function(t, n, e, r) {
+                    !t && (r.indexOf("它") >= 0 || r.indexOf("这个药") >= 0 || r.indexOf("这药") >= 0) && (t = e.topicDrug);
+                    var i = (n.medicalHistory || {}).medications || "",
+                        l = i.split("，");
+                    if (!t && _msgHas(r, "没吃|不吃|不想吃|没喝")) return u(["是忘吃了吗？药得按时吃，别落下。", "药可别落下，按时吃才管用。要是吃着不舒服，跟医生说说，别自己停。"], e.lastReply);
+                    if (!t && _msgHas(r, "忘记|忘了|漏了|忘吃")) return u(["偶尔漏一顿没事，别老忘就行。刚想起来就补上，快到下顿了就别补，千万别一次吃两顿。", "漏一顿别慌，记住别一次补两顿的量就行。"], e.lastReply);
+                    if (!t && _msgHas(r, "吃药了|吃了药|吃过了|刚吃|服了|按时吃")) return u(["那就好，药按时吃着，血压血糖才稳得住。", "嗯，吃了就放心了。", "好，记住今天这顿没落。"], e.lastReply);
+                    if (t) {
+                        var s = e.lastDrug === t;
+                        e.lastDrug = t;
+                        for (var o = 0; o < l.length; o++)
+                            if (l[o].indexOf(t) >= 0) {
+                                var a = medsPlain(l[o].trim());
+                                return s ? "这个药我再说一遍：" + a : u([a + "。按时吃就行，别自己加量减量。", a + "，这个药得长期吃才管用。"], e.lastReply)
+                            } return u(["药单里没看到" + t + "。如果是新开的，先让医生确认一下再吃。", t + "不在你现在的药单上呢，新开的药最好让张医生看看。"], null)
+                    }
+                    return _msgHas(r, "怎么吃|几点吃|怎么用") ? u(["你现在吃的药：" + medsPlain(i) + "。具体几点吃，药盒上都写着呢。", "我捋一捋——" + medsPlain(i) + "。按药盒上的时间来，别搞混。"], e.lastReply) : u(["现在吃的药：" + medsPlain(i) + "。想知道哪个药，跟我说名字就行。", "手头的药：" + medsPlain(i) + "。每天按时吃，有啥不舒服随时说。"], e.lastReply)
+                }(t.drug, t.p, t.state, t.msg)
+            },
+            VITALS: function(t) {
+                return function(t, n, e, r) {
+                    var i = e.heartRate.toFixed(0),
+                        l = e.bloodOxygen.toFixed(0),
+                        s = e.systolic.toFixed(0),
+                        o = e.diastolic.toFixed(0),
+                        a = e.temperature.toFixed(1),
+                        f = e.bloodSugar.toFixed(1),
+                        c = "";
+                    n.metrics.indexOf("血压") >= 0 || n.metrics.indexOf("收缩压") >= 0 || n.metrics.indexOf("舒张压") >= 0 ? c = "bp" : n.metrics.indexOf("血糖") >= 0 ? c = "bs" : n.metrics.indexOf("心率") >= 0 ? c = "hr" : n.metrics.indexOf("血氧") >= 0 ? c = "bo" : n.metrics.indexOf("体温") >= 0 && (c = "temp");
+                    var d = c && r.lastMetric === c;
+                    if (r.lastMetric = c, n.metrics.indexOf("血压") >= 0 || n.metrics.indexOf("收缩压") >= 0 || n.metrics.indexOf("舒张压") >= 0) {
+                        var m = e.systolic >= 150 ? "稍微高了点，这两天吃淡些、少放盐，把数字记下来给医生看看。" : e.systolic >= 140 ? "偏高一点，注意别吃太咸。" : "在正常范围，挺稳定的，放心。";
+                        return u(d ? ["我再跟你说一遍：血压" + s + "/" + o + "。" + m, "血压还是" + s + "/" + o + "。" + m] : ["今天血压" + s + "/" + o + "。" + m, "高压" + s + "、低压" + o + "。" + m], r.lastReply)
+                    }
+                    if (n.metrics.indexOf("血糖") >= 0) {
+                        var g = f >= 7 ? "偏高了一点，主食少吃两口，甜的暂时别碰。" : f >= 6.2 ? "偏高一点，主食略减些。" : "在正常范围，挺好的。";
+                        return u(d ? ["我再跟你说一遍：血糖" + f + "。" + g, "血糖还是" + f + "。" + g] : ["今天血糖" + f + "。" + g, "血糖" + f + "。" + g], r.lastReply)
+                    }
+                    if (n.metrics.indexOf("心率") >= 0) {
+                        var p = i > 100 ? "有点快，先坐下歇歇。" : i < 60 ? i >= 50 ? "偏慢一点，不头晕就没大事。" : "偏慢了，要是头晕乏力心慌，得让医生看看。" : "正常，放心就行。";
+                        return u(d ? ["我再跟你说一遍：心率" + i + "下。" + p] : ["心率" + i + "下。" + p, "心跳" + i + "。" + p], r.lastReply)
+                    }
+                    if (n.metrics.indexOf("血氧") >= 0) {
+                        var O = l >= 95 ? "正常，挺好。" : l >= 90 ? "偏低一点，安静坐会儿再量，老在90上下就得找医生。" : "太低，这得重视，让家人陪着去医院吸氧。";
+                        return u(d ? ["我再跟你说一遍：血氧" + l + "%。" + O] : ["血氧" + l + "%。" + O], null)
+                    }
+                    if (n.metrics.indexOf("体温") >= 0) {
+                        var x = a >= 37.3 ? "有点低烧，多喝水、多休息，持续烧就得看医生。" : a <= 36 ? "偏低一些，多穿点，喝杯热水暖暖。" : "正常，没问题。";
+                        return u(d ? ["我再跟你说一遍：体温" + a + "度。" + x] : ["今天体温" + a + "度。" + x], null)
+                    }
+                    return u(d ? ["我再跟你说一遍：血压" + s + "/" + o + "，心率" + i + "，血糖" + f + "。"] : ["血压" + s + "/" + o + "，心率" + i + "，血糖" + f + "。" + ("normal" === e.status ? "都挺正常的，放心就行。" : "血压血糖偏高点，多注意。"), "血压" + s + "/" + o + "，心率" + i + "，血糖" + f + "。"], r.lastReply)
+                }(t.msg, t.kw, t.p, t.state)
+            },
+            SYMPTOM: function(t) {
+                return function(t, n) {
+                    var e = t.symptoms.filter(function(t) {
+                            return t.indexOf("头") >= 0 || t.indexOf("晕") >= 0
+                        }),
+                        r = ["胸口疼", "胸口闷", "胸闷", "心口堵", "胸痛", "呼吸困难", "喘不上气"];
+                    if (t.urgentSymptoms && t.urgentSymptoms.length >= 1 || t.urgent.length >= 2 || t.symptoms.some(function(t) {
+                            return r.indexOf(t) >= 0
+                        })) return u(["胸口疼、喘不上气可不能拖，赶紧打120，别耽搁。", "你说的这个要紧，马上打120，让家人陪着你。"], null);
+                    if (e.length > 0 && n.systolic >= 140) return "头晕可能跟血压偏高有关系，现在血压" + n.systolic.toFixed(0) + "/" + n.diastolic.toFixed(0) + "。先坐下歇会儿，过半小时再量一次，还晕就让家人陪着看看医生。";
+                    if (n.chronic && n.chronic.indexOf("糖尿病") >= 0 && t.symptoms.indexOf("乏力") >= 0) return "没力气可能是血糖低了，先测测血糖，要是低了就含颗糖。";
+                    var i = t.symptoms;
+                    return i.some(function(t) {
+                        return t.indexOf("腹") >= 0 || t.indexOf("胃") >= 0 || t.indexOf("肚") >= 0
+                    }) ? u(["肚子疼先别乱吃东西，观察半天，要是持续疼就得看医生。", "胃肚子的事可大可小，严重了就赶紧就医。"], null) : i.some(function(t) {
+                        return t.indexOf("关节") >= 0 || t.indexOf("腿") >= 0 || t.indexOf("腰") >= 0
+                    }) ? "关节腿脚疼的话，注意保暖别受凉，少走点路。要是肿了红了，让医生看看。" : i.some(function(t) {
+                        return t.indexOf("肿") >= 0 || t.indexOf("浮") >= 0
+                    }) ? "脚肿手肿的话，盐少吃，水也别喝太多，躺着把腿垫高。肿得厉害就尽快看医生。" : i.some(function(t) {
+                        return t.indexOf("咳") >= 0 || t.indexOf("痰") >= 0
+                    }) ? "咳嗽有痰，先多喝温水、注意保暖。要是咳得厉害、痰带血或喘不上气，赶紧就医。" : u(["这个情况先观察半天，要是没好转或加重，就让家人陪着去看看医生。", "身体不舒服别硬扛，先休息观察，不好转就去看医生。"], null)
+                }(t.kw, t.p)
+            },
+            DIET: function(t) {
+                return n = t.p, e = [], "number" == typeof n.bloodSugar && n.bloodSugar >= 7 && e.push("血糖偏高，主食换点粗粮，甜的暂时别碰"), "number" == typeof n.systolic && n.systolic >= 150 && e.push("血压偏高，菜里少放盐"), "number" == typeof n.bloodOxygen && n.bloodOxygen <= 93 && e.push("血氧偏低，注意补铁，别太累"), e.length ? e.join("。") + "。" : "今天指标都正常，清淡饮食、营养均衡就行。";
+                var n, e
+            },
+            EXERCISE: function(t) {
+                return n = t.p, e = n.chronic && n.chronic.indexOf("脑梗") >= 0 ? "康复训练得坚持，每天扶着拐杖慢慢走个十几二十分钟就行，别急着走远。" : (n.mobility || .5) <= .3 ? "行动不太方便的话，在屋里来回走走、坐着抬抬腿就好，别硬撑。" : n.age >= 75 ? "每天在花园慢慢溜达个二三十分钟就够了，天好再去。" : "每天快走三四十分钟，走到微微出汗就行。", n.bloodOxygen <= 93 && (e += " 血氧有点低，别太用力，喘了就歇会儿。"), e;
+                var n, e
+            },
+            SLEEP: function(t) {
+                return t.p, u(["睡不着啊？试试睡前别玩手机，泡泡热水脚。要是老睡不好，复查的时候问问医生。", "失眠确实难受。白天多走动走动，晚上好睡些。总睡不好就让医生看看。"], null)
+            },
+            APPOINTMENT: function(t) {
+                return n = t.p, "上次体检是" + ((e = String((n.medicalHistory || {}).lastCheckup || "").match(/\d{4}-\d{2}-\d{2}/)) ? e[0] : "待查") + "。到复查时间的话，让家人帮着约一个就行。";
+                var n, e
+            },
+            TIME: function(t) {
+                return t.p, e = ((n = new Date).getHours() < 10 ? "0" : "") + n.getHours() + ":" + (n.getMinutes() < 10 ? "0" : "") + n.getMinutes(), r = ["日", "一", "二", "三", "四", "五", "六"][n.getDay()], "现在" + e + "，" + n.getFullYear() + "年" + (n.getMonth() + 1) + "月" + n.getDate() + "日，星期" + r + "。";
+                var n, e, r
+            },
+            REMINDER: function(t) {
+                return t.p, u(['我还没有设置提醒。请打开“本机提醒”填写内容和时间，页面打开时才会提示。', '请在“本机提醒”中保存具体时间；这条回复本身不会创建提醒。'], null)
+            },
+            WEATHER: function(t) {
+                return t.p, u(["这几天天气多变，出门加件衣服，带把伞。", "出门留意下天气，该添衣服就添，别着凉。"], null)
+            },
+            GREETING: function(t) {
+                return function(t, n) {
+                    var e = (n || "").match(/早上好|早安|上午好|中午好|午安|下午好|晚上好|晚安|早上|上午|中午|下午|晚上/);
+                    if (e) {
+                        var r = e[0],
+                            i = /晚安/.test(r) ? "晚安" : /下午/.test(r) ? "下午好" : /中午|午安/.test(r) ? "中午好" : /上午/.test(r) ? "上午好" : /早/.test(r) ? "早上好" : "晚上好";
+                        if ("晚安" === i) return "danger" === t.status ? "晚安。今天指标有些不太好，记得联系医生看看，早点休息。" : "晚安，早点休息，睡个好觉。";
+                        var l = [i + "，你今天精神头怎么样？", i + "，有啥想聊的就跟我说。", i + "！"];
+                        return "danger" === t.status && (l = l.map(function(t) {
+                            return t + " 今天指标有些不太好，得联系医生看看。"
+                        })), u(l, null)
+                    }
+                    var s = u(["你好呀，有什么想聊的？", "你好！今天感觉怎么样？", "你好，我在呢，有事你说话。"], null);
+                    return "danger" === t.status && (s += " 今天指标有些不太好，得联系医生看看。"), s
+                }(t.p, t.msg)
+            },
+            THANKS: function(t) {
+                return u(r, null)
+            },
+            BYE: function(t) {
+                return u(i, null)
+            },
+            ABOUT: function(t) {
+                return t.p, "我是社区里陪你唠嗑的人，名字不重要。今儿个是想看看指标，还是想唠点别的？"
+            },
+            OPINION: function(t) {
+                return t.p, (n = t.kw).food.length ? "吃的嘛，尝个鲜挺好，适量就行。" : n.tech.length ? "能用着顺手就行，想换让家人帮你参谋参谋。" : u(["我觉得挺好的，适合自己就成。", "自己顺心最重要。"], null);
+                var n
+            },
+            ABILITY: function(t) {
+                return t.p, n = t.msg, /英语|英文|外语|普通话|方言/.test(n) ? u(["可以呀，咱们用英语聊两句。", "没问题，你想用英语说就说，我接着。"], null) : /唱|歌|戏|笑话|故事/.test(n) ? u(["可以，你想听啥，我给你来一段。", "能呀，唱歌讲笑话都行。"], null) : /帮|陪|聊/.test(n) ? u(["可以，你说，我听着呢。", "没问题，我陪着你，有啥事你说。"], null) : u(["可以呀，你说。", "没问题，我听着呢。"], null);
+                var n
+            },
+            KNOWLEDGE: function(t) {
+                return function(t) {
+                    var n = String(t).match(/什么是(.+)|(.+)是啥|啥是(.+)|(.+)是什么|(.+)是干什么的/),
+                        e = "";
+                    if (n)
+                        for (var r = 1; r <= 4; r++)
+                            if (n[r] && n[r].trim()) {
+                                e = n[r].trim();
+                                break
+                            } var i = (e = e.replace(/[？?。！!，,、]/g, "").trim()).toLowerCase();
+                    return s[i] ? s[i] : u(['"' + (e || "这个") + '"这词儿我还真不太懂，怕给你说岔了。你是在哪儿听说的？跟我说说，我帮你琢磨琢磨。', "这个我还真不太清楚。你是在哪儿看到的，跟我说说，咱一块儿弄明白。"], null)
+                }(t.msg)
+            },
+            FUN: function(t) {
+                return t.p, (n = ["有个老爷爷去买菜，问老板：这白菜新鲜吗？老板说：你瞧，这叶子上还带着露水呢。老爷爷说：那正好，这露水的钱我就不给了。", "老张在公园下棋，旁边人看了半天说：你这步走得不对。老张说：下棋嘛，输赢不重要，开心最重要。那人说：那你也别老输啊。", "老奶奶教孙子包饺子，孙子包得歪歪扭扭。老奶奶说：没事，饺子嘛，歪的也能吃。孙子说：那咱今天吃的怎么全是歪的？", "大夫对老李说：你这身体恢复得不错。老李说：那当然，我天天听你的话，早睡早起。大夫说：那你昨天怎么又来挂号了？老李说：挂号便宜，不来白不来。", "小明问爷爷：爷爷，你怎么每天都要看天气预报？爷爷说：我得看穿几件衣服出门，省得你奶奶说我不会照顾自己。"])[Math.floor(Math.random() * n.length)];
+                var n
+            },
+            CLARIFY: function(t) {
+                return t.p, "是我没说明白。你是想问血压、吃药，还是别的事儿？"
+            },
+            TECH: function(t) {
+                return t.p, (e = ((n = t.kw).keys || []).concat(n.tech)).indexOf("密码") >= 0 ? '密码忘了？点"忘记密码"按提示找回就行，或者让家人帮你重新设一个。' : e.some(function(t) {
+                    return "微信" === t || "视频" === t || "照片" === t || "充电" === t
+                }) ? "这个操作让家人当面教你一遍，比我说步骤管用。" : "先关机等十几秒再开机，一半的小毛病能好。还不行就让家人带你去修一修。";
+                var n, e
+            },
+            FOOD: function(t) {
+                return t.p, "奶茶" === (e = (n = t.kw).food.length > 0 ? n.food[0] : "吃的") ? "奶茶糖分挺高的，偶尔喝一杯解解馋行，别天天喝。" : "火锅" === e ? "火锅好啊，多涮点蔬菜豆腐，肉适量，别太辣。" : "西瓜" === e ? "西瓜解暑挺好，别放太冰再吃，切开了当天吃完。" : "饺子" === e ? "饺子好，皮薄馅大，配点醋特别香。" : "按自己的口味来，清淡点，别太油太咸就行。";
+                var n, e
+            },
+            EMOTION: function(t) {
+                return t.p, n = t.kw, e = t.state, r = t.msg, i = n.emotion[0] || "", "neg" === (l = TinyNLP.emotionMood(r || "", n)) ? u("烦" === i || "生气" === i ? ["听着是遇到不顺心的事了。先消消气，愿意的话跟我说说是怎么回事，说出来心里能松快些。", "气大伤身，先缓缓。想说道说道我就听着，你慢慢说。"] : "紧张" === i || "害怕" === i || "担心" === i ? ["先别慌，跟我说说在担心啥，我陪你一起想办法。", "你先把心放下，说说怕的是什么事，咱们一件件捋。"] : ["心里头不痛快别憋着，想念叨就跟我说，我在呢。", "看你心里不舒坦，跟我说说怎么回事，说出来能好受些。"], e && e.lastReply) : "pos" === l ? u(["那太好了，高兴的事儿说说，我也跟着乐呵乐呵。", "心情好，看啥都顺眼，今儿个真不错。"], e && e.lastReply) : "无聊" === i ? "找老伙计们打打牌、说说话，或者来找我聊聊天。" : "累" === i || "困" === i ? "累了就好好歇会儿，眯一觉。" : "有啥事跟我说，我陪着呢。";
+                var n, e, r, i, l
+            },
+            LIFE: function(t) {
+                return t.p, "钱" === (e = (n = t.kw).life.length > 0 ? n.life[0] : "") || "工资" === e || "退休金" === e ? "退休金不够花的话，可以问问社区有没有补贴，也让家里帮衬着点。" : "房子" === e ? "房子的事让家人陪着多看看，住得舒服最要紧。" : "邻居" === e ? "多串串门、打打招呼，跟邻居熟络了日子热闹。" : "宠物" === e || "猫" === e || "狗" === e ? "养宠物得有人天天照顾，忙得过来就养。" : "电视" === e || "新闻" === e ? "看会儿电视解解闷挺好的，别坐太久，起来活动活动。" : "花" === e || "养花" === e ? "养花好，先挑绿萝、长寿花这些好活的品种。" : "过日子嘛，平平安安、乐乐呵呵就挺好。";
+                var n, e
+            },
+            CHITCHAT: function(t) {
+                return t.p, n = t.msg, t.kw, r = (e = (new Date).getHours()) < 6 ? "这么晚了还没睡啊，早点歇着。" : e < 9 ? "早上好呀。" : e < 14 ? "" : e < 19 ? "下午好啊。" : "晚上好啊。", /儿子|女儿|孙子|孙女|外孙|外孙女|老伴|家里|来看|回家|回来|惦记/.test(n) ? u(["孩子来看你，心里高兴吧。", "家里人惦记着你呢，这就是福气。", "家人常来陪陪，日子就不孤单了。"], null) : /饭|菜|咸|淡|饿|甜|早饭|午饭|晚饭|面条|馒头|吃/.test(n) ? u(["饭要按时吃，清淡点，别太咸太油。", "饿了就吃，别扛着。", "饭菜合口才吃得香，口味淡些对血压好。"], null) : /睡觉|该睡|困了|瞌睡/.test(n) ? u(["是该早点睡，休息好，精神才好。", "累了一天，早点歇着吧。"], null) : /天气|下雨|天冷|天热|冷|热|刮风|下雪|阴|晴/.test(n) ? u(["这天儿说变就变，出门多穿点、带把伞。", "天气的事多听预报，别着凉。"], null) : /出去|出门|走走|遛弯|逛|散步|活动/.test(n) ? u(["出去走走好，活动活动筋骨，注意脚下。", "散步是好事，天好再出去，别累着。"], null) : /心情|感觉|不错|挺好/.test(n) ? u(["心情好，身体也跟着好。", "听着就舒坦，日子有奔头。"], null) : /疼|难受|不舒服|不得劲/.test(n) ? "身体不舒服别硬扛，跟我说说哪儿不得劲。" : r + u(["嗯，接着说。", "是这样啊，继续说。", "我在呢，慢慢说。", "好嘞，今天感觉怎么样？"], null);
+                var n, e, r
+            }
+        },
+        s = {
+            "vibe coding": "是这两年流行的一种编程方式，指写代码时主要依靠整体感觉和经验、借助 AI 辅助快速实现功能，不过分纠结底层细节和语法。是编程圈子里较新的说法。",
+            ai: "就是人工智能，让计算机具备理解、推理、对话和学习能力的技术。我这类对话助手就是基于 AI 的。",
+            "人工智能": "是让计算机具备类似人类的思考和学习能力的技术，涉及语音识别、自然语言处理、图像识别等方向。",
+            app: "是应用程序的简称，指手机或电脑上安装的软件，微信、视频、天气查询等都是一个个 APP。",
+            "软件": "是电脑或手机里运行的程序集合，用来完成办公、通讯、娱乐等特定功能。",
+            "微信": "是目前使用广泛的即时通讯软件，支持文字、语音、视频通话和文件传输，也集成了支付等功能。",
+            wifi: "是无线局域网技术，手机、平板等设备无需网线即可接入互联网。",
+            "5g": "是第五代移动通信技术，相比 4G 带宽更大、延迟更低，适合高清视频和实时交互。",
+            "芯片": "是集成电路的俗称，是电子设备中进行运算和数据存储的核心部件，相当于设备的大脑。",
+            "机器人": "是可以按程序自动执行任务的机器，部分具备感知和对话能力，广泛用于工业和服务领域。",
+            "密码": "是用于身份验证的秘密字符组合，保护账号不被他人登录。",
+            "网银": "是银行提供的网络服务，用户可通过手机或电脑办理余额查询、转账汇款等业务，无需到网点。",
+            "扫码": "是通过手机扫描二维码完成支付、添加好友、进入小程序等操作。",
+            "网购": "是在电商平台浏览和购买商品，在线支付后由物流配送到家。",
+            "手机": "是便携式移动电话，除通话外还具备上网、通讯、拍照和运行各类应用的能力。",
+            "血压": "是血液在血管内流动时对血管壁产生的侧压力，是衡量循环系统健康的重要指标。",
+            "血糖": "是血液中葡萄糖的浓度，反映机体糖代谢状况，异常时需关注饮食和胰岛素调节。",
+            "心率": "是心脏每分钟跳动的次数，成年人静息时一般在 60 到 100 次。",
+            "血氧": "是血液中氧合血红蛋白所占的比例，正常值一般在 95% 以上。",
+            "体温": "是人体内部的温度，正常范围约 36 到 37 摄氏度。",
+            "短视频": "是时长通常在几秒到几分钟的视频形式，内容丰富，传播快。",
+            "抖音": "是国内主流的短视频平台，用户可观看和发布短视频，也支持直播等功能。",
+            "电商": "是电子商务的简称，指依托互联网进行的商品交易活动，包括开店、购物、支付和物流。"
+        };
+
+    function o(t, n) {
+        return u(["哎，你这话我还没听明白，你再细说说？", "我听着呢，你接着说。", "这话有意思，你多跟我讲讲。"], null)
+    }
+    return {
+        generate: function(e, r, i) {
+            var u = TinyNLP.segment(r),
+                s = TinyNLP.extract(u),
+                a = TinyNLP.classify(r, s),
+                f = function(e, r) {
+                    var i = (null == e ? "anon" : e) + ":" + r;
+                    if (!n[i]) {
+                        var u = Object.keys(n);
+                        u.length >= 50 && delete n[u[0]], n[i] = new t
+                    }
+                    return n[i]
+                }(i && i.id, e),
+                c = TinyNLP.findDrugName(r, u);
+            f.intent = a, c && (f.drugAsked = c, f.topicDrug = c), f.lastIntent === a ? f.topicCount++ : f.topicCount = 0, f.lastIntent = a;
+            for (var d = {
+                    p: i,
+                    state: f,
+                    kw: s,
+                    drug: c,
+                    msg: r,
+                    cid: e
+                }, m = l[a], g = m ? m(d) : o(), p = 0; g === f.lastReply && p < 3;) g = m ? m(d) : o(), p++;
+            return f.lastReply = g, {
+                text: g,
+                intent: a
+            }
+        }
+    }
+}();

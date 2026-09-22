@@ -1,0 +1,6 @@
+window.App = window.App || {},
+    function() {
+        var n, l = window.App,
+            u = null;
+        (n = loadJSON("hm-login", null)) && n.uid && (u = n.uid), l.USER_ID = u, l.loginInfo = n, l.currentPatient = null, l.avatars = {}, l.updateAIStatus = null
+    }();

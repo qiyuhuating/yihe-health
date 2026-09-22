@@ -1,0 +1,70 @@
+var AdminLogin = function() {
+    "use strict";
+    var e = "hm-admin-login";
+
+    function n() {
+        var n = loadJSON(e, null),
+            t = n && "admin" === n.role && (!n.ts || Date.now() - n.ts < 864e5);
+        if (n && !t) {
+            try {
+                localStorage.removeItem(e)
+            } catch (e) {}
+            return null
+        }
+        return t ? n : null
+    }
+
+    function t() {
+        var e = n(),
+            t = document.getElementById("adminLoginOverlay");
+        return t && (t.hidden = !!e), e
+    }
+
+    function o() {
+        var n = document.getElementById("adminLoginHint"),
+            o = document.getElementById("adminLoginName").value.trim(),
+            d = document.getElementById("adminLoginPassword").value;
+        if (n && (n.hidden = !0), o && d)
+            if ("admin" === o && "admin123" === d) {
+                try {
+                    localStorage.setItem(e, JSON.stringify({
+                        name: o,
+                        role: "admin",
+                        ts: Date.now()
+                    }))
+                } catch (e) {}
+                t()
+            } else n && (n.textContent = "账号或密码错误", n.hidden = !1);
+        else n && (n.textContent = "请输入账号和密码", n.hidden = !1)
+    }
+
+    function d() {
+        try {
+            localStorage.removeItem(e)
+        } catch (e) {}
+        Audit.log("退出登录"), location.reload()
+    }
+    var i = document.getElementById("adminLoginSubmit");
+    i && i.addEventListener("click", o);
+    var a = document.getElementById("adminLoginName");
+    a && a.addEventListener("keydown", function(e) {
+        if ("Enter" === e.key) {
+            e.preventDefault();
+            var n = document.getElementById("adminLoginPassword");
+            n && n.focus()
+        }
+    });
+    var r = document.getElementById("adminLoginPassword");
+    r && r.addEventListener("keydown", function(e) {
+        "Enter" === e.key && (e.preventDefault(), o())
+    });
+    var m = document.querySelector("[data-admin-login-logo]");
+    m && (m.src = iconSVG("heart", 56, "#FFFFFF"));
+    var l = document.getElementById("btnAdminLogout");
+    return l && l.addEventListener("click", d), t(), {
+        getLogin: n,
+        gate: t,
+        submit: o,
+        logout: d
+    }
+}();

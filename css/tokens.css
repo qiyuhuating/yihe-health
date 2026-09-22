@@ -1,0 +1,20 @@
+:root,body.light{
+ --bg:#F6F2E8;--bg-2:#EDE8DB;--card:#FFFCF5;--card-tint:#F0EBDD;--surface:#FFFCF5;--surface-2:#F0EBDD;
+ --t1:#292B26;--t2:#535A50;--t3:#62675D;--ink:#292B26;--ink-2:#535A50;--ink-3:#62675D;
+ --sep:#D9D8C9;--line:#D9D8C9;--hover:#EBEFDF;--menu-bg:#FFFCF5;--card-secondary:#F0EBDD;
+ --brand:#963D32;--accent:#963D32;--accent-hover:#7B3027;--accent-soft:#F2E0D8;--on-accent:#FFF;
+ --action:#365B49;--blue:var(--action);--green:#365B49;--orange:#8B5B14;--red:#B42318;--purple:#675273;
+ --ok-text:#365B49;--warn-text:#85500F;--danger-text:#B42318;--gold:#9B773B;
+ --shadow-sm:0 1px 2px #292B2608;--shadow:0 8px 24px #292B2609;--shadow-lg:0 18px 60px #292B2626;--shadow-card:var(--shadow-sm);
+ --ring:#365B4938;--r:12px;--rs:8px;--rss:5px;
+ --font:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;--font-num:system-ui,sans-serif;
+ --font-serif:"Noto Serif SC","Songti SC","SimSun",serif;--font-brush:var(--font-serif);
+}
+body.dark,:root[data-theme="dark"]{
+ --bg:#191F1B;--bg-2:#212922;--card:#252D27;--card-tint:#303931;--surface:#252D27;--surface-2:#303931;
+ --t1:#F5F1E7;--t2:#DDDCCF;--t3:#B8C1B3;--ink:#F5F1E7;--ink-2:#DDDCCF;--ink-3:#B8C1B3;
+ --sep:#4E5B4D;--line:#4E5B4D;--hover:#354336;--menu-bg:#252D27;--card-secondary:#303931;
+ --brand:#F0A18D;--accent:#F0A18D;--accent-hover:#FFC2B1;--accent-soft:#4B322E;--on-accent:#241F18;
+ --action:#A7D4B5;--blue:var(--action);--green:#A7D4B5;--red:#FFACA0;--orange:#F1CA85;
+ --ok-text:#A7D4B5;--warn-text:#F1CA85;--danger-text:#FFACA0;--ring:#A7D4B54D;
+}

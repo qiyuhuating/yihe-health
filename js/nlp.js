@@ -1,0 +1,541 @@
+var TinyNLP = function() {
+    "use strict";
+
+    function e() {
+        this.children = {}, this.isEnd = !1, this.tag = null
+    }
+    var t = new e;
+    [
+        ["高血压", "disease"],
+        ["糖尿病", "disease"],
+        ["冠心病", "disease"],
+        ["脑梗", "disease"],
+        ["慢性支气管炎", "disease"],
+        ["肺气肿", "disease"],
+        ["骨质疏松", "disease"],
+        ["痛风", "disease"],
+        ["心绞痛", "disease"],
+        ["心肌梗死", "disease"],
+        ["前列腺增生", "disease"],
+        ["慢性胃炎", "disease"],
+        ["血糖", "metric"],
+        ["血压", "metric"],
+        ["心率", "metric"],
+        ["血氧", "metric"],
+        ["体温", "metric"],
+        ["收缩压", "metric"],
+        ["舒张压", "metric"],
+        ["空腹", "time"],
+        ["餐后", "time"],
+        ["氨氯地平", "drug"],
+        ["二甲双胍", "drug"],
+        ["阿司匹林", "drug"],
+        ["美托洛尔", "drug"],
+        ["厄贝沙坦", "drug"],
+        ["氯沙坦", "drug"],
+        ["瑞舒伐他汀", "drug"],
+        ["阿托伐他汀", "drug"],
+        ["格列美脲", "drug"],
+        ["甘精胰岛素", "drug"],
+        ["胰岛素", "drug"],
+        ["单硝酸异山梨酯", "drug"],
+        ["沙美特罗", "drug"],
+        ["噻托溴铵", "drug"],
+        ["坦索罗辛", "drug"],
+        ["非那雄胺", "drug"],
+        ["奥美拉唑", "drug"],
+        ["氯吡格雷", "drug"],
+        ["替格瑞洛", "drug"],
+        ["秋水仙碱", "drug"],
+        ["非布司他", "drug"],
+        ["阿仑膦酸钠", "drug"],
+        ["钙尔奇", "drug"],
+        ["降压药", "drug_class"],
+        ["降糖药", "drug_class"],
+        ["他汀", "drug_class"],
+        ["头晕", "symptom"],
+        ["胸闷", "symptom"],
+        ["心慌", "symptom"],
+        ["气短", "symptom"],
+        ["恶心", "symptom"],
+        ["呕吐", "symptom"],
+        ["发烧", "symptom"],
+        ["咳嗽", "symptom"],
+        ["乏力", "symptom"],
+        ["没力气", "symptom"],
+        ["不舒服", "symptom"],
+        ["难受", "symptom"],
+        ["睡不着", "symptom"],
+        ["失眠", "symptom"],
+        ["头疼", "symptom"],
+        ["头痛", "symptom"],
+        ["肚子疼", "symptom"],
+        ["胃疼", "symptom"],
+        ["关节疼", "symptom"],
+        ["水肿", "symptom"],
+        ["浮肿", "symptom"],
+        ["呼吸困难", "symptom_urgent"],
+        ["胸口疼", "symptom_urgent"],
+        ["剧烈", "severity"],
+        ["受不了", "severity"],
+        ["很痛", "severity"],
+        ["吃饭", "meal"],
+        ["早餐", "meal"],
+        ["午餐", "meal"],
+        ["晚餐", "meal"],
+        ["吃药", "med_action"],
+        ["运动", "exercise"],
+        ["走路", "exercise"],
+        ["散步", "exercise"],
+        ["锻炼", "exercise"],
+        ["睡觉", "sleep"],
+        ["醒了", "sleep"],
+        ["早醒", "sleep"],
+        ["喝水", "drink"],
+        ["抽烟", "smoke"],
+        ["喝酒", "alcohol"],
+        ["天热", "weather"],
+        ["天冷", "weather"],
+        ["高温", "weather"],
+        ["降温", "weather"],
+        ["下雨", "weather"],
+        ["闷热", "weather"],
+        ["阴天", "weather"],
+        ["刮风", "weather"],
+        ["晴天", "weather"],
+        ["下雪", "weather"],
+        ["凉快", "weather"],
+        ["潮湿", "weather"],
+        ["怎么吃", "how_take"],
+        ["怎么用", "how_take"],
+        ["几点吃", "when_take"],
+        ["忘记", "forgot"],
+        ["忘了", "forgot"],
+        ["漏了", "forgot"],
+        ["什么时候", "when"],
+        ["复查", "checkup"],
+        ["预约", "appointment"],
+        ["挂号", "appointment"],
+        ["报告", "report"],
+        ["检查", "examination"],
+        ["体检", "examination"],
+        ["吃什么", "diet_ask"],
+        ["不能吃", "diet_restrict"],
+        ["忌口", "diet_restrict"],
+        ["救命", "emergency"],
+        ["急救", "emergency"],
+        ["不行了", "emergency"],
+        ["谢谢", "thanks"],
+        ["多谢", "thanks"],
+        ["再见", "bye"],
+        ["拜拜", "bye"],
+        ["你好", "greet"],
+        ["您好", "greet"],
+        ["早安", "greet"],
+        ["晚安", "greet"],
+        ["早上好", "greet"],
+        ["上午好", "greet"],
+        ["中午好", "greet"],
+        ["下午好", "greet"],
+        ["晚上好", "greet"],
+        ["嗨", "greet"],
+        ["哈喽", "greet"],
+        ["hello", "greet"],
+        ["你好呀", "greet"],
+        ["按时", "adherence"],
+        ["规律", "adherence"],
+        ["控制", "control"],
+        ["正常吗", "ask_normal"],
+        ["偏高", "high"],
+        ["偏低", "low"],
+        ["高不高", "ask_normal"],
+        ["药量", "dosage"],
+        ["剂量", "dosage"],
+        ["副作用", "side_effect"],
+        ["今天", "today"],
+        ["昨天", "yesterday"],
+        ["最近", "recently"],
+        ["一直", "always"],
+        ["提醒", "remind"],
+        ["闹钟", "remind"],
+        ["家人", "family"],
+        ["医生", "doctor"],
+        ["护士", "nurse"],
+        ["感觉", "feel"],
+        ["有点", "degree"],
+        ["非常", "degree"],
+        ["好多了", "better"],
+        ["好一些", "better"],
+        ["还是", "still"],
+        ["又", "again"],
+        ["开心", "emotion"],
+        ["高兴", "emotion"],
+        ["难过", "emotion"],
+        ["伤心", "emotion"],
+        ["无聊", "emotion"],
+        ["烦", "emotion"],
+        ["累", "emotion"],
+        ["困", "emotion"],
+        ["紧张", "emotion"],
+        ["生气", "emotion"],
+        ["害怕", "emotion"],
+        ["担心", "emotion"],
+        ["舒服", "emotion"],
+        ["爽", "emotion"],
+        ["郁闷", "emotion"],
+        ["焦虑", "emotion"],
+        ["你是谁", "about_self"],
+        ["你叫什么", "about_self"],
+        ["你会什么", "about_self"],
+        ["你能做什么", "about_self"],
+        ["你多大了", "about_self"],
+        ["你是机器人吗", "about_self"],
+        ["你是AI吗", "about_self"],
+        ["你聪明吗", "about_self"],
+        ["你觉得", "opinion"],
+        ["好不好", "opinion"],
+        ["行不行", "opinion"],
+        ["可以吗", "opinion"],
+        ["怎么样", "opinion"],
+        ["对吗", "opinion"],
+        ["是不是", "opinion"],
+        ["推荐", "opinion"],
+        ["笑话", "fun"],
+        ["讲个故事", "fun"],
+        ["猜谜语", "fun"],
+        ["唱歌", "fun"],
+        ["电影", "fun"],
+        ["电视剧", "fun"],
+        ["游戏", "fun"],
+        ["好玩", "fun"],
+        ["有趣", "fun"],
+        ["逗我", "fun"],
+        ["段子", "fun"],
+        ["搞笑", "fun"],
+        ["什么意思", "clarify"],
+        ["再说一遍", "clarify"],
+        ["没听懂", "clarify"],
+        ["没听清", "clarify"],
+        ["啥意思", "clarify"],
+        ["说啥", "clarify"],
+        ["手机", "tech"],
+        ["电脑", "tech"],
+        ["网络", "tech"],
+        ["wifi", "tech"],
+        ["微信", "tech"],
+        ["视频", "tech"],
+        ["照片", "tech"],
+        ["密码", "tech"],
+        ["充电", "tech"],
+        ["坏了", "tech"],
+        ["打不开", "tech"],
+        ["卡了", "tech"],
+        ["火锅", "food"],
+        ["面条", "food"],
+        ["米饭", "food"],
+        ["饺子", "food"],
+        ["奶茶", "food"],
+        ["咖啡", "food"],
+        ["茶", "food"],
+        ["水果", "food"],
+        ["西瓜", "food"],
+        ["好吃的", "food"],
+        ["外卖", "food"],
+        ["做饭", "food"],
+        ["买菜", "food"],
+        ["零食", "food"],
+        ["蛋糕", "food"],
+        ["面包", "food"],
+        ["钱", "life"],
+        ["工资", "life"],
+        ["退休金", "life"],
+        ["房子", "life"],
+        ["邻居", "life"],
+        ["社区", "life"],
+        ["超市", "life"],
+        ["快递", "life"],
+        ["电视", "life"],
+        ["新闻", "life"],
+        ["报纸", "life"],
+        ["收音机", "life"],
+        ["花", "life"],
+        ["宠物", "life"],
+        ["猫", "life"],
+        ["狗", "life"],
+        ["养花", "life"],
+        ["儿子", "family"],
+        ["女儿", "family"],
+        ["孙子", "family"],
+        ["老伴", "family"],
+        ["朋友", "family"],
+        ["同学", "family"],
+        ["同事", "family"],
+        ["邻居", "family"],
+        ["腿疼", "symptom"],
+        ["腿痛", "symptom"],
+        ["腰疼", "symptom"],
+        ["背疼", "symptom"],
+        ["肩膀疼", "symptom"],
+        ["胳膊疼", "symptom"],
+        ["膝盖疼", "symptom"],
+        ["手麻", "symptom"],
+        ["脚麻", "symptom"],
+        ["手抖", "symptom"],
+        ["腿脚发麻", "symptom"],
+        ["腰酸背痛", "symptom"],
+        ["拉肚子", "symptom"],
+        ["便秘", "symptom"],
+        ["胃胀", "symptom"],
+        ["肚子胀", "symptom"],
+        ["没胃口", "symptom"],
+        ["胃口不好", "symptom"],
+        ["嗓子疼", "symptom"],
+        ["喉咙疼", "symptom"],
+        ["牙疼", "symptom"],
+        ["牙齿疼", "symptom"],
+        ["耳鸣", "symptom"],
+        ["眼睛花", "symptom"],
+        ["发冷", "symptom"],
+        ["出汗", "symptom"],
+        ["心口堵", "symptom"],
+        ["反酸", "symptom"],
+        ["烧心", "symptom"],
+        ["浑身没劲", "symptom"],
+        ["头晕目眩", "symptom"],
+        ["恶心想吐", "symptom"],
+        ["胸口闷", "symptom"],
+        ["没精神", "symptom"],
+        ["睡不好", "symptom"],
+        ["做噩梦", "symptom"],
+        ["打嗝", "symptom"],
+        ["喘不上气", "symptom_urgent"],
+        ["解闷", "fun"],
+        ["打牌", "fun"],
+        ["下棋", "fun"],
+        ["广场舞", "exercise"],
+        ["太极拳", "exercise"],
+        ["逛公园", "exercise"],
+        ["遛弯", "exercise"],
+        ["看电视", "life"],
+        ["唠嗑", "life"],
+        ["串门", "life"],
+        ["午睡", "sleep"],
+        ["瞌睡", "sleep"],
+        ["睡午觉", "sleep"],
+        ["怎么回事", "clarify"],
+        ["怎么办", "clarify"],
+        ["稍微", "degree"],
+        ["特别", "degree"],
+        ["早上", "time"],
+        ["中午", "time"],
+        ["晚上", "time"],
+        ["夜里", "time"],
+        ["没吃", "neg"],
+        ["不吃", "neg"],
+        ["不想", "neg"],
+        ["没喝", "neg"],
+        ["没吃药", "neg_med"],
+        ["不吃药", "neg_med"],
+        ["没喝药", "neg_med"],
+        ["几点了", "clock"],
+        ["几点", "clock"],
+        ["几点钟", "clock"],
+        ["几号", "clock"],
+        ["星期几", "clock"],
+        ["礼拜几", "clock"],
+        ["什么时间", "clock"],
+        ["孙女", "family"],
+        ["外孙", "family"],
+        ["外孙女", "family"],
+        ["老伴儿", "family"],
+        ["家里人", "family"],
+        ["侄子", "family"],
+        ["侄女", "family"],
+        ["脚肿", "symptom"],
+        ["手肿", "symptom"],
+        ["腿肿", "symptom"],
+        ["脸肿", "symptom"],
+        ["心情", "emotion"],
+        ["情绪", "emotion"],
+        ["不开心", "emotion"],
+        ["心里堵得慌", "emotion"]
+    ].forEach(function(o) {
+        ! function(o, s) {
+            for (var i = t, n = 0; n < o.length; n++) {
+                var r = o[n];
+                i.children[r] || (i.children[r] = new e), i = i.children[r]
+            }
+            i.isEnd = !0, i.tag = s
+        }(o[0], o[1])
+    });
+    var o = ["难过", "伤心", "烦", "紧张", "生气", "害怕", "担心", "郁闷", "焦虑", "不开心", "心里堵得慌"],
+        s = ["开心", "高兴", "舒服", "爽"],
+        i = [
+            ["咋回事", "怎么回事"],
+            ["咋办", "怎么办"],
+            ["啥意思", "什么意思"],
+            ["多会儿", "几点"],
+            ["咋吃", "怎么吃"],
+            ["咋", "怎么"],
+            ["啥", "什么"]
+        ];
+
+    function n(e) {
+        e = function(e) {
+            if (!e) return e;
+            for (var t = e, o = 0; o < i.length; o++) t = t.split(i[o][0]).join(i[o][1]);
+            return t
+        }(e);
+        for (var o = [], s = 0, n = e.length; s < n;) {
+            for (var r = t, m = null, a = s, d = s; d < n && r.children[e[d]];) r = r.children[e[d]], d++, r.isEnd && (m = {
+                word: e.slice(s, d),
+                tag: r.tag
+            }, a = d);
+            m ? (o.push(m), s = a) : s++
+        }
+        return o
+    }
+    return {
+        segment: n,
+        extract: function(e) {
+            var t = {
+                diseases: [],
+                metrics: [],
+                drugs: [],
+                symptoms: [],
+                urgent: [],
+                urgentSymptoms: [],
+                actions: [],
+                social: [],
+                weather: [],
+                diet: [],
+                appt: [],
+                remind: [],
+                emotion: [],
+                about: [],
+                opinion: [],
+                fun: [],
+                clarify: [],
+                tech: [],
+                food: [],
+                life: [],
+                neg: [],
+                negMed: !1,
+                clock: [],
+                keys: []
+            };
+            return e.forEach(function(e) {
+                switch (e.tag) {
+                    case "disease":
+                        t.diseases.push(e.word);
+                        break;
+                    case "metric":
+                        t.metrics.push(e.word);
+                        break;
+                    case "drug":
+                    case "drug_class":
+                        t.drugs.push(e.word);
+                        break;
+                    case "symptom":
+                        t.symptoms.push(e.word);
+                        break;
+                    case "symptom_urgent":
+                        t.symptoms.push(e.word), t.urgent.push(e.word), t.urgentSymptoms.push(e.word);
+                        break;
+                    case "severity":
+                        t.urgent.push(e.word);
+                        break;
+                    case "meal":
+                    case "med_action":
+                    case "exercise":
+                    case "sleep":
+                        t.actions.push(e.word);
+                        break;
+                    case "diet_ask":
+                    case "diet_restrict":
+                        t.diet.push(e.word);
+                        break;
+                    case "how_take":
+                    case "when_take":
+                    case "forgot":
+                    default:
+                        t.keys.push(e.word);
+                        break;
+                    case "checkup":
+                    case "appointment":
+                        t.appt.push(e.word);
+                        break;
+                    case "remind":
+                        t.remind.push(e.word);
+                        break;
+                    case "greet":
+                        t.social.push("greet");
+                        break;
+                    case "thanks":
+                        t.social.push("thanks");
+                        break;
+                    case "bye":
+                        t.social.push("bye");
+                        break;
+                    case "weather":
+                        t.weather.push(e.word);
+                        break;
+                    case "emotion":
+                        t.emotion.push(e.word);
+                        break;
+                    case "about_self":
+                        t.about.push(e.word);
+                        break;
+                    case "opinion":
+                        t.opinion.push(e.word);
+                        break;
+                    case "fun":
+                        t.fun.push(e.word);
+                        break;
+                    case "clarify":
+                        t.clarify.push(e.word);
+                        break;
+                    case "tech":
+                        t.tech.push(e.word);
+                        break;
+                    case "food":
+                        t.food.push(e.word);
+                        break;
+                    case "life":
+                        t.life.push(e.word);
+                        break;
+                    case "neg":
+                        t.neg.push(e.word);
+                        break;
+                    case "neg_med":
+                        t.neg.push(e.word), t.negMed = !0;
+                        break;
+                    case "clock":
+                        t.clock.push(e.word)
+                }
+            }), t
+        },
+        classify: function(e, t) {
+            if (t.urgentSymptoms && t.urgentSymptoms.length >= 1 || t.urgent.length >= 2 || t.keys.indexOf("救命") >= 0 || t.keys.indexOf("急救") >= 0 || t.keys.indexOf("不行了") >= 0) return "EMERGENCY";
+            if (/你(是谁|是什么|是啥|叫啥)/.test(e)) return "ABOUT";
+            if (/什么是|是啥|啥是|啥叫|是什么|干啥的|干什么的/.test(e) && !/啥时候|什么时候/.test(e)) return "KNOWLEDGE";
+            var o = (t.keys.indexOf("忘记") >= 0 || t.keys.indexOf("忘了") >= 0 || t.keys.indexOf("漏了") >= 0) && !(t.tech.length || t.food.length || t.life.length);
+            return t.drugs.length > 0 || t.actions.indexOf("吃药") >= 0 || t.keys.indexOf("怎么吃") >= 0 || t.keys.indexOf("几点吃") >= 0 || o || t.negMed ? "MEDICATION" : t.metrics.length > 0 || t.keys.indexOf("正常吗") >= 0 || t.keys.indexOf("偏高") >= 0 || t.keys.indexOf("偏低") >= 0 || t.keys.indexOf("高不高") >= 0 || e.indexOf("多少") >= 0 && !(t.life.length || t.food.length || t.tech.length) ? "VITALS" : t.symptoms.indexOf("失眠") >= 0 || e.indexOf("睡") >= 0 && (e.indexOf("不着") >= 0 || e.indexOf("不好") >= 0 || e.indexOf("醒") >= 0) ? "SLEEP" : t.symptoms.length > 0 || e.indexOf("疼") >= 0 || e.indexOf("痛") >= 0 || t.diseases.length > 0 ? "SYMPTOM" : t.diet.length > 0 || e.indexOf("饮食") >= 0 ? "DIET" : t.actions.indexOf("运动") >= 0 || t.actions.indexOf("散步") >= 0 || t.actions.indexOf("锻炼") >= 0 || e.indexOf("走路") >= 0 ? "EXERCISE" : t.appt.length > 0 || e.indexOf("体检") >= 0 ? "APPOINTMENT" : t.clock.length > 0 ? "TIME" : t.remind.length > 0 ? "REMINDER" : t.weather.length > 0 || e.indexOf("天气") >= 0 ? "WEATHER" : t.about.length > 0 ? "ABOUT" : t.opinion.length > 0 ? "OPINION" : t.fun.length > 0 ? "FUN" : t.clarify.length > 0 ? "CLARIFY" : t.tech.length > 0 ? "TECH" : t.food.length > 0 ? "FOOD" : t.emotion.length > 0 ? "EMOTION" : t.life.length > 0 ? "LIFE" : t.social.indexOf("greet") >= 0 || e.indexOf("你好") >= 0 || "早" === e ? "GREETING" : t.social.indexOf("thanks") >= 0 ? "THANKS" : t.social.indexOf("bye") >= 0 ? "BYE" : /可以|能|会不会|会|能不能|可不可以|行不行/.test(e) && /吗|么/.test(e) ? "ABILITY" : "CHITCHAT"
+        },
+        findDrugName: function(e, t) {
+            for (var o = t || n(e), s = 0; s < o.length; s++)
+                if ("drug" === o[s].tag) return o[s].word;
+            return null
+        },
+        emotionMood: function(e, t) {
+            var i = t && t.emotion || [];
+            if (!i.length) return null;
+            for (var n = 0; n < i.length; n++)
+                if (o.indexOf(i[n]) >= 0) return "neg";
+            for (n = 0; n < i.length; n++)
+                if (s.indexOf(i[n]) >= 0) return "pos";
+            var r = e || "";
+            return /不好|很差|差|糟糕|难受|低落|不好受|糟/.test(r) ? "neg" : /好|不错|挺好|舒坦|满意/.test(r) ? "pos" : null
+        }
+    }
+}();

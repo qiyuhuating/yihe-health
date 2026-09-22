@@ -1,0 +1,270 @@
+var DB_NAME = "HealthMonitorDB",
+    DB_VERSION = 2,
+    _sharedDb = null;
+
+function _getSharedDB() {
+    return _sharedDb ? Promise.resolve(_sharedDb) : new Promise(function(e, t) {
+        var n = indexedDB.open(DB_NAME, DB_VERSION);
+        n.onupgradeneeded = function(e) {
+            var t = e.target.result,
+                n = e.oldVersion;
+            n < 1 && !t.objectStoreNames.contains("avatars") && t.createObjectStore("avatars", {
+                keyPath: "id"
+            }), n < 2 && (t.objectStoreNames.contains("config") || t.createObjectStore("config", {
+                keyPath: "key"
+            }), t.objectStoreNames.contains("chats") || t.createObjectStore("chats", {
+                keyPath: "key"
+            }))
+        }, n.onsuccess = function(t) {
+            _sharedDb = t.target.result, e(_sharedDb)
+        }, n.onerror = function() {
+            console.error("[DataStore] IndexedDB 打开失败"), t(new Error("IndexedDB不可用"))
+        }
+    })
+}
+
+function _dbGet(e, t) {
+    return _getSharedDB().then(function(n) {
+        return new Promise(function(r) {
+            try {
+                var o = n.transaction(e, "readonly").objectStore(e).get(t);
+                o.onsuccess = function() {
+                    r(o.result ? o.result.data : null)
+                }, o.onerror = function() {
+                    r(null)
+                }
+            } catch (n) {
+                if ("config" === e) return void r(null);
+                try {
+                    var a = localStorage.getItem("idb_fb_" + e + "_" + t);
+                    r(a ? JSON.parse(a) : null)
+                } catch (e) {
+                    r(null)
+                }
+            }
+        })
+    }).catch(function() {
+        if ("config" === e) return Promise.resolve(null);
+        try {
+            var n = localStorage.getItem("idb_fb_" + e + "_" + t);
+            return Promise.resolve(n ? JSON.parse(n) : null)
+        } catch (e) {
+            return Promise.resolve(null)
+        }
+    })
+}
+
+function _dbPut(e, t, n) {
+    return _getSharedDB().then(function(r) {
+        return new Promise(function(o) {
+            try {
+                var a = r.transaction(e, "readwrite");
+                a.objectStore(e).put({
+                    key: t,
+                    data: n,
+                    time: Date.now()
+                }), a.oncomplete = function() {
+                    o(!0)
+                }, a.onerror = function() {
+                    o(!1)
+                }
+            } catch (r) {
+                if ("config" === e) return void o(!1);
+                try {
+                    localStorage.setItem("idb_fb_" + e + "_" + t, JSON.stringify(n)), o(!0)
+                } catch (e) {
+                    o(!1)
+                }
+            }
+        })
+    }).catch(function() {
+        if ("config" === e) return Promise.resolve(!1);
+        try {
+            return localStorage.setItem("idb_fb_" + e + "_" + t, JSON.stringify(n)), Promise.resolve(!0)
+        } catch (e) {
+            return Promise.resolve(!1)
+        }
+    })
+}
+
+function _dbPutById(e, t, n) {
+    return _getSharedDB().then(function(r) {
+        return new Promise(function(o) {
+            try {
+                var a = r.transaction(e, "readwrite");
+                a.objectStore(e).put({
+                    id: t,
+                    data: n,
+                    time: Date.now()
+                }), a.oncomplete = function() {
+                    o(!0)
+                }, a.onerror = function() {
+                    o(!1)
+                }
+            } catch (e) {
+                o(!1)
+            }
+        })
+    })
+}
+var DataStore = {
+        get: function(e) {
+            return _dbGet("config", e)
+        },
+        set: function(e, t) {
+            return _dbPut("config", e, t)
+        },
+        remove: function(e) {
+            return _getSharedDB().then(function(t) {
+                return new Promise(function(n) {
+                    try {
+                        var r = t.transaction("config", "readwrite");
+                        r.objectStore("config").delete(e), r.oncomplete = function() {
+                            n(!0)
+                        }, r.onerror = function() {
+                            n(!1)
+                        }
+                    } catch (e) {
+                        n(!1)
+                    }
+                })
+            })
+        },
+        loadChats: function(e) {
+            return _getSharedDB().then(function(t) {
+                return new Promise(function(n) {
+                    try {
+                        var r = t.transaction("chats", "readonly").objectStore("chats").getAll();
+                        r.onsuccess = function() {
+                            var t = null == e ? "" : String(e) + ":",
+                                o = {};
+                            (r.result || []).forEach(function(e) {
+                                "" === t ? e.key.indexOf(":") < 0 && (o[e.key] = e.data) : 0 === e.key.indexOf(t) && (o[e.key.slice(t.length)] = e.data)
+                            }), n(o)
+                        }, r.onerror = function() {
+                            n({})
+                        }
+                    } catch (e) {
+                        n({})
+                    }
+                })
+            })
+        },
+        saveChats: function(e, t) {
+            var n = Object.keys(e).map(function(n) {
+                return _dbPut("chats", t + ":" + n, e[n])
+            });
+            return Promise.all(n).then(function(e) {
+                return e.every(Boolean)
+            })
+        },
+        saveChat: function(e, t, n) {
+            return _dbPut("chats", t + ":" + e, n)
+        },
+        removeLegacyChats: function() {
+            return _getSharedDB().then(function(e) {
+                return new Promise(function(t) {
+                    try {
+                        var n = e.transaction("chats", "readwrite").objectStore("chats").openCursor();
+                        n.onsuccess = function() {
+                            var e = n.result;
+                            e ? (e.key.indexOf(":") < 0 && e.delete(), e.continue()) : t(!0)
+                        }, n.onerror = function() {
+                            t(!1)
+                        }
+                    } catch (e) {
+                        t(!1)
+                    }
+                })
+            })
+        }
+    },
+    AvatarStore = function() {
+        var e = null;
+        return {
+            load: function(e) {
+                var t = "avatars/" + e + ".jpg";
+                return new Promise(function(n) {
+                    var r = new Image;
+                    r.onload = function() {
+                        n(t)
+                    }, r.onerror = function() {
+                        (function(e) {
+                            return _getSharedDB().then(function(t) {
+                                return t ? new Promise(function(n) {
+                                    try {
+                                        var r = t.transaction("avatars", "readonly").objectStore("avatars").get(e);
+                                        r.onsuccess = function() {
+                                            n(r.result ? r.result.data : null)
+                                        }, r.onerror = function() {
+                                            n(null)
+                                        }
+                                    } catch (e) {
+                                        n(null)
+                                    }
+                                }) : null
+                            })
+                        })(e).then(function(e) {
+                            n(e)
+                        })
+                    }, r.src = t
+                })
+            },
+            save: function(t, n) {
+                var r = function(e, t) {
+                        return _dbPutById("avatars", e, t)
+                    }(t, n),
+                    o = function(t, n) {
+                        return (e ? Promise.resolve(e) : "function" != typeof showDirectoryPicker ? Promise.reject(new Error("浏览器不支持直接写文件，请使用 Chrome/Edge")) : showDirectoryPicker({
+                            mode: "readwrite"
+                        }).then(function(t) {
+                            return e = t, t
+                        })).then(function(e) {
+                            for (var r = n.split(","), o = r[0] && r[0].match(/:(.*?);/), a = o ? o[1] : "image/png", c = atob(r[1]), i = new Uint8Array(c.length), u = 0; u < c.length; u++) i[u] = c.charCodeAt(u);
+                            var s = new Blob([i], {
+                                type: a
+                            });
+                            return e.getFileHandle(t + ".jpg", {
+                                create: !0
+                            }).then(function(e) {
+                                return e.createWritable().then(function(e) {
+                                    return e.write(s).then(function() {
+                                        return e.close()
+                                    })
+                                })
+                            })
+                        })
+                    }(t, n).then(function() {
+                        console.log("头像已保存到 avatars/ 文件夹：" + t + ".jpg")
+                    }).catch(function(e) {
+                        console.warn("头像写入文件夹失败（需授权目录访问），降级为下载:", e.message);
+                        try {
+                            var r = document.createElement("a");
+                            r.href = n, r.download = t + ".jpg", document.body.appendChild(r), r.click(), document.body.removeChild(r)
+                        } catch (e) {
+                            console.warn("头像下载降级也失败:", e.message)
+                        }
+                    });
+                return Promise.all([r, o])
+            },
+            getAllDB: function() {
+                return _getSharedDB().then(function(e) {
+                    return e ? new Promise(function(t) {
+                        try {
+                            var n = e.transaction("avatars", "readonly").objectStore("avatars").getAll();
+                            n.onsuccess = function() {
+                                var e = {};
+                                (n.result || []).forEach(function(t) {
+                                    e[t.id] = t.data
+                                }), t(e)
+                            }, n.onerror = function() {
+                                t({})
+                            }
+                        } catch (e) {
+                            t({})
+                        }
+                    }) : {}
+                })
+            }
+        }
+    }();
