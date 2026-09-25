@@ -54,37 +54,16 @@ function _dbGet(e, t) {
     })
 }
 
-function _dbPut(e, t, n) {
-    return _getSharedDB().then(function(r) {
-        return new Promise(function(o) {
-            try {
-                var a = r.transaction(e, "readwrite");
-                a.objectStore(e).put({
-                    key: t,
-                    data: n,
-                    time: Date.now()
-                }), a.oncomplete = function() {
-                    o(!0)
-                }, a.onerror = function() {
-                    o(!1)
-                }
-            } catch (r) {
-                if ("config" === e) return void o(!1);
-                try {
-                    localStorage.setItem("idb_fb_" + e + "_" + t, JSON.stringify(n)), o(!0)
-                } catch (e) {
-                    o(!1)
-                }
-            }
-        })
-    }).catch(function() {
-        if ("config" === e) return Promise.resolve(!1);
+// Boolean write contract: true only after commit; the feature owns fallback/retry UI.
+function _dbPut(store, key, data) {
+    return _getSharedDB().then(db => new Promise(resolve => {
         try {
-            return localStorage.setItem("idb_fb_" + e + "_" + t, JSON.stringify(n)), Promise.resolve(!0)
-        } catch (e) {
-            return Promise.resolve(!1)
-        }
-    })
+            const tx = db.transaction(store, "readwrite");
+            tx.oncomplete = () => resolve(true);
+            tx.onabort = tx.onerror = () => resolve(false);
+            tx.objectStore(store).put({key, data, time: Date.now()});
+        } catch (_) {resolve(false);}
+    })).catch(() => false);
 }
 
 function _dbPutById(e, t, n) {
@@ -98,7 +77,7 @@ function _dbPutById(e, t, n) {
                     time: Date.now()
                 }), a.oncomplete = function() {
                     o(!0)
-                }, a.onerror = function() {
+                }, a.onabort = a.onerror = function() {
                     o(!1)
                 }
             } catch (e) {
@@ -121,7 +100,7 @@ var DataStore = {
                         var r = t.transaction("config", "readwrite");
                         r.objectStore("config").delete(e), r.oncomplete = function() {
                             n(!0)
-                        }, r.onerror = function() {
+                        }, r.onabort = r.onerror = function() {
                             n(!1)
                         }
                     } catch (e) {
@@ -206,7 +185,7 @@ var DataStore = {
                             })
                         })(e).then(function(e) {
                             n(e)
-                        })
+                        }).catch(function() { n(null); })
                     }, r.src = t
                 })
             },

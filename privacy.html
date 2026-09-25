@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>隐私与数据说明 | 颐和前端演示</title>
+  <meta name="description" content="说明颐和前端演示在浏览器中保存哪些数据，以及可选AI功能的数据传输。">
+  <link rel="stylesheet" href="site.css">
+  <script src="theme.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主内容</a>
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-hero"><div class="container"><span class="eyebrow">数据说明</span><h1>你的记录保存在哪里</h1><p>适用于当前静态前端演示版本 · 更新于2026年9月25日</p></div></section>
+    <section class="section"><div class="container privacy-copy">
+      <h2>本机保存</h2>
+      <p>演示登录状态、你填写的资料、提醒、行程、联系人、留言、打卡、收藏和模拟健康记录保存在当前网站的浏览器存储中。聊天和头像使用 IndexedDB；聊天写入失败时会尝试同一浏览器的 localStorage 备用存储。退出演示账号不会自动删除这些记录。</p>
+      <p>同一浏览器里的演示账号使用不同的数据名称，但这不构成安全隔离。请不要填写真实患者资料、敏感个人信息或把本产品用于真实照护。清理网站数据、使用隐私浏览或更换设备可能使本机记录丢失。</p>
+      <h2>可选 AI 功能</h2>
+      <p>不填写密钥时，聊天使用浏览器内的规则回复。填写 DeepSeek API Key 后，消息与最近最多12条历史消息会通过 HTTPS 直接发送至 api.deepseek.com；这些数据的处理同时受该服务提供方的条款约束。请勿在消息中输入隐私资料。</p>
+      <p>“发送当前模拟健康上下文”默认关闭。打开后，健康相关主题会额外发送模拟年龄、性别、慢性病、指标、用药和过敏信息；该上下文不主动附加姓名。聊天文字中自行输入的姓名不会自动脱敏。</p>
+      <p>密钥默认只用于本次页面会话。主动选择“加密记住”时，密钥经 WebCrypto 加密保存在 IndexedDB；这不能防止能够访问同一浏览器或同源脚本的人使用它。可以在“我的 → AI 设置”中清除密钥与配置。</p>
+      <h2>留言、预约与通知</h2>
+      <p>留言和行程不会提交给机构；“模拟求助”不会拨打电话。管理端预警也是模拟数据，知晓不代表问题已解决。短信、邮件、推送均未接入。</p>
+      <h2>删除与导出</h2>
+      <p>聊天可使用聊天工具栏导出，健康摘要可生成后下载。要删除此演示保存的全部数据，可在浏览器的网站设置中清除此网站的 localStorage、IndexedDB 和其他网站数据。此操作不可恢复，请先导出需要保留的记录。清理后内置的虚构演示数据仍会重新加载。</p>
+      <h2>托管服务</h2>
+      <p>页面由 GitHub Pages 托管。访问时浏览器会向托管方请求网页资源，托管方可能按其服务规则处理访问日志。本演示没有接入独立的统计分析服务。</p>
+      <p><a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener noreferrer">GitHub 隐私声明</a> · <a href="home.html">返回演示首页</a></p>
+    </div></section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="site.js"></script>
+</body>
+</html>

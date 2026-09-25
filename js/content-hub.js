@@ -37,10 +37,11 @@
     }
 
     function toggleBM(id) {
+        const previous = bookmarks.slice();
         var i = bookmarks.indexOf(id);
         if (i >= 0) bookmarks.splice(i, 1);
         else bookmarks.push(id);
-        saveJSON(BM_KEY, bookmarks);
+        if (!saveJSON(BM_KEY, bookmarks)) bookmarks=previous;
         return isBM(id);
     }
 
@@ -120,18 +121,6 @@
     }
 
     /* ---------- 5. 当前节气自动研判（数据驱动，非硬编码） ---------- */
-    function parseSolar(s) {
-        // 形如 "2/3 – 2/17" 或 "12/21 – 1/4"
-        var m = String(s).match(/(\d{1,2})\/(\d{1,2})\s*[–-]\s*(\d{1,2})\/(\d{1,2})/);
-        if (!m) return null;
-        return {
-            m1: +m[1],
-            d1: +m[2],
-            m2: +m[3],
-            d2: +m[4]
-        };
-    }
-
     function currentTermName() { return window.YiheCalendar?.current().term?.name || "全部"; }
 
     function filtered() {
@@ -186,12 +175,7 @@
         for (var i = 0; i < list.length; i++) html += cardHTML(list[i]);
         $list.innerHTML = html;
 
-        // 滚动入场
-        var cards = $list.querySelectorAll(".ch-card");
-        for (var j = 0; j < cards.length; j++) {
-            if (io) io.observe(cards[j]);
-            else cards[j].classList.add("in");
-        }
+
     }
 
     /* ---------- 7. 节气物语 ---------- */
@@ -248,15 +232,18 @@
         $dBmTxt.textContent = on ? "已收藏" : "收藏";
         $detail._id = a.id;
 
+        $detail._previousFocus=document.activeElement;
         $detail.classList.add("open");
         $detail.setAttribute("aria-hidden", "false");
         document.body.classList.add("ch-no-scroll");
+        $dClose.focus();
     }
 
     function closeDetail() {
         $detail.classList.remove("open");
         $detail.setAttribute("aria-hidden", "true");
         document.body.classList.remove("ch-no-scroll");
+        if($detail._previousFocus?.isConnected)$detail._previousFocus.focus();
     }
 
     function bmBtn(id, btn, card) {

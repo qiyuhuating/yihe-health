@@ -26,22 +26,26 @@ window.ChatModule = function(t) {
         i.doctor || (i.doctor = []), i.nurse || (i.nurse = []), i.family || (i.family = [])
     }
 
-    function c(e) {
-        return (e && i[e] ? DataStore.saveChat(e, t.USER_ID, i[e]) : DataStore.saveChats(i, t.USER_ID)).catch(function() {
+    function c() {
+        const key = userKey(KEYS.CHAT_V2, t.USER_ID);
+        const snapshot = JSON.stringify(i);
+        // Serialize snapshots so an older completion cannot remove a newer fallback.
+        c.pending = (c.pending || Promise.resolve()).then(async function() {
             try {
-                localStorage.setItem(userKey(KEYS.CHAT_V2,t.USER_ID), JSON.stringify(i))
-            } catch (t) {
-                Object.keys(i).forEach(function(t) {
-                    i[t] = i[t].slice(-10)
-                });
+                if (!await DataStore.saveChats(JSON.parse(snapshot), t.USER_ID)) throw new Error("write failed");
+                localStorage.removeItem(key);
+                return true;
+            } catch (_) {
                 try {
-                    localStorage.setItem(userKey(KEYS.CHAT_V2,t.USER_ID), JSON.stringify(i))
-                } catch (t) {
-                    showToast("聊天记录保存失败，请清理浏览器存储空间")
+                    localStorage.setItem(key, snapshot);
+                    return true;
+                } catch (_) {
+                    showToast("聊天记录保存失败，刷新会丢失未保存消息；请先导出聊天记录");
+                    return false;
                 }
             }
-            return null
-        })
+        });
+        return c.pending;
     }
 
     function s() {
@@ -62,16 +66,13 @@ window.ChatModule = function(t) {
                     b && (C = x, H(!1)), n = e;
                     var r = a[e];
                     if ($("#chatName").textContent = r ? r.name + " · " + r.role : "", $("#chatPanel").hidden = !1, window.innerWidth >= 769 ? s() : $("#msgContacts").hidden = !0, y(), !i[e] || 0 === i[e].length) {
-                        var cg = AIChat.getConfig(),
-                            ca = AIChat.PRESETS[cg.persona],
-                            cFromContact = !!(window.CONTACT_GREETINGS && window.CONTACT_GREETINGS[e]),
-                            c = "我是AI模拟助手，不是你的医生或家属。未配置密钥时使用本地规则回复，消息不会通知任何人。",
+                        var c = "我是AI模拟助手，不是你的医生或家属。未配置密钥时使用本地规则回复，消息不会通知任何人。",
                             hon;
                         if (c && t.currentPatient && t.currentPatient.name) {
                             hon = t.currentPatient.name.charAt(0) + ("女" === t.currentPatient.gender ? "奶奶" : "爷爷");
                             c = c.split("{{user}}").join(hon)
                         };
-                        c && R(e, c, e, null, !cFromContact && !!(ca && ca.greeting))
+                        c && R(e, c, e, null, false)
                     }
                     setTimeout(function() {
                         $("#chatInput").focus()
@@ -478,7 +479,8 @@ window.ChatModule = function(t) {
         }
     }), t.chat = {
         loadChatHistory: function() {
-            return DataStore.loadChats(t.USER_ID).then(function(data){i=data||{};r();}).catch(function(){i=loadJSON(userKey(KEYS.CHAT_V2,t.USER_ID),{});r();});
+            const backup=loadJSON(userKey(KEYS.CHAT_V2,t.USER_ID),null);
+            return DataStore.loadChats(t.USER_ID).then(function(data){i=backup||data||{};r();}).catch(function(){i=backup||{};r();showToast("聊天存储暂不可用，已尝试读取本机备用记录");});
         },
         renderContacts: s
     }, t.updateAIStatus = function(t) {

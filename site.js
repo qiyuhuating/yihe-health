@@ -132,7 +132,7 @@
             '<button class="tool-btn" id="themeToggle" type="button" aria-label="切换深色模式" aria-pressed="' + (isDark ? "true" : "false") + '">' +
             siteIcon(isDark ? "sun" : "moon", 20) + '</button>' +
             '</div>' +
-            '</nav></div></header>';
+            '</nav></div></header><div class="site-demo-notice" role="note">前端作品演示 · 机构名称、地址、电话、规模及评价均为展示样例，不提供真实预约或医疗服务。</div>';
     }
 
     function buildFooter() {
@@ -166,8 +166,8 @@
             '</div>' +
             '</div>' +
             '<div class="foot-bottom">' +
-            '<span>© ' + y + ' 颐和康养服务中心 · 浙ICP备 1800XXXX 号</span>' +
-            '<span><a href="about.html">关于我们</a><a href="guide.html">入住流程</a><a href="contact.html">隐私政策</a></span>' +
+            '<span>© ' + y + ' 颐和康养服务中心 · 前端演示作品</span>' +
+            '<span><a href="about.html">关于我们</a><a href="guide.html">入住流程</a><a href="privacy.html">隐私与数据说明</a></span>' +
             '</div>' +
             '</div></footer>';
     }
@@ -390,6 +390,8 @@
             var saveKey = form.getAttribute("data-form");
             form.addEventListener("submit", function(e) {
                 e.preventDefault();
+                const previousSuccess=form.parentElement.querySelector('.form-success');
+                if(previousSuccess)previousSuccess.classList.remove('show');
                 var ok = true;
                 form.querySelectorAll(".field").forEach(function(field) {
                     var input = field.querySelector("input,textarea,select");
@@ -435,29 +437,6 @@
     }
 
     /* ---------- 11. 结构化数据（JSON-LD，SEO） ---------- */
-    function injectJsonLd() {
-        if (document.getElementById("yihe-ld")) return;
-        var data = {
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "颐和·智慧康养",
-            "description": "杭州拱墅区医养结合品质养老机构，提供生活照料、医疗护理、康复理疗、营养膳食与精神关怀一体的长者服务。",
-            "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "杭州市拱墅区",
-                "addressRegion": "浙江省",
-                "streetAddress": "和睦街道颐和路 18 号"
-            },
-            "telephone": "+86-400-823-1998",
-            "url": "https://yihe.example.com"
-        };
-        var s = document.createElement("script");
-        s.type = "application/ld+json";
-        s.id = "yihe-ld";
-        s.textContent = JSON.stringify(data);
-        document.head.appendChild(s);
-    }
-
     /* ---------- 11b. 云纹分隔带（自动插入 section 之间） ---------- */
     function insertCloudDividers() {
         var secs = document.querySelectorAll("main > .section");
@@ -484,7 +463,6 @@
         bindFaq();
         bindNewsFilter();
         bindForms();
-        injectJsonLd();
         paintIcons(document);
         insertCloudDividers();
     }

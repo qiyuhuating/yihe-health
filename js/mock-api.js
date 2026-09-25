@@ -222,7 +222,26 @@
         } catch (t) {}
         M && clearInterval(M), w && clearInterval(w)
     });
-    var acknowledged = loadJSON("yihe-alert-ack", {});
+    const ackKey = "yihe-alert-ack-v3";
+    const newEventId = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    function activeAlerts() {
+        let changed = false;
+        const acknowledged = loadJSON(ackKey, {});
+        const alerts = [];
+        s.forEach(patient => {
+            for (const type of ["health", "fence"]) {
+                const active = !u[patient.id] && (type === "health" ? patient.status === "danger" : patient.fenceStatus === "out");
+                const key = type === "health" ? "_healthEventId" : "_fenceEventId";
+                if (!active) {if (patient[key]) {patient[key]=null;changed=true;}continue;}
+                if (!patient[key]) {patient[key]=newEventId();changed=true;}
+                alerts.push({id:patient.id,eventId:patient[key],name:patient.name,type,status:"danger",
+                    state:acknowledged[patient[key]] ? "acknowledged" : "triggered",
+                    alertMsg:type === "health" ? patient.alertMsg : "走失预警：居民可能已走失",place:y(patient.pos)});
+            }
+        });
+        if (changed) I();
+        return alerts;
+    }
     var H = {
         getPatients: async () => (await p(f(80, 200)), s.map(t => {
             var {
@@ -252,31 +271,16 @@
                 }
             } : null
         },
-        async getAlerts() {
-            await p(f(50, 150));
-            var t = s.filter(t => "danger" === t.status && !u[t.id]).map(t => ({
-                    id: t.id,
-                    name: t.name,
-                    type: "health",
-                    status: t.status,
-                    alertMsg: t.alertMsg,
-                    place: y(t.pos)
-                })),
-                e = s.filter(t => "out" === t.fenceStatus && !u[t.id]).map(t => ({
-                    id: t.id,
-                    name: t.name,
-                    type: "fence",
-                    status: "danger",
-                    alertMsg: "走失预警：居民可能已走失",
-                    place: y(t.pos)
-                }));
-            return t.concat(e).filter(alert => !acknowledged[alert.id + "|" + alert.type + "|" + alert.alertMsg])
-        },
-        async resolveAlert(id) {
-            const alerts = await H.getAlerts();
-            alerts.filter(alert => alert.id === id).forEach(alert => acknowledged[alert.id + "|" + alert.type + "|" + alert.alertMsg] = new Date().toISOString());
-            saveJSON("yihe-alert-ack", acknowledged);
-            return { success:true, acknowledged:true };
+        async getAlerts() { await p(f(50,150)); return activeAlerts(); },
+        async acknowledgeAlert(eventId) {
+            const event = activeAlerts().find(item => item.eventId === eventId);
+            if (!event) return {success:false,reason:"该预警已恢复或更新，请刷新列表"};
+            const acknowledged = loadJSON(ackKey, {});
+            acknowledged[eventId] = new Date().toISOString();
+            const activeIds = new Set(activeAlerts().map(item=>item.eventId));
+            Object.keys(acknowledged).forEach(id=>{if(!activeIds.has(id))delete acknowledged[id];});
+            if (!saveJSON(ackKey, acknowledged)) throw new Error("预警确认保存失败，请重试");
+            return {success:true,eventId,state:"acknowledged"};
         },
         async simulateDanger() {
             await p(100);
@@ -303,7 +307,7 @@
                 }, () => {
                     r.bloodSugar = f(2, t.bloodSugar.dangerLow)
                 }];
-            return n[Math.floor(Math.random() * n.length)](), r.status = "danger", r.alertMsg = e(r), I(), {
+            return r._healthEventId=newEventId(), n[Math.floor(Math.random() * n.length)](), r.status = "danger", r.alertMsg = e(r), I(), {
                 success: !0,
                 patient: {
                     id: r.id,
@@ -323,7 +327,7 @@
                 reason: "没有可模拟的居民"
             };
             var e = t[Math.floor(Math.random() * t.length)];
-            return e.pos.x = r.x1 + f(20, 50), e.pos.y = 565 + f(5, 30), e.fenceStatus = "out", e.moveTarget = null, I(), {
+            return e._fenceEventId=newEventId(), e.pos.x = r.x1 + f(20, 50), e.pos.y = 565 + f(5, 30), e.fenceStatus = "out", e.moveTarget = null, I(), {
                 success: !0,
                 patient: {
                     id: e.id,
@@ -334,7 +338,7 @@
         async simulateDangerFor(a) {
             await p(60);
             var r = s.find(t => t.id === a);
-            return r ? (r.heartRate = f(t.heartRate.dangerHigh, 135), r.status = "danger", r.alertMsg = e(r), {
+            return r ? (r._healthEventId=newEventId(), r.heartRate = f(t.heartRate.dangerHigh, 135), r.status = "danger", r.alertMsg = e(r), I(), {
                 success: !0,
                 patient: {
                     id: r.id,
@@ -464,7 +468,7 @@
                                 }(n)
                         }
                     }
-                }), I()
+                }), activeAlerts(), I()
             }
         }
     };

@@ -14,7 +14,11 @@
       else { const el=previous.get(dialog); if(el?.isConnected) el.focus(); }
     }).observe(dialog,{attributes:true,attributeFilter:['hidden']});
     dialog.addEventListener('keydown',event => {
-      if(event.key==='Escape' && !dialog.classList.contains('login-overlay')) { dialog.hidden=true; window.AudioUtils?.stopAlarm(); }
+      if(event.key==='Escape' && !dialog.classList.contains('login-overlay')) {
+        event.preventDefault();event.stopPropagation();
+        const request=new CustomEvent('dialog:request-close',{cancelable:true});
+        if(dialog.dispatchEvent(request)) dialog.hidden=true;
+      }
       if(event.key!=='Tab') return;
       const list=focusables(dialog); if(!list.length) {event.preventDefault();return;}
       if(event.shiftKey && document.activeElement===list[0]) {event.preventDefault();list.at(-1).focus();}

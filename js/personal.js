@@ -59,7 +59,7 @@
   on('sosOk',()=>close('sosOverlay'));
   on('btnSaveProfile',()=>{
     const age=Number(el('editAge').value),height=Number(el('editHeight').value),weight=Number(el('editWeight').value);
-    if(!el('editName').value.trim()||age<1||age>120||height<50||height>250||weight<10||weight>300)return showToast('请填写姓名及合理的年龄、身高、体重');
+    if(!el('editName').value.trim()||![age,height,weight].every(Number.isFinite)||!Number.isInteger(age)||age<1||age>120||height<50||height>250||weight<10||weight>300)return showToast('请填写姓名及合理的年龄、身高、体重');
     const next={name:el('editName').value.trim(),age,height,weight,bloodType:document.querySelector('[name="editBlood"]:checked')?.value||profile.bloodType};
     if(DemoDomain.write(profileKey,next)){profile=next;close('editOverlay');render(app.currentPatient);showToast('资料已保存到当前账号的本机记录');}
   });
@@ -87,9 +87,21 @@
   on('apptList',event=>{const button=event.target.closest('[data-delete-appt]');if(button){const list=loadJSON(appointmentKey,[]);list.splice(Number(button.dataset.deleteAppt),1);DemoDomain.write(appointmentKey,list);appointments();}});
   on('apptClose',()=>close('apptOverlay'));
   on('aiPersona',()=>el('customPromptGroup').hidden=el('aiPersona').value!=='custom','change');
-  on('btnSaveAI',async()=>{await AIChat.saveConfig(el('aiApiKey').value.trim(),el('aiPersona').value,el('aiCustomPrompt').value.trim(),el('aiPersistKey').checked,el('aiShareHealth').checked);close('aiOverlay');app.updateAIStatus(AIChat.isEnabled()?'online':'offline');showToast(AIChat.isEnabled()?'配置已保存，连接状态将在发送时确认':'已使用本地规则回复');});
+  on('btnSaveAI',async()=>{
+    const button=el('btnSaveAI');button.disabled=true;
+    try {
+      await AIChat.saveConfig(el('aiApiKey').value.trim(),el('aiPersona').value,el('aiCustomPrompt').value.trim(),el('aiPersistKey').checked,el('aiShareHealth').checked);
+      close('aiOverlay');app.updateAIStatus(AIChat.isEnabled()?'online':'offline');
+      showToast(AIChat.isEnabled()?'配置已保存，连接状态将在发送时确认':'已保存：使用本地规则回复');
+    } catch(error) {showToast(error.message || '配置保存失败，请重试');}
+    finally {button.disabled=false;}
+  });
   on('btnCancelAI',()=>close('aiOverlay'));
-  on('btnClearAI',async()=>{await AIChat.clear();el('aiApiKey').value='';el('aiShareHealth').checked=false;el('aiPersistKey').checked=false;app.updateAIStatus('offline');showToast('已清除当前账号的密钥与AI配置');});
+  on('btnClearAI',async()=>{
+    try {await AIChat.clear();el('aiApiKey').value='';el('aiShareHealth').checked=false;el('aiPersistKey').checked=false;showToast('已清除当前账号的密钥与AI配置');}
+    catch(error){showToast(error.message || '清除失败，请重试');}
+    finally {app.updateAIStatus(AIChat.isEnabled()?'online':'offline');}
+  });
   const actions={
     editProfile(){const p=app.currentPatient;if(!p)return;for(const [id,key]of [['editName','name'],['editAge','age'],['editHeight','height'],['editWeight','weight']])el(id).value=profile[key]||p[key]||'';document.querySelectorAll('[name="editBlood"]').forEach(x=>x.checked=x.value===(profile.bloodType||p.medicalHistory.bloodType||'').replace('型血',''));open('editOverlay');},
     trends:()=>app.reports.openTrends(),healthReport:()=>tab('health'),medReminder:()=>app.openReminder(),emergency,

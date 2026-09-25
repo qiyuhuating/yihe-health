@@ -1,0 +1,24 @@
+name: Frontend checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements-test.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: python tests/check_static.py
+      - run: python -m unittest discover -s tests -v

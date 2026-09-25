@@ -22,7 +22,10 @@ window.CheckinModule = function(e) {
                 n.addEventListener("click", function() {
                     c();
                     var n = this.dataset.slot;
-                    t[l] || (t[l] = {}), t[l][n] = t[l][n] ? null : nowTime(), saveJSON(userKey(KEYS.CHECKIN, e.USER_ID), t), Audit.log("服药打卡", n), i(), a()
+                    const next=JSON.parse(JSON.stringify(t));
+                    next[l] ||= {};next[l][n]=next[l][n] ? null : nowTime();
+                    if (!saveJSON(userKey(KEYS.CHECKIN, e.USER_ID), next)) return;
+                    t=next;Audit.log("服药打卡", n);i();a();
                 })
             })
         }

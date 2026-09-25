@@ -698,3 +698,5 @@ img.img-fallback{
   .reveal{opacity:1;transform:none}
   html.js .fade{opacity:1;transform:none}
 }
+
+.site-demo-notice{padding:10px 20px;text-align:center;background:#ede8db;color:#535a50;font-size:14px;line-height:1.6;overflow-wrap:anywhere}

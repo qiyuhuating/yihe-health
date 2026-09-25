@@ -34,17 +34,8 @@ window.AdminViews = function(e) {
                     i.textContent = r.slice(0, 3).join("、") + (r.length > 3 ? " 等 " + r.length + " 人" : ""), a.hidden = !1
                 } else a.hidden = !0;
             var s = t.out;
-            $("#mapFoot").textContent = "在线 " + e.length + " 人" + (s ? " · ⚠ " + s + " 人越界" : "") + " · 更新于 " + (new Date).toLocaleTimeString("zh-CN"), e.filter(function(e) {
-                return "out" === e.fenceStatus
-            }).forEach(function(e) {
-                AlertSystem.show({
-                    id: e.id,
-                    name: e.name,
-                    type: "fence",
-                    alertMsg: "走失预警：居民可能已走失",
-                    place: e.place
-                })
-            })
+            $("#mapFoot").textContent = "在线 " + e.length + " 人" + (s ? " · ⚠ " + s + " 人越界" : "") + " · 更新于 " + (new Date).toLocaleTimeString("zh-CN");
+            return API.getAlerts().then(alerts=>AlertSystem.sync(alerts))
         }).catch(function(e) {
             console.error("[Admin] 地图数据加载失败:", e.message);
             var t = getEl("mapFoot");

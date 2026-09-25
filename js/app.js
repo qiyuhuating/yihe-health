@@ -52,27 +52,11 @@
         })
     })(m[g]);
 
-    function p() {
-        var e = "";
-        try {
-            var t = sessionStorage.getItem("hm-user");
-            t && (e = JSON.parse(t).username || "")
-        } catch (e) {}
-        return "hm-resolved-" + (e || "admin")
-    }
-
-    function f() {
-        try {
-            return parseInt(sessionStorage.getItem(p()) || "0", 10) || 0
-        } catch (e) {
-            return 0
-        }
-    }
     var v = "",
         h = null;
 
     function S() {
-        "summary" === e.currentView && Promise.all([API.getPatients(), API.getAlerts()]).then(function(t) {
+        return "summary" === e.currentView && Promise.all([API.getPatients(), API.getAlerts()]).then(function(t) {
             ! function(e) {
                 var t = {
                     normal: 0,
@@ -94,24 +78,15 @@
                 if (t) {
                     var n = getEl("alertStats");
                     if (n) {
-                        var a = e.length,
-                            i = f(),
-                            s = a + i;
-                        n.textContent = "待处理 " + a + " · 已处理 " + i + " · 处理率 " + (s ? Math.round(i / s * 100) : 0) + "%"
+                        const pending=e.filter(item=>item.state==='triggered').length;
+                        n.textContent='待知晓 '+pending+' · 已知晓/处理中 '+(e.length-pending)+' · 仅为模拟预警';
                     }
-                    e.length ? (t.innerHTML = e.map(function(e) {
-                        return '<div class="alert-item danger"><span class="alert-icon">🚨</span><div class="alert-info"><div class="alert-name">' + escapeHtml(e.name) + '</div><div class="alert-msg">' + escapeHtml(e.alertMsg) + '</div></div><button class="btn btn-sm" data-resolve="' + e.id + '">处理</button></div>'
-                    }).join(""), t.querySelectorAll("[data-resolve]").forEach(function(e) {
-                        e.addEventListener("click", function(t) {
-                            t.stopPropagation(), Audit.log("处理预警", "#" + parseInt(e.dataset.resolve, 10)),
-                                function() {
-                                    var e = f() + 1;
-                                    try {
-                                        sessionStorage.setItem(p(), String(e))
-                                    } catch (e) {}
-                                }(), API.resolveAlert(parseInt(e.dataset.resolve, 10)).then(S)
-                        })
-                    })) : t.innerHTML = '<p class="empty">暂无危险预警</p>'
+                    t.innerHTML=e.length ? e.map(item => '<div class="alert-item danger"><span class="alert-icon" aria-hidden="true">!</span><div class="alert-info"><div class="alert-name">'+escapeHtml(item.name)+'</div><div class="alert-msg">'+escapeHtml(item.alertMsg)+'</div><small>'+(item.state==='acknowledged'?'已知晓 · 异常仍在持续':'待知晓')+'</small></div>'+(item.state==='triggered'?'<button class="btn btn-sm" data-ack-event="'+escapeHtml(item.eventId)+'">已知晓</button>':'')+'</div>').join('') : '<p class="empty">暂无危险预警</p>';
+                    t.querySelectorAll('[data-ack-event]').forEach(button=>button.addEventListener('click',async()=>{
+                        button.disabled=true;
+                        try {const result=await API.acknowledgeAlert(button.dataset.ackEvent);if(!result.success)throw new Error(result.reason);Audit.log('知晓模拟预警',button.dataset.ackEvent);await S();}
+                        catch(error){showToast(error.message);button.disabled=false;}
+                    }));
                 }
             }(t[1]),
             function(t) {
@@ -154,18 +129,7 @@
                         })
                     }
                 }
-            }(t[0]), $("#lastUpdate").textContent = "更新于 " + (new Date).toLocaleTimeString("zh-CN"), t[0].filter(function(e) {
-                return !e.admitted && ("danger" === e.status || "out" === e.fenceStatus)
-            }).forEach(function(e) {
-                var t = "out" === e.fenceStatus;
-                AlertSystem.show({
-                    id: e.id,
-                    name: e.name,
-                    type: t ? "fence" : "health",
-                    alertMsg: t ? "走失预警：居民可能已走失" : e.alertMsg,
-                    place: e.place
-                })
-            })
+            }(t[0]), $("#lastUpdate").textContent = "更新于 " + (new Date).toLocaleTimeString("zh-CN"), AlertSystem.sync(t[1])
         }).catch(function(e) {
             console.error("[Admin] 概览数据加载失败:", e.message);
             var t = getEl("lastUpdate");
@@ -205,6 +169,8 @@
         }), WSClient.on("alert", function(e) {
             AlertSystem.show({
                 id: e.id,
+                eventId: e.eventId,
+                state: e.state,
                 name: e.name,
                 type: e.type,
                 alertMsg: e.alertMsg,

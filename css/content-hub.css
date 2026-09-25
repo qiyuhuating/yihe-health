@@ -200,11 +200,7 @@
 @keyframes chShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 @media(prefers-reduced-motion:reduce){.ch-skel-line{animation:none}}
 
-/* ---------- 6. 滚动入场 ---------- */
-.ch-card{opacity:0;transform:translateY(14px)}
-.ch-card.in{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
-@media(prefers-reduced-motion:reduce){.ch-card{opacity:1;transform:none;animation:none}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ch-card{opacity:1;transform:none}
 
 /* ---------- 7. 节气浏览条（首页联动入口） ---------- */
 .ch-season-note{

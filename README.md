@@ -16,7 +16,7 @@
 
 ## 技术说明
 
-- **数据**：全部为内置模拟数据（`data/` 目录），刷新即重置。
+- **数据**：健康指标来自内置模拟数据（`data/`），模拟状态和用户输入保存在当前浏览器，部分数据刷新后仍保留。清理网站数据会删除本机记录。
 - **AI 对话**：需在界面设置中填入使用者自己的 DeepSeek API Key。Key 通过 WebCrypto
   以 AES-GCM 加密后存于浏览器 IndexedDB，直接请求 `api.deepseek.com`，不经过第三方服务器。
   不填 Key 时自动降级为本地规则回复。
@@ -31,6 +31,18 @@ python -m http.server 8000
 ```
 
 直接双击 `index.html` 也能看，但部分浏览器会限制 `file://` 下的模块加载，建议起本地服务。
+
+## 前端检查与交付
+
+```bash
+python -m pip install -r requirements-test.txt
+python -m playwright install chromium
+python tests/check_static.py
+python -m unittest discover -s tests -v
+```
+
+语法检查需要 Node.js。浏览器回归使用独立的本地服务与临时浏览器，不操作线上数据。
+GitHub Actions 会检查 main 推送和 PR。接口字段、失败状态及验收方式见 [FRONTEND-HANDOFF.md](FRONTEND-HANDOFF.md)。本机存储与可选 AI 的数据说明见 [privacy.html](privacy.html)。
 
 ## 部署
 

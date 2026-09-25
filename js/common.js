@@ -32,6 +32,8 @@ function nowTime() {
 function showToast(msg) {
     var t = document.createElement("div");
     t.className = "error-toast";
+    t.setAttribute("role", "status");
+    t.setAttribute("aria-live", "polite");
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function() {
@@ -73,9 +75,11 @@ function loadJSON(key, def) {
 function saveJSON(key, val) {
     try {
         localStorage.setItem(key, JSON.stringify(val));
+        return true;
     } catch (e) {
         console.warn('localStorage write failed:', key, e.message);
         showToast('保存失败，请检查浏览器存储空间');
+        return false;
     }
 }
 
@@ -83,7 +87,7 @@ function saveJSON(key, val) {
 function userKey(base, uid) {
     return base + '-' + (uid == null || uid === '' ? 0 : uid);
 }
-/* 读取按用户存储的数据：优先 per-user key；无则迁移旧全局 key（一次性，迁移后删除旧 key），保证老数据不丢 */
+/* Only read records whose owner is known; never assign legacy global records to a user. */
 function loadUserData(base, uid, def) { return loadJSON(userKey(base, uid), def); }
 
 /* 消息格式化：处理换行 + 代码块 ``` (必须在 escapeHtml 之前调用) */

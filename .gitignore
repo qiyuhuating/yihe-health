@@ -4,3 +4,8 @@ Thumbs.db
 _verify/
 _src-patches/
 _tools/
+
+__pycache__/
+*.pyc
+.venv/
+test-results/

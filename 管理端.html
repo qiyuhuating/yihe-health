@@ -79,6 +79,7 @@
   </ul>
 </nav>
 
+<p class="admin-demo-notice" role="note">前端演示 · 指标、位置和预警均为模拟，未接入设备或通知服务。</p>
 <main class="main" id="main-content">
 
   <!-- ===== 概览 ===== -->
@@ -186,7 +187,7 @@
       <div class="fg"><div class="fg-tit">日期</div><input type="date" id="admissionDate" class="input input-full"></div>
       <div class="fg"><div class="fg-tit">医院</div><input type="text" id="admissionHospital" class="input input-full" placeholder="例如：市第一中心医院" maxlength="100"></div>
       <div class="fg"><div class="fg-tit">原因</div><textarea id="admissionReason" class="input textarea" rows="3" placeholder="简述入院原因…" maxlength="500"></textarea></div>
-      <div class="fg"><label class="check"><input type="checkbox" id="admissionNotify" checked disabled aria-describedby="channelNote"> 同时短信通知医生</label></div>
+      <div class="fg"><label class="check"><input type="checkbox" id="admissionNotify" disabled aria-describedby="channelNote"> 短信通知未接入</label></div>
       <button class="btn btn-primary btn-full" id="btnAdmit">确认入院</button>
       <p class="hint" id="admissionHint"></p>
       <div class="fg mt-24"><div class="fg-tit">入院记录</div><div id="admissionRecords"><p class="empty">暂无</p></div></div>
@@ -235,7 +236,7 @@
     <p class="modal-place" id="modalPlace"></p>
     <p class="modal-urgent" id="modalUrgent">请立即联系医生确认情况</p>
     <p class="modal-queue" id="modalQueue" hidden></p>
-    <button class="btn btn-danger btn-full" id="btnSendSMS"><img src="" data-admin-icon="phone" width="16" height="16" alt="" class="ico ico-white">发送短信通知医生</button>
+    <button class="btn btn-danger btn-full" id="btnSendSMS" disabled aria-describedby="modalChannelNote"><img src="" data-admin-icon="phone" width="16" height="16" alt="" class="ico ico-white">短信渠道未接入</button><p id="modalChannelNote" class="data-note">这里只记录本机知晓状态，不会通知医生或家属。</p>
     <button class="btn btn-ghost btn-full mt-8" id="btnAcknowledge">已知晓，正在处理</button>
   </div>
 </div>
