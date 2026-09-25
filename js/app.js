@@ -179,9 +179,7 @@
         }), WSClient.on("alerts", function() {
             "summary" === e.currentView && S()
         }), WSClient.on("connected", function() {
-            console.log("[admin] WS 已连接（仅实时预警）")
         }), WSClient.on("fallback", function() {}), WSClient.on("disconnected", function() {
-            console.log("[admin] WS 已断开，管理端继续使用 mock 数据源")
         }), API.onExternalSync(function() {
             "summary" === e.currentView ? S() : "map" === e.currentView && e.refreshMap && e.refreshMap()
         }),

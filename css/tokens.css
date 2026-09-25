@@ -1,4 +1,4 @@
-:root,body.light{
+:root,body.light{/* color-mix 回退：不支持 color-mix() 的浏览器使用以下静态值 */--cm-1:rgb(246 242 232 / 0.86);--cm-2:rgb(246 242 232 / 0.94);--cm-3:rgb(239 233 224);--cm-4:rgb(223 229 226);--cm-5:rgb(34 26 13);--cm-6:rgb(12 20 16);--cm-7:rgb(240 235 226);--cm-8:rgb(225 230 228);--cm-9:rgb(246 242 232 / 0.4);--cm-10:rgb(231 235 233);--cm-11:rgb(185 198 191);--cm-12:rgb(11 18 15);--cm-13:rgb(22 36 29);--cm-14:rgb(255 255 255 / 0.9);--cm-15:rgb(227 229 221);--cm-16:rgb(244 233 226);--cm-17:rgb(38 64 51);--cm-18:rgb(246 242 232 / 0.88);--cm-19:rgb(54 91 73 / 0.14);--cm-20:rgb(54 91 73 / 0.4);--cm-21:rgb(180 35 24 / 0.14);--cm-22:rgb(180 35 24 / 0.4);--cm-23:rgb(54 91 73 / 0.12);
  --bg:#F6F2E8;--bg-2:#EDE8DB;--card:#FFFCF5;--card-tint:#F0EBDD;--surface:#FFFCF5;--surface-2:#F0EBDD;
  --t1:#292B26;--t2:#535A50;--t3:#62675D;--ink:#292B26;--ink-2:#535A50;--ink-3:#62675D;
  --sep:#D9D8C9;--line:#D9D8C9;--hover:#EBEFDF;--menu-bg:#FFFCF5;--card-secondary:#F0EBDD;
@@ -10,7 +10,7 @@
  --font:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;--font-num:system-ui,sans-serif;
  --font-serif:"Noto Serif SC","Songti SC","SimSun",serif;--font-brush:var(--font-serif);
 }
-body.dark,:root[data-theme="dark"]{
+body.dark,:root[data-theme="dark"],:root[data-theme="dark"] body{--cm-1:rgb(25 31 27 / 0.86);--cm-2:rgb(25 31 27 / 0.94);--cm-3:rgb(239 233 224);--cm-4:rgb(241 248 243);--cm-5:rgb(34 26 13);--cm-6:rgb(37 47 40);--cm-7:rgb(240 235 226);--cm-8:rgb(242 249 244);--cm-9:rgb(25 31 27 / 0.4);--cm-10:rgb(244 250 246);--cm-11:rgb(224 240 229);--cm-12:rgb(33 42 36);--cm-13:rgb(67 85 72);--cm-14:rgb(36 31 24 / 0.9);--cm-15:rgb(55 68 59);--cm-16:rgb(57 57 49);--cm-17:rgb(117 148 127);--cm-18:rgb(25 31 27 / 0.88);--cm-19:rgb(167 212 181 / 0.14);--cm-20:rgb(167 212 181 / 0.4);--cm-21:rgb(255 172 160 / 0.14);--cm-22:rgb(255 172 160 / 0.4);--cm-23:rgb(167 212 181 / 0.12);
  --bg:#191F1B;--bg-2:#212922;--card:#252D27;--card-tint:#303931;--surface:#252D27;--surface-2:#303931;
  --t1:#F5F1E7;--t2:#DDDCCF;--t3:#B8C1B3;--ink:#F5F1E7;--ink-2:#DDDCCF;--ink-3:#B8C1B3;
  --sep:#4E5B4D;--line:#4E5B4D;--hover:#354336;--menu-bg:#252D27;--card-secondary:#303931;

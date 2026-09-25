@@ -14,7 +14,7 @@
 }
 .ch-seal{
   width:46px;height:46px;flex:0 0 auto;border-radius:8px;
-  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
+  background:var(--cm-17);background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
   color:#FDF8EF;display:grid;place-items:center;
   font-family:var(--font-brush);font-size:26px;line-height:1;font-weight:700;
   box-shadow:var(--shadow),inset 0 0 0 1px rgba(255,255,255,.25);
@@ -35,8 +35,8 @@
 /* ---------- 1. 搜索 ---------- */
 .ch-searchbar{
   position:sticky;top:0;z-index:30;
-  background:color-mix(in srgb,var(--bg) 88%,transparent);
-  backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px);
+  background:var(--cm-18);background:color-mix(in srgb,var(--bg) 88%,transparent);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1)blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px);
   padding:10px 0 12px;margin:-4px 0 14px;
 }
 .ch-search{
@@ -73,11 +73,11 @@
 .ch-chip:active{transform:scale(.95)}
 .ch-chip .dot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.7}
 .ch-chip.active{
-  background:color-mix(in srgb,var(--blue) 14%,transparent);
-  color:var(--blue);border-color:color-mix(in srgb,var(--blue) 40%,transparent);
+  background:var(--cm-19);background:color-mix(in srgb,var(--blue) 14%,transparent);
+  color:var(--blue);border-color:var(--cm-20);border-color:color-mix(in srgb,var(--blue) 40%,transparent);
   font-weight:600;
 }
-.ch-chip.fav.active{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.ch-chip.fav.active{background:var(--cm-21);background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);border-color:var(--cm-22);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
 .ch-row-label{font-size:.72rem;color:var(--t3);letter-spacing:.16em;margin:2px 4px 0}
 
 /* 分类色彩（与全站 token 呼应） */
@@ -102,7 +102,7 @@
 .ch-card-top{display:flex;align-items:center;gap:8px}
 .ch-tag{
   font-size:.7rem;letter-spacing:.1em;padding:3px 10px;border-radius:999px;
-  background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);font-weight:600;
+  background:var(--cm-23);background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);font-weight:600;
 }
 .ch-term{font-size:.72rem;color:var(--t3);letter-spacing:.06em;margin-left:auto}
 .ch-card h3{font-family:var(--font-brush);font-size:1.08rem;color:var(--t1);letter-spacing:.03em;line-height:1.4;font-weight:700}
@@ -117,13 +117,13 @@
 }
 .ch-bm:active{transform:scale(.9)}
 .ch-bm img{width:18px;height:18px}
-.ch-bm.on{background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.ch-bm.on{background:var(--cm-21);background:color-mix(in srgb,var(--red) 14%,transparent);border-color:var(--cm-22);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
 .ch-bm.on img{filter:none}
 
 /* ---------- 4. 详情滑层 ---------- */
 .ch-detail{
   position:fixed;inset:0;z-index:60;background:rgba(29,24,19,.5);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)blur(8px);-webkit-backdrop-filter:blur(8px);
   display:flex;justify-content:flex-end;opacity:0;visibility:hidden;
   transition:opacity .28s ease,visibility .28s;
 }
@@ -167,7 +167,7 @@
   transition:background .18s,transform .12s,border-color .18s;
 }
 .ch-detail-ft .ch-bm-lg:active{transform:scale(.98)}
-.ch-detail-ft .ch-bm-lg.on{background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 40%,transparent);color:var(--red)}
+.ch-detail-ft .ch-bm-lg.on{background:var(--cm-21);background:color-mix(in srgb,var(--red) 14%,transparent);border-color:var(--cm-22);border-color:color-mix(in srgb,var(--red) 40%,transparent);color:var(--red)}
 .ch-detail-ft .ch-bm-lg img{width:20px;height:20px}
 
 /* ---------- 5. 空 / 加载态 ---------- */
@@ -178,7 +178,7 @@
 .ch-empty.show{display:flex}
 .ch-empty .ic{
   width:72px;height:72px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;
-  background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
+  background:var(--cm-17);background:linear-gradient(160deg,var(--blue),color-mix(in srgb,var(--blue) 70%,#000));
   color:#FDF8EF;font-family:var(--font-brush);font-size:2rem;font-weight:700;
   box-shadow:var(--shadow);
 }
@@ -186,7 +186,7 @@
 .ch-empty p{max-width:30ch;line-height:1.8;font-size:.88rem}
 .ch-empty button{
   margin-top:18px;padding:11px 22px;border:1px solid var(--blue);border-radius:var(--rs);
-  background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);
+  background:var(--cm-23);background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);
   font-family:var(--font);font-size:.86rem;letter-spacing:.06em;cursor:pointer;
 }
 .ch-skeleton{display:grid;gap:14px}

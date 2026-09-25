@@ -2,14 +2,14 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data: https://fonts.gstatic.com; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <script src="theme.js" defer></script>
   <meta name="description" content="颐和·智慧康养 养生内容中心：顺时养生科普、节气物候、饮食起居情志运动经络，支持搜索与收藏">
   <meta name="theme-color" content="#F5EFE2" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1D1813" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239E3B2E%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%223%22/><text x=%2212%22 y=%2217%22 text-anchor=%22middle%22 font-size=%2212%22 fill=%22%239E3B2E%22 font-family=%22serif%22>颐</text></svg>">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>养生内容中心 · 颐和·智慧康养</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/xz.css">
   <link rel="stylesheet" href="css/content-hub.css">
@@ -19,6 +19,7 @@
 <a href="#main-content" class="skip-link">跳到主要内容</a>
 
 <main class="ch-page" id="main-content">
+  <h1 class="sr-only">养生内容中心</h1>
   <!-- 顶栏 -->
   <header class="ch-topbar">
     <div class="ch-seal" aria-label="颐和">颐</div>
@@ -32,9 +33,9 @@
   <!-- 搜索（吸顶） -->
   <div class="ch-searchbar">
     <div class="ch-search">
-      <img src="" data-icon="search" width="20" height="20" alt="">
+      <img src="" data-icon="search" width="20" height="20" alt="" loading="lazy" decoding="async">
       <input type="search" id="chSearch" placeholder="搜索养生方法、节气、关键词…" aria-label="搜索养生内容" autocomplete="off">
-      <button class="ch-search-clear" id="chClear" aria-label="清除搜索"><img src="" data-icon="close" width="16" height="16" alt=""></button>
+      <button class="ch-search-clear" id="chClear" aria-label="清除搜索"><img src="" data-icon="close" width="16" height="16" alt="" loading="lazy" decoding="async"></button>
     </div>
   </div>
 
@@ -74,7 +75,7 @@
   <div class="ch-detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
     <div class="ch-detail-hd">
       <span class="ch-tag" id="detailTag"></span>
-      <button class="ch-close" id="detailClose" aria-label="关闭详情"><img src="" data-icon="close" width="18" height="18" alt=""></button>
+      <button class="ch-close" id="detailClose" aria-label="关闭详情"><img src="" data-icon="close" width="18" height="18" alt="" loading="lazy" decoding="async"></button>
     </div>
     <div class="ch-detail-body">
       <h2 id="detailTitle"></h2>
@@ -83,14 +84,14 @@
       <div class="ch-detail-tags" id="detailTags"></div>
     </div>
     <div class="ch-detail-ft">
-      <button class="ch-bm-lg" id="detailBm" type="button"><img src="" data-icon="heart" width="20" height="20" alt=""> <span id="detailBmTxt">收藏</span></button>
+      <button class="ch-bm-lg" id="detailBm" type="button"><img src="" data-icon="heart" width="20" height="20" alt="" loading="lazy" decoding="async"> <span id="detailBmTxt">收藏</span></button>
     </div>
   </div>
 </div>
 
-<script src="js/common.js"></script>
-<script src="data/content.js"></script>
-<script src="data/terms.js"></script>
-<script src="js/solarlunar.min.js"></script><script src="js/calendar.js"></script><script src="js/content-hub.js"></script><script src="js/ui.js"></script>
+<script src="js/common.js" defer></script>
+<script src="data/content.js" defer></script>
+<script src="data/terms.js" defer></script>
+<script src="js/solarlunar.min.js" defer></script><script src="js/calendar.js" defer></script><script src="js/content-hub.js" defer></script><script src="js/ui.js" defer></script>
 </body>
 </html>

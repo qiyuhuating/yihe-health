@@ -161,7 +161,10 @@ var DataStore = {
     AvatarStore = function() {
         var e = null;
         return {
-            load: function(e) {
+            // 说明：avatars/ 是可选的「静态头像目录」，本仓库不包含该目录。
+            // 以往无条件用 new Image() 探测该路径，会产生必然的 404（实测每次加载 13 次）。
+            // 现在改为：默认只查 IndexedDB；仅当调用方显式传 forceFileProbe 时才做文件探测。
+            load: function(e, forceFileProbe) {
                 var t = "avatars/" + e + ".jpg";
                 return new Promise(function(n) {
                     var r = new Image;
@@ -186,7 +189,8 @@ var DataStore = {
                         })(e).then(function(e) {
                             n(e)
                         }).catch(function() { n(null); })
-                    }, r.src = t
+                    };
+                    forceFileProbe ? (r.src = t) : r.onerror()
                 })
             },
             save: function(t, n) {
@@ -214,7 +218,6 @@ var DataStore = {
                             })
                         })
                     }(t, n).then(function() {
-                        console.log("头像已保存到 avatars/ 文件夹：" + t + ".jpg")
                     }).catch(function(e) {
                         console.warn("头像写入文件夹失败（需授权目录访问），降级为下载:", e.message);
                         try {

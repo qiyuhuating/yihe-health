@@ -2,11 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>隐私与数据说明 | 颐和前端演示</title>
   <meta name="description" content="说明颐和前端演示在浏览器中保存哪些数据，以及可选AI功能的数据传输。">
   <link rel="stylesheet" href="site.css">
-  <script src="theme.js"></script>
+  <script src="theme.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主内容</a>
@@ -31,6 +32,6 @@
     </div></section>
   </main>
   <div id="site-footer"></div>
-  <script src="site.js"></script>
+  <script src="site.js" defer></script>
 </body>
 </html>

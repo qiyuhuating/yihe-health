@@ -9,3 +9,13 @@ __pycache__/
 *.pyc
 .venv/
 test-results/
+
+# 本地审查与开发产物（不进仓库）
+_backup/
+_shots/
+run_tests_local.py
+_audit_*.py
+_audit_out*.txt
+审核报告_*.md
+体检报告_*.md
+全维度审核报告_*.md

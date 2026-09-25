@@ -2,12 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data: https://fonts.googleapis.cn https://fonts.loli.net https://fonts.gstatic.com; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <script src="theme.js" defer></script>
   <meta name="description" content="颐和·智慧康养，智慧养老服务平台，二十四节气新中式首页">
   <meta name="theme-color" content="#F5EFE2" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1D1813" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239E3B2E%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%223%22/><text x=%2212%22 y=%2217%22 text-anchor=%22middle%22 font-size=%2212%22 fill=%22%239E3B2E%22 font-family=%22serif%22>颐</text></svg>">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>颐和·智慧康养</title>
 <link rel="preload" href="css/common.css" as="style">
   <link rel="stylesheet" href="css/common.css">
@@ -33,9 +34,9 @@
         <p id="healthSummary" class="health-summary">查看你的模拟健康记录</p>
         <div class="vitals-row">
           <div class="vital-card" id="heartCard"><div class="vital-icon"><img data-icon="heart" width="24" height="24" alt=""></div><div class="vital-label">心率 <span class="vital-unit">bpm</span></div><div class="vital-number" id="heartRateVal">--</div><div class="vital-status">待加载</div></div>
-          <div class="vital-card" id="oxygenCard"><div class="vital-icon"><img data-icon="oxygen" width="24" height="24" alt=""></div><div class="vital-label">血氧 <span class="vital-unit">%</span></div><div class="vital-number" id="oxygenVal">--</div><div class="vital-status">待加载</div></div>
-          <div class="vital-card" id="tempCard"><div class="vital-icon"><img data-icon="temp" width="24" height="24" alt=""></div><div class="vital-label">体温 <span class="vital-unit">°C</span></div><div class="vital-number" id="tempVal">--</div><div class="vital-status">待加载</div></div>
-          <div class="vital-card" id="bpCard"><div class="vital-icon"><img data-icon="bp" width="24" height="24" alt=""></div><div class="vital-label">血压 <span class="vital-unit">mmHg</span></div><div class="vital-number" id="bpVal">--</div><div class="vital-status">待加载</div></div>
+          <div class="vital-card" id="oxygenCard"><div class="vital-icon"><img data-icon="oxygen" width="24" height="24" alt="" loading="lazy" decoding="async"></div><div class="vital-label">血氧 <span class="vital-unit">%</span></div><div class="vital-number" id="oxygenVal">--</div><div class="vital-status">待加载</div></div>
+          <div class="vital-card" id="tempCard"><div class="vital-icon"><img data-icon="temp" width="24" height="24" alt="" loading="lazy" decoding="async"></div><div class="vital-label">体温 <span class="vital-unit">°C</span></div><div class="vital-number" id="tempVal">--</div><div class="vital-status">待加载</div></div>
+          <div class="vital-card" id="bpCard"><div class="vital-icon"><img data-icon="bp" width="24" height="24" alt="" loading="lazy" decoding="async"></div><div class="vital-label">血压 <span class="vital-unit">mmHg</span></div><div class="vital-number" id="bpVal">--</div><div class="vital-status">待加载</div></div>
         </div>
         <div class="home-actions"><button class="btn btn-primary" data-home-action="medReminder">设置本机提醒</button><button class="btn" data-home-action="emergency">联系人备忘</button><button class="btn sos-action" id="btnHomeSOS">模拟求助</button></div>
       </section>
@@ -44,7 +45,7 @@
         <section class="home-hero" aria-label="当季节气文化"><div><span class="eyebrow">四时有序 · 当季节气</span><h2 class="home-term">节气</h2><p class="home-meta"></p><p class="home-season"></p><p class="home-note"></p><a href="yangheng.html" class="text-link">读一篇养生小记 →</a></div><div class="home-roundel" aria-hidden="true"><span>养</span></div></section>
       </div>
       <section class="home-food"><div class="sec-hd"><h2 id="foodHeading">四时食养</h2><span class="data-note">传统饮食文化 · 非个体处方</span></div><div class="food-grid" id="seasonFoods"></div></section>
-      <div class="home-grid"><section class="steps-card"><div class="steps-header"><h2>日常活动</h2><span class="data-note" id="stepsUpdateTime">演示样本</span></div><div class="steps-body"><svg class="steps-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="stepsRing" cx="50" cy="50" r="42"/></svg><div class="steps-center"><div id="stepsCount" class="steps-count">--</div><div class="steps-goal">步 / 示例8000步</div></div></div><div class="steps-bar-wrap"><div class="steps-bar" id="stepsBar"></div></div></section><section class="loc-card"><img data-icon="pin" width="28" height="28" alt=""><h2 id="locPlace">--</h2><p id="locTime" class="data-note"></p></section></div>
+      <div class="home-grid"><section class="steps-card"><div class="steps-header"><h2>日常活动</h2><span class="data-note" id="stepsUpdateTime">演示样本</span></div><div class="steps-body"><svg class="steps-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle class="ring-fill" id="stepsRing" cx="50" cy="50" r="42"/></svg><div class="steps-center"><div id="stepsCount" class="steps-count">--</div><div class="steps-goal">步 / 示例8000步</div></div></div><div class="steps-bar-wrap"><div class="steps-bar" id="stepsBar"></div></div></section><section class="loc-card"><img data-icon="pin" width="28" height="28" alt="" loading="lazy" decoding="async"><h2 id="locPlace">--</h2><p id="locTime" class="data-note"></p></section></div>
       <footer class="page-foot">颐和 · 静态体验版 <a href="home.html">了解演示机构</a> <a href="yangheng.html">养生内容</a></footer>
     </div>
   </section>
@@ -59,7 +60,7 @@
       </button>
       <div class="chat-search-bar" id="chatSearchBar">
         <input type="search" class="chat-search-input" id="chatSearchInput" placeholder="搜索聊天记录…">
-        <button class="chat-search-close" id="chatSearchClose" aria-label="关闭搜索"><img src="" data-icon="close" width="16" height="16" alt=""></button>
+        <button class="chat-search-close" id="chatSearchClose" aria-label="关闭搜索"><img src="" data-icon="close" width="16" height="16" alt="" loading="lazy" decoding="async"></button>
       </div>
       <p class="chat-disclosure">AI 陪伴体验 · 以下都是模拟角色，消息不会发给医生、护士或家属。</p><div class="msg-contacts" id="msgContacts"></div><div class="chat-empty">选一个聊天主题，慢慢聊聊今天。<small>未配置密钥时使用本地规则回复。</small></div>
       <div class="chat-panel" id="chatPanel" hidden>
@@ -75,13 +76,13 @@
         <div class="chat-ft">
           <div class="chat-quote-bar" id="chatQuoteBar" hidden>
             <div class="quote-content" id="quoteContent"></div>
-            <button class="quote-close" id="quoteClose" aria-label="取消引用"><img src="" data-icon="close" width="14" height="14" alt=""></button>
+            <button class="quote-close" id="quoteClose" aria-label="取消引用"><img src="" data-icon="close" width="14" height="14" alt="" loading="lazy" decoding="async"></button>
           </div>
           <div class="chat-ctrls"><button class="chat-voice" id="chatVoice" title="语音输入" aria-label="语音输入">🎤</button><input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" maxlength="500"><button class="chat-send" id="chatSend">发送</button></div>
           <div class="chat-tools" id="chatTools">
-            <button class="tool-btn" id="chatSearchBtn" title="搜索"><img src="" data-icon="search" width="16" height="16" alt="搜索"></button>
-            <button class="tool-btn" id="chatExport" title="导出"><img src="" data-icon="clipboard" width="16" height="16" alt="导出"></button>
-            <button class="tool-btn" id="chatBatch" title="多选"><img src="" data-icon="check" width="16" height="16" alt="多选"></button>
+            <button class="tool-btn" id="chatSearchBtn" title="搜索"><img src="" data-icon="search" width="16" height="16" alt="搜索" loading="lazy" decoding="async"></button>
+            <button class="tool-btn" id="chatExport" title="导出"><img src="" data-icon="clipboard" width="16" height="16" alt="导出" loading="lazy" decoding="async"></button>
+            <button class="tool-btn" id="chatBatch" title="多选"><img src="" data-icon="check" width="16" height="16" alt="多选" loading="lazy" decoding="async"></button>
           </div>
         </div>
         <div class="chat-quick-bar" id="chatQuickBar">
@@ -100,25 +101,25 @@
   <section class="tab-view" id="tab-health">
     <!-- 健康趋势（内联） -->
     <section class="sec-card">
-      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4">今日趋势</span></div>
+      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4" loading="lazy" decoding="async">今日趋势</span></div>
       <div class="trend-body-inline" id="trendBodyInline"><p class="empty p-20" >数据收集中…</p></div>
     </section>
 
     <!-- 用药打卡记录 -->
     <section class="sec-card">
-      <div class="sec-hd"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4">近期服药记录</span></div>
+      <div class="sec-hd"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4" loading="lazy" decoding="async">近期服药记录</span></div>
       <div id="checkinHistory"><p class="empty p-20" >暂无服药记录</p></div>
     </section>
 
     <!-- 病历 -->
     <section class="rec-card">
-      <button class="rec-hd" id="recordToggle" aria-expanded="true"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4">我的病历</span><span class="rec-arrow open" id="recordArrow">›</span></button>
+      <button class="rec-hd" id="recordToggle" aria-expanded="true"><span><img src="" data-sec-icon="clipboard" width="18" height="18" alt=""  class="ic-mr4" loading="lazy" decoding="async">我的病历</span><span class="rec-arrow open" id="recordArrow">›</span></button>
       <div class="rec-body" id="recordBody"></div>
     </section>
 
     <!-- 健康报告 -->
     <section class="sec-card">
-      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4">健康报告</span></div>
+      <div class="sec-hd"><span><img src="" data-sec-icon="chart" width="18" height="18" alt=""  class="ic-mr4" loading="lazy" decoding="async">健康报告</span></div>
       <div class="fg-row py-12" >
         <button class="btn flex-1" id="genWeekTab" >本周报告</button>
         <button class="btn flex-1" id="genMonthTab" >本月报告</button>
@@ -132,14 +133,14 @@
   <section class="tab-view" id="tab-me">
     <div class="me-hero">
       <div class="avatar-wrap avatar-wrap-lg" id="avatarWrapMe" title="点击更换头像">
-        <img id="avatarImgMe" alt=""><span class="av-fb" id="avatarFallbackMe">--</span>
-        <span class="avatar-edit"><img src="" data-icon="edit" width="12" height="12" alt=""  class="ico-white"></span>
+        <img id="avatarImgMe" alt="" loading="lazy" decoding="async"><span class="av-fb" id="avatarFallbackMe">--</span>
+        <span class="avatar-edit"><img src="" data-icon="edit" width="12" height="12" alt=""  class="ico-white" loading="lazy" decoding="async"></span>
       </div>
       <div class="me-info">
         <div class="me-name" id="meName">--</div>
         <div class="me-meta" id="meMeta">--</div>
       </div>
-      <button class="theme-toggle" id="themeToggleMe" title="切换深浅色" aria-label="切换深浅色主题"><img src="" data-theme-icon width="20" height="20" alt=""></button>
+      <button class="theme-toggle" id="themeToggleMe" title="切换深浅色" aria-label="切换深浅色主题"><img src="" data-theme-icon width="20" height="20" alt="" loading="lazy" decoding="async"></button>
     </div>
 
     <!-- 健康档案（姓名 / 性别年龄 / 病史标签，供 personal.js 渲染） -->
@@ -152,15 +153,15 @@
     <input type="file" id="avatarFileInput" accept="image/*" hidden>
 
     <div class="me-menu">
-      <button class="me-menu-item" type="button" data-action="editProfile"><span><img src="" data-me-icon="edit" width="22" height="22" alt=""></span><span>编辑资料</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="trends"><span><img src="" data-me-icon="chart" width="22" height="22" alt=""></span><span>健康趋势</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="healthReport"><span><img src="" data-me-icon="clipboard" width="22" height="22" alt=""></span><span>健康报告</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="medReminder"><span><img src="" data-me-icon="clock" width="22" height="22" alt=""></span><span>本机提醒</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="emergency"><span><img src="" data-me-icon="warn" width="22" height="22" alt=""></span><span>紧急联系人</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="appointments"><span><img src="" data-me-icon="calendar" width="22" height="22" alt=""></span><span>行程备忘</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="aiSettings"><span><img src="" data-me-icon="ai" width="22" height="22" alt=""></span><span>AI 设置</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="admin"><span><img src="" data-me-icon="hospital" width="22" height="22" alt=""></span><span>管理端入口</span><span class="me-arrow">›</span></button>
-      <button class="me-menu-item" type="button" data-action="switchUser"><span><img src="" data-me-icon="users" width="22" height="22" alt=""></span><span>切换账号</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="editProfile"><span><img src="" data-me-icon="edit" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>编辑资料</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="trends"><span><img src="" data-me-icon="chart" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>健康趋势</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="healthReport"><span><img src="" data-me-icon="clipboard" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>健康报告</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="medReminder"><span><img src="" data-me-icon="clock" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>本机提醒</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="emergency"><span><img src="" data-me-icon="warn" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>紧急联系人</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="appointments"><span><img src="" data-me-icon="calendar" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>行程备忘</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="aiSettings"><span><img src="" data-me-icon="ai" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>AI 设置</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="admin"><span><img src="" data-me-icon="hospital" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>管理端入口</span><span class="me-arrow">›</span></button>
+      <button class="me-menu-item" type="button" data-action="switchUser"><span><img src="" data-me-icon="users" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span>切换账号</span><span class="me-arrow">›</span></button>
     </div>
 
     <footer class="page-foot">演示数据 — 对接智能穿戴设备后替换为真实数据</footer>
@@ -169,22 +170,22 @@
 
 <!-- 聊天右键菜单 -->
 <div class="ctx-menu" id="ctxMenu" hidden>
-  <div class="ctx-item" data-action="copy"><img src="" data-ctx-icon="clipboard" width="16" height="16" alt=""> 复制</div>
-  <div class="ctx-item" data-action="quote"><img src="" data-ctx-icon="quote" width="16" height="16" alt=""> 引用</div>
-  <div class="ctx-item" data-action="withdraw"><img src="" data-ctx-icon="refresh" width="16" height="16" alt=""> 撤回</div>
+  <div class="ctx-item" data-action="copy"><img src="" data-ctx-icon="clipboard" width="16" height="16" alt="" loading="lazy" decoding="async"> 复制</div>
+  <div class="ctx-item" data-action="quote"><img src="" data-ctx-icon="quote" width="16" height="16" alt="" loading="lazy" decoding="async"> 引用</div>
+  <div class="ctx-item" data-action="withdraw"><img src="" data-ctx-icon="refresh" width="16" height="16" alt="" loading="lazy" decoding="async"> 撤回</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-item" data-action="remind"><img src="" data-ctx-icon="clock" width="16" height="16" alt=""> 提醒</div>
-  <div class="ctx-item ctx-danger" data-action="delete"><img src="" data-ctx-icon="trash" width="16" height="16" alt=""> 删除</div>
+  <div class="ctx-item" data-action="remind"><img src="" data-ctx-icon="clock" width="16" height="16" alt="" loading="lazy" decoding="async"> 提醒</div>
+  <div class="ctx-item ctx-danger" data-action="delete"><img src="" data-ctx-icon="trash" width="16" height="16" alt="" loading="lazy" decoding="async"> 删除</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-item" data-action="multi"><img src="" data-ctx-icon="check" width="16" height="16" alt=""> 多选</div>
+  <div class="ctx-item" data-action="multi"><img src="" data-ctx-icon="check" width="16" height="16" alt="" loading="lazy" decoding="async"> 多选</div>
 </div>
 
 <!-- 底部导航栏 -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="nav-item active" data-tab="home" type="button"><span class="nav-icon"><img src="" data-icon="home" width="22" height="22" alt=""></span><span class="nav-label">首页</span></button>
-  <button class="nav-item" data-tab="chat" type="button"><span class="nav-icon"><img src="" data-icon="chat" width="22" height="22" alt=""></span><span class="nav-label">聊天</span></button>
-  <button class="nav-item" data-tab="health" type="button"><span class="nav-icon"><img src="" data-icon="health" width="22" height="22" alt=""></span><span class="nav-label">健康</span></button>
-  <button class="nav-item" data-tab="me" type="button"><span class="nav-icon"><img src="" data-icon="person" width="22" height="22" alt=""></span><span class="nav-label">我的</span></button>
+  <button class="nav-item active" data-tab="home" type="button"><span class="nav-icon"><img src="" data-icon="home" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span class="nav-label">首页</span></button>
+  <button class="nav-item" data-tab="chat" type="button"><span class="nav-icon"><img src="" data-icon="chat" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span class="nav-label">聊天</span></button>
+  <button class="nav-item" data-tab="health" type="button"><span class="nav-icon"><img src="" data-icon="health" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span class="nav-label">健康</span></button>
+  <button class="nav-item" data-tab="me" type="button"><span class="nav-icon"><img src="" data-icon="person" width="22" height="22" alt="" loading="lazy" decoding="async"></span><span class="nav-label">我的</span></button>
 </nav>
 
 <!-- ====== 弹窗 ====== -->
@@ -209,7 +210,7 @@
 
 <div class="overlay" id="trendsOverlay" hidden>
   <div class="modal trend-modal">
-    <div class="modal-hd"><h2><img src="" data-modal-icon="chart" width="20" height="20" alt=""  class="ic-mr6">最近采样记录</h2><button class="mclose" id="trendsClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt=""></button></div>
+    <div class="modal-hd"><h2><img src="" data-modal-icon="chart" width="20" height="20" alt=""  class="ic-mr6" loading="lazy" decoding="async">最近采样记录</h2><button class="mclose" id="trendsClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt="" loading="lazy" decoding="async"></button></div>
     <div class="trend-body" id="trendBody"></div>
   </div>
 </div>
@@ -217,7 +218,7 @@
 <div class="overlay" id="medRemindOverlay" hidden><div class="modal edit-modal"><h2>本机提醒</h2><p class="data-note">仅在当前页面打开时提示。不会发送短信，不替代可靠的服药提醒设备。</p><div id="taskList"></div><label class="fg">提醒内容<input class="input" id="taskText" maxlength="200" placeholder="例如：给家人打个电话"></label><label class="fg">提醒时间<input class="input" id="taskAt" type="datetime-local"></label><div class="fg-row"><button id="saveMedTimes" class="btn btn-primary">保存提醒</button><button id="cancelMedTimes" class="btn">关闭</button></div></div></div>
 <div class="overlay" id="emergencyOverlay" hidden>
   <div class="modal edit-modal">
-    <h2><img src="" data-modal-icon="bell" width="20" height="20" alt=""  class="ic-mr6">紧急联系人</h2>
+    <h2><img src="" data-modal-icon="bell" width="20" height="20" alt=""  class="ic-mr6" loading="lazy" decoding="async">紧急联系人</h2>
     <div class="fg"><div class="fg-tit">主治医生</div><input type="text" class="input" id="emName1" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone1" placeholder="电话" ></div>
     <div class="fg"><div class="fg-tit">社区护士</div><input type="text" class="input" id="emName2" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone2" placeholder="电话" ></div>
     <div class="fg"><div class="fg-tit">家属</div><input type="text" class="input" id="emName3" placeholder="姓名"><input type="text" class="input mt-6" id="emPhone3" placeholder="电话" ></div>
@@ -230,7 +231,7 @@
 
 <div class="overlay" id="apptOverlay" hidden>
   <div class="modal edit-modal">
-    <div class="modal-hd"><h2><img src="" data-modal-icon="calendar" width="20" height="20" alt=""  class="ic-mr6">行程备忘</h2><button class="mclose" id="apptClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt=""></button></div>
+    <div class="modal-hd"><h2><img src="" data-modal-icon="calendar" width="20" height="20" alt=""  class="ic-mr6" loading="lazy" decoding="async">行程备忘</h2><button class="mclose" id="apptClose" aria-label="关闭"><img src="" data-icon="close" width="16" height="16" alt="" loading="lazy" decoding="async"></button></div>
     <div id="apptList"></div>
     <div class="fg mt-16" ><div class="fg-tit">新增本机行程</div>
       <input type="text" class="input mb-6" id="apptTitle" placeholder="例如：心内科复查" maxlength="50" >
@@ -243,7 +244,7 @@
 
 <div class="overlay" id="aiOverlay" hidden>
   <div class="modal edit-modal">
-    <h2><img src="" data-modal-icon="ai" width="20" height="20" alt=""  class="ic-mr6">AI 对话设置</h2>
+    <h2><img src="" data-modal-icon="ai" width="20" height="20" alt=""  class="ic-mr6" loading="lazy" decoding="async">AI 对话设置</h2>
     <div class="fg"><div class="fg-tit">AI人设</div>
       <select class="input w-full" id="aiPersona" >
         <option value="general">通用生活助手 — 多领域问答</option>
@@ -271,7 +272,7 @@
 <!-- SOS 危险强提醒（全屏） -->
 <div class="sos-overlay" id="sosOverlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="sosTitle">
   <div class="sos-modal">
-    <div class="sos-icon"><img src="" data-sos-modal-icon width="48" height="48" alt=""></div>
+    <div class="sos-icon"><img src="" data-sos-modal-icon width="48" height="48" alt="" loading="lazy" decoding="async"></div>
     <div class="sos-title" id="sosTitle">--</div>
     <div class="sos-detail" id="sosDetail"></div>
     <div class="sos-place" id="sosPlace"></div>
@@ -280,34 +281,34 @@
   </div>
 </div>
 
-<script src="js/common.js"></script>
-<script src="js/audit.js"></script>
-<script src="js/metrics.js"></script>
-<script src="js/sim-store.js"></script>
-<script src="data/schema.js"></script>
-<script src="data/residents.js"></script>
-<script src="js/seed-data.js"></script>
-<script src="js/app-state.js"></script>
-<script src="js/demo-domain.js"></script>
-<script src="js/mock-api.js"></script>
+<script src="js/common.js" defer></script>
+<script src="js/audit.js" defer></script>
+<script src="js/metrics.js" defer></script>
+<script src="js/sim-store.js" defer></script>
+<script src="data/schema.js" defer></script>
+<script src="data/residents.js" defer></script>
+<script src="js/seed-data.js" defer></script>
+<script src="js/app-state.js" defer></script>
+<script src="js/demo-domain.js" defer></script>
+<script src="js/mock-api.js" defer></script>
 
-<script src="js/login.js"></script>
-<script src="js/audio-utils.js"></script>
-<script src="js/nlp.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/chat-engine.js"></script>
-<script src="js/config.js"></script>
-<script src="js/ai-chat.js"></script>
-  <script src="js/chat.js"></script>
-  <script src="js/chat-more-menu.js"></script>
-  <script src="js/reports.js"></script>
-<script src="js/checkin.js"></script>
-<script src="js/solarlunar.min.js"></script>
-<script src="data/terms.js"></script>
-<script src="js/calendar.js"></script>
-<script src="js/personal.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/dialogs.js"></script>
+<script src="js/login.js" defer></script>
+<script src="js/audio-utils.js" defer></script>
+<script src="js/nlp.js" defer></script>
+<script src="js/storage.js" defer></script>
+<script src="js/chat-engine.js" defer></script>
+<script src="js/config.js" defer></script>
+<script src="js/ai-chat.js" defer></script>
+  <script src="js/chat.js" defer></script>
+  <script src="js/chat-more-menu.js" defer></script>
+  <script src="js/reports.js" defer></script>
+<script src="js/checkin.js" defer></script>
+<script src="js/solarlunar.min.js" defer></script>
+<script src="data/terms.js" defer></script>
+<script src="js/calendar.js" defer></script>
+<script src="js/personal.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/dialogs.js" defer></script>
   
 </body>
 </html>
