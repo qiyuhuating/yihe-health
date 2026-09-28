@@ -3,34 +3,7 @@
    优化方向：更柔和的层叠阴影 · 统一圆角节奏 · 精细排版 · 焦点/滚动条/Toast 质感
    ========================================== */
 
-/* ---- 浅色主题 · Apple Health 原色系（不变） ---- */
-body.light{
-  --bg:#F2F2F7; --card:#FFFFFF; --card-tint:#F9F9FB;
-  --t1:#1C1C1E; --t2:#5C5C64; --t3:#8A8A8E;
-  --sep:#ECECF0; --hover:#F4F4F8; --menu-bg:#FFFFFF;
-  --blue:#007AFF; --green:#34C759; --orange:#FF9500; --red:#FF3B30; --purple:#AF52DE;
-  --ok-text:#1B7D36; --warn-text:#B45309; --danger-text:#CC1A1A;
-  --shadow-sm:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
-  --shadow:0 2px 8px rgba(16,24,40,.05), 0 8px 24px rgba(16,24,40,.06);
-  --shadow-lg:0 12px 32px rgba(16,24,40,.10), 0 4px 12px rgba(16,24,40,.06);
-  --shadow-card:0 1px 3px rgba(16,24,40,.04), 0 10px 30px rgba(16,24,40,.07);
-  --card-secondary:#F6F6FA;
-  --ring:rgba(0,122,255,.16);
-}
-/* ---- 深色主题（不变） ---- */
-body.dark{
-  --bg:#0F172A; --card:#1E293B; --card-tint:#2A3A52;
-  --t1:#F1F5F9; --t2:#A7B4C6; --t3:#7C8DA0;
-  --sep:#2C3A52; --hover:#243349; --menu-bg:#0F172A;
-  --blue:#22D3EE; --green:#34D399; --orange:#FBBF24; --red:#F87171; --purple:#A78BFA;
-  --ok-text:#34D759; --warn-text:#FBBF24; --danger-text:#F87171;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
-  --shadow:0 2px 10px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.28);
-  --shadow-lg:0 16px 40px rgba(0,0,0,.5);
-  --shadow-card:0 2px 12px rgba(0,0,0,.32);
-  --card-secondary:#243349;
-  --ring:rgba(34,211,238,.18);
-}
+/* Theme colors are defined once in tokens.css. */
 
 /* ---- 全局 Reset ---- */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -69,7 +42,7 @@ h1,h2,h3,h4{letter-spacing:-.02em;line-height:1.2;font-weight:700}
 
 /* ---- 性能优化 ---- */
 .view:not(.active){content-visibility:hidden;contain-intrinsic-size:auto}
-.chat-body,.drawer-body,.menu-list,.report-content{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.drawer-body,.menu-list,.report-content{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 img[loading="lazy"]{min-height:1px}
 
 /* ---- Toast（更克制） ---- */

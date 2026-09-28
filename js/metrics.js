@@ -1,3 +1,25 @@
+/* ===========================================================================
+ * metrics.js — 健康指标区间与状态判定
+ * ---------------------------------------------------------------------------
+ * ⚠️ RANGES 里的数值是**演示基线，不是诊断标准**。
+ *
+ * 它们来自通用体检参考区间，用于让演示数据产生"正常/异常/危险"三态，
+ * 从而驱动界面上的状态徽标与模拟告警。**这些数值未经医学审核**，
+ * 不同标准（教科书 / 诊疗指南 / 不同年龄段）取值并不相同。
+ *
+ * 真实落地前必须做的事（属临床决策，需专业人员参与，不要由前端自行改数）：
+ *   1. 按年龄 / 性别 / 慢病分层，而不是所有老人共用一套区间
+ *   2. 与机构采用的诊断标准逐项对齐，并记录来源与版本
+ *   3. 明确"提示复测"与"提示就医"的阈值差异
+ *   4. 单次越界与持续越界要分开处理，避免噪声告警
+ *
+ * 现状：RANGES 是模块内常量，未提供运行时覆盖入口。
+ *      如需按机构配置外置，建议新增 data/thresholds.js（与 residents.js
+ *      同为演示数据层），而不是在页面上硬编码。
+ *
+ * evaluateStatus() 另有一层"与个人基线比较"的逻辑（warnPct / dangerPct），
+ * 同样属于演示取值。
+ * =========================================================================== */
 ! function(e) {
     var r = function() {
         var e = {
@@ -41,12 +63,13 @@
 
         function r(r, a) {
             var n = e[r];
+            if (!n || !Number.isFinite(a)) return "unknown";
             return n ? a <= n.dangerLow || a >= n.dangerHigh ? "danger" : a < n.min || a > n.max ? "warning" : "normal" : "normal"
         }
 
         function a(r, a) {
             var n = e[r];
-            return !!n && (a <= n.dangerLow || a >= n.dangerHigh)
+            return !!n && Number.isFinite(a) && (a <= n.dangerLow || a >= n.dangerHigh)
         }
         var n = [{
             name: "清晨",
@@ -79,9 +102,10 @@
                 return a("heartRate", e.heartRate) && r.push("心率" + Number(e.heartRate).toFixed(0) + "bpm"), a("bloodOxygen", e.bloodOxygen) && r.push("血氧" + Number(e.bloodOxygen).toFixed(0) + "%"), a("temperature", e.temperature) && r.push("体温" + Number(e.temperature).toFixed(1) + "°C"), a("systolic", e.systolic) && r.push("收缩压" + Number(e.systolic).toFixed(0)), a("diastolic", e.diastolic) && r.push("舒张压" + Number(e.diastolic).toFixed(0)), a("bloodSugar", e.bloodSugar) && r.push("血糖" + Number(e.bloodSugar).toFixed(1)), r.join("，")
             },
             evaluateStatus: function(e, a) {
-                if (!e || !a) return "normal";
+                if (!e || !a) return "unknown";
                 var n = !1,
-                    t = !1;
+                    t = !1,
+                    missing = !1;
                 return [{
                     key: "heartRate",
                     warnPct: .2,
@@ -108,6 +132,7 @@
                     dangerPct: .4
                 }].forEach(function(o) {
                     var i = r(o.key, e[o.key]);
+                    if (i === "unknown") { missing = !0; return; }
                     if ("danger" !== i)
                         if ("warning" !== i) {
                             var d = a[o.key];
@@ -117,7 +142,7 @@
                             }
                         } else t = !0;
                     else n = !0
-                }), n ? "danger" : t ? "warning" : "normal"
+                }), n ? "danger" : t ? "warning" : missing ? "unknown" : "normal"
             },
             SLOTS: n,
             slotOf: function(e) {

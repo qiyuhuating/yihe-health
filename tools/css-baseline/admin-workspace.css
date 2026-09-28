@@ -1,0 +1,150 @@
+/* Staff workspace layout and controls. Shared component states remain authoritative. */
+.empty.state-loading {
+    color: var(--t3);
+}
+
+.empty.state-error {
+    color: var(--red);
+}
+
+.browse-bar > span {
+    color: var(--t3);
+    font-size: 12px;
+}
+
+.admin-page .topbar{background:var(--card);border-bottom:1px solid var(--sep);box-shadow:0 2px 12px rgba(42,44,38,.04)}
+.admin-page .topbar-title{font-family:var(--font-serif);font-size:20px;letter-spacing:.02em}
+.admin-page .hamburger,.admin-page .btn,.admin-page .menu-close,.admin-page .drawer-close{min-height:44px}
+.admin-page .menu-close,.admin-page .drawer-close{min-width:44px;border-radius:11px}
+.admin-page .btn,.admin-page .hamburger{border:1px solid var(--sep);border-radius:10px;background:var(--card);color:var(--t1);transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease}
+.admin-page .btn:not(:disabled):hover,.admin-page .hamburger:hover{opacity:1;background:var(--hover);border-color:var(--action);box-shadow:0 4px 12px rgba(42,44,38,.09)}
+.admin-page .btn:not(:disabled):active,.admin-page .hamburger:active{background:var(--card-tint);box-shadow:inset 0 2px 4px #241f1817}
+.admin-page .btn:disabled{opacity:.56;cursor:not-allowed}
+.admin-page .btn-primary,.admin-page .login-btn{background:var(--action);border-color:var(--action);color:var(--card)}
+.admin-page.dark .btn-primary,.admin-page.dark .login-btn{background:var(--action);border-color:var(--action);color:var(--card)}
+.admin-page .btn-primary:not(:disabled):hover,.admin-page .login-btn:hover{background:var(--action);filter:brightness(.94);color:var(--card)}
+.admin-page .btn-primary:not(:disabled):active{background:var(--action);filter:brightness(.86);color:var(--card)}
+.admin-page .btn-danger{background:var(--red);border-color:var(--red);color:var(--danger-on)}
+.admin-page .btn-danger:not(:disabled):hover{background:var(--danger-text);border-color:var(--danger-text);color:var(--danger-on)}
+.admin-page #btnSimWander{background:color-mix(in srgb,var(--orange) 10%,var(--card));color:var(--warn-text);border-color:color-mix(in srgb,var(--orange) 32%,var(--sep))}
+.admin-page #btnSimDanger{background:color-mix(in srgb,var(--red) 10%,var(--card));color:var(--danger-text);border-color:color-mix(in srgb,var(--red) 32%,var(--sep))}
+.admin-page #btnSimWander:not(:disabled):hover{background:color-mix(in srgb,var(--orange) 18%,var(--card));color:var(--warn-text)}
+.admin-page #btnSimDanger:not(:disabled):hover{background:color-mix(in srgb,var(--red) 18%,var(--card));color:var(--danger-text)}
+.admin-page .topbar-right,.admin-page .topbar-monitor,.admin-page .topbar-actions{display:flex;align-items:center;gap:8px}
+.admin-page .topbar-monitor,.admin-page .topbar-actions{flex:none}
+.admin-page .topbar-monitor{gap:10px}
+.admin-page .topbar-actions{padding:0 10px;border-inline:1px solid var(--sep)}
+.admin-page .topbar-logout{color:var(--t2)}
+.admin-page .switch{height:44px;width:50px}
+.admin-page .switch .slider{inset:8px 2px}
+.admin-page.dark .switch input:checked+.slider{background:var(--action)}
+.admin-page .panel,.admin-page .stat-card{border-radius:16px;box-shadow:0 8px 28px rgba(42,44,38,.045)}
+.admin-page .panel-title{font-size:18px;letter-spacing:0}
+.admin-page #view-summary .main-grid>.panel:first-child{align-self:start}
+.admin-page .table-scroll-hint{display:none}
+.admin-page .stat-card{background:linear-gradient(160deg,var(--card),color-mix(in srgb,var(--card-tint) 38%,var(--card)))}
+.admin-page .stat-icon{border-radius:12px}
+.admin-page.dark .stat-icon img,.admin-page.dark .menu-icon img{filter:brightness(0) invert(1);opacity:.78}
+.admin-page .stat-total .stat-icon{background:color-mix(in srgb,var(--action) 11%,var(--card))}
+.admin-page .stat-normal .stat-icon{background:color-mix(in srgb,var(--green) 11%,var(--card))}
+.admin-page .stat-warning .stat-icon{background:color-mix(in srgb,var(--orange) 11%,var(--card))}
+.admin-page .stat-danger .stat-icon{background:color-mix(in srgb,var(--red) 11%,var(--card))}
+.admin-page .stat-lbl{font-size:14px}
+.admin-page .menu-panel{border-right:1px solid var(--sep);box-shadow:12px 0 48px rgba(42,44,38,.12)}
+.admin-page .menu-overlay:not(.open){pointer-events:none}
+.admin-page .menu-item{border-radius:11px}
+.admin-page .menu-item.active,.admin-page .menu-item.active:hover,.admin-page.dark .menu-item.active,.admin-page.dark .menu-item.active:hover{background:var(--hover)}
+.admin-page .menu-item.active::before{background:var(--action)}
+.admin-page .menu-item.active .menu-label{color:var(--action)}
+.admin-page .alert-list .empty{min-height:200px;justify-content:center;border:1px dashed var(--sep);border-radius:12px;background:radial-gradient(circle at 50% 15%,var(--hover),transparent 65%);font-size:16px;color:var(--t2)}
+.admin-page .alert-list .empty::after{content:"模拟危险事件将显示在这里";display:block;font-size:13px;color:var(--t3)}
+.admin-page .browse-card,.admin-page .admitted-card{font:inherit;color:var(--t1);width:100%;border-radius:12px}
+.admin-page .browse-card{text-align:center}
+.admin-page .admitted-card{text-align:left}
+.admin-page .card-name,.admin-page .card-meta,.admin-page .card-status,.admin-page .admitted-name,.admin-page .admitted-detail{display:block}
+.admin-page .browse-card:focus-visible,.admin-page .admitted-card:focus-visible,.admin-page tbody tr:focus-visible{outline:3px solid var(--action);outline-offset:2px}
+.admin-page .badge,.admin-page .p-status{border-radius:999px}
+.admin-page .input:focus,.admin-page .login-input:focus{box-shadow:0 0 0 3px var(--ring);border-color:var(--action)}
+
+@media (max-width:767px){
+    .admin-page .panel,.admin-page .stat-card{border-radius:14px}
+    .admin-page .topbar-right{justify-content:flex-start}
+    .admin-page .topbar-title{font-size:18px}
+    .admin-page .table-scroll-hint{display:block;margin:-4px 0 12px;color:var(--t3);font-size:13px}
+}
+
+@media (max-width: 767px) {
+    .admin-page .topbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+    .admin-page .topbar-right{display:contents}
+    .admin-page .topbar-monitor{grid-column:1/-1;grid-row:2;min-height:48px;padding:4px 0;border-block:1px solid var(--sep)}
+    .admin-page .topbar-monitor .topbar-hint{display:inline-flex;align-items:center}
+    .admin-page .topbar-monitor .topbar-clock,.admin-page .topbar-monitor .topbar-time{display:none}
+    .admin-page .topbar-actions{grid-column:1/-1;grid-row:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:2px 0 0;border:0;width:100%}
+    .admin-page .topbar-actions .btn{width:100%;min-height:48px;font-size:14px}
+    .admin-page .topbar-logout{grid-column:3;grid-row:1;min-width:56px}
+}
+@media (max-width: 350px) {
+    .admin-page #view-summary .panel-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+    .admin-page #view-summary .panel-title .alert-stats{width:100%;margin-left:0}
+}
+
+/* Staff workspace: the navigation stays visible when there is room for it. */
+@media (min-width: 1180px) {
+    .admin-page .hamburger,
+    .admin-page .menu-close,
+    .admin-page .menu-overlay {display:none}
+    .admin-page .menu-panel {
+        top:64px;
+        width:232px;
+        transform:none;
+        box-shadow:none;
+        z-index:30;
+        border-right:1px solid var(--sep);
+    }
+    .admin-page .menu-head {padding:18px 20px 8px;color:var(--t3)}
+    .admin-page .menu-list {padding:8px 12px 28px}
+    .admin-page .menu-item {margin:3px 0;padding:11px 12px}
+    .admin-page .menu-sub {font-size:12px}
+    .admin-page .main {margin-left:232px;padding-top:10px}
+    .admin-page .admin-demo-notice {margin-left:232px}
+    .admin-page .view {max-width:1450px;margin:0 auto}
+}
+
+/* Clear control hierarchy and legible operational states. */
+.admin-page .topbar-hint {white-space:nowrap}
+.admin-page .topbar-right .switch {flex:none}
+.admin-page .form-note {margin:0 0 22px;color:var(--t2);font-size:14px;line-height:1.6}
+.admin-page .field-help {display:block;margin:6px 0 0;color:var(--t3);font-size:13px;line-height:1.5}
+.admin-page .export-scope {padding:12px 14px;border:1px solid var(--sep);border-radius:10px;background:var(--card-tint);color:var(--t2);font-size:14px;line-height:1.6}
+.admin-page #view-sharing input[type="date"]{width:100%;min-height:48px;padding:9px 12px;border:1px solid var(--sep);border-radius:10px;background:var(--bg);color:var(--t1)}
+.admin-page #view-sharing input[type="date"]:focus-visible{border-color:var(--action);box-shadow:0 0 0 3px var(--ring);outline:none}
+.admin-page #exportResidents{gap:8px}
+.admin-page #exportResidents label{min-height:44px;padding:8px 10px;border:1px solid var(--sep);border-radius:9px;background:var(--card);font-size:14px;line-height:1.4;touch-action:manipulation}
+.admin-page #exportResidents label:has(input:checked){border-color:var(--action);background:var(--hover)}
+.admin-page #exportResidents input,.admin-page #view-sharing .radio input{width:18px;height:18px;flex:none;accent-color:var(--action)}
+.admin-page #view-sharing .radio{min-height:44px;min-width:96px;padding:8px 12px;border:1px solid var(--sep);border-radius:9px;background:var(--card);touch-action:manipulation}
+.admin-page #view-sharing .radio:has(input:checked){border-color:var(--action);background:var(--hover)}
+.admin-page #view-sharing .fg-row.mt-8{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-page .hint:not(:empty) {display:block;margin-top:12px;line-height:1.6}
+.admin-page .hint:not(:empty)[data-state="error"] {color:var(--danger-text)}
+.admin-page .hint:not(:empty)[data-state="success"] {color:var(--ok-text)}
+.admin-page .panel-form .fg {margin-bottom:20px}
+.admin-page .panel-form .fg-tit {margin-bottom:8px}
+.admin-page .input,.admin-page input[type="date"],.admin-page textarea {max-width:100%}
+.admin-page .browse-bar {gap:12px;align-items:center}
+.admin-page .browse-bar .input {min-height:48px}
+.admin-page .table-wrap {scrollbar-color:var(--sep) transparent}
+.admin-page #patientTableBody tr {cursor:pointer}
+.admin-page #patientTableBody tr:hover {background:var(--hover)}
+.admin-page.dark tbody tr.warning-row{background:color-mix(in srgb,var(--orange) 13%,var(--card))}
+.admin-page.dark tbody tr.danger-row{background:color-mix(in srgb,var(--red) 10%,var(--card))}
+.admin-page.dark tbody tr.admitted-row{background:var(--card-tint)}
+.admin-page.dark tbody tr.warning-row td:first-child{box-shadow:inset 3px 0 var(--orange)}
+.admin-page.dark tbody tr.danger-row td:first-child{box-shadow:inset 3px 0 var(--red)}
+.admin-page.dark tbody tr.warning-row:hover,.admin-page.dark tbody tr.danger-row:hover,.admin-page.dark tbody tr.admitted-row:hover{background:var(--hover)}
+.admin-page .alert-item {border-left:3px solid var(--red)}
+.admin-page .alert-item small {display:block;margin-top:5px;color:var(--t2)}
+@media (max-width: 767px) {
+    .admin-page .topbar-title {margin-right:auto}
+    .admin-page .panel-form {padding:20px}
+}

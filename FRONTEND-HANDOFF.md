@@ -1,55 +1,32 @@
-# 前端交付与接口对接
+﻿# 前端交接
 
-当前交付范围为静态前端演示，保留原生 HTML/CSS/JS。真实鉴权、设备、数据库、消息发送由后端负责；不要把前端的演示账号当作授权边界。
+## 已实现
 
-## 入口和状态
+居民三页与工作人员五页；四类异常统一事件；负责人、我的待办、未分配与超时队列；接单、处理、解决、误报、升级及历史；设备新鲜度、趋势、紧急联系人；姓名字段打码、统一主题与简易事件 JSON 导出。
 
-- `index.html`：登录后的居民端；`login.html`：演示登录；`个人端.html`：兼容跳转。
-- `管理端.html`：模拟监测、预警和档案；`home.html`：机构样例展示。
-- `yangheng.html`：内容筛选、详情、收藏；`privacy.html`：实际本地存储和第三方AI说明。
-- 演示指标/位置必须保留来源标记。接口加载失败不得回填随机数据冒充成功。
-- 短信、邮件、推送未接入时保持禁用；不得仅弹成功提示。
+## 后端接入契约
 
-## 健康数据适配接口
+以 `js/care-api.js` 对外方法为模拟契约，页面层不直接操作业务存储。后续替换其实现时，应保留返回值及失败拒绝语义：snapshot、scan、transition、saveResident、addDose、confirmDose、markPresented。模拟器操作不应进入真实生产接口。
 
-当前 `window.API` 由 `js/mock-api.js` 提供。对接真实接口时提供相同入口或集中替换适配层，视图不应分散拼接URL。
+| 方法 | 输入与返回约定 |
+|---|---|
+| snapshot() | 返回聚合快照；读入格式或存储权限异常时拒绝 Promise |
+| transition(id, action, actor, note, revision, target) | revision 必须为当前事件版本；终结/升级需非空结果，升级需另一位有效负责人；成功返回持久化后的事件 |
+| saveResident(id, patch, actor) | patch 可更新姓名、年龄、联系人与责任人；成功返回持久化后的聚合；姓名 1–20 字、联系人最多 3 位 |
+| addDose(id, name, dueAt, actor) | 经工作人员核对的名称（1–100 字）和有效日期；成功返回聚合 |
+| confirmDose(id, doseId) | 计划前 30 分钟内或到期后可确认；重复确认幂等，不能代替工作人员结案 |
+| markPresented(ids, actor) | 按提醒轮次幂等记录页面已展示；不表示短信投递或送达 |
 
-| 接口 | 前端使用的结果 | 失败行为 |
-|---|---|---|
-| `getPatients()` | 居民列表：id/name/gender/age/status/heartRate/bloodOxygen/temperature/systolic/diastolic/bloodSugar/admitted/place | reject，视图显示加载失败 |
-| `getPatientDetail(id)` | 上述字段及medicalHistory、height/weight/chronic等；不存在返回null | reject，保留错误状态 |
-| `getAlerts()` | 当前活动事件数组，包含已知晓但异常未恢复的事件 | reject，不伪造空列表 |
-| `acknowledgeAlert(eventId)` | `{success:true,eventId,state:'acknowledged'}` | 失效事件返回`{success:false,reason}`；存储/网络失败reject |
-| `getLocations()` | 带id/name/x/y/place/fenceStatus/status的模拟地图点 | 真定位须另行定义坐标系和采样时间 |
+所有时间在新数据中使用含时区的 ISO 8601 字符串。指标缺失或非数值必须呈现“数据不足”，不能转换为 0 或正常；结构无效、未知居民引用和无效时间拒绝读写，原记录保留。读取错误使用 `DATA_INVALID` / `STORAGE_UNAVAILABLE`，环境不支持使用 `ENV_UNSUPPORTED`，均可由页面提供重试；输入错误、版本冲突和保存失败拒绝 Promise，页面保留输入。替换为真实 API 后也应测试超时、断网、401/403、409 和服务端校验失败的相同用户反馈。
 
-告警对象：`{eventId,id,name,type:'health'|'fence',state:'triggered'|'acknowledged',status:'danger',alertMsg,place}`。
+服务端必须实现：真实账户和角色权限；居民访问范围；事件版本冲突校验；原子状态和历史写入；时区与可靠时钟；设备采样/在线状态；经确认的用药计划；告警去重、复发、恶化和升级；通知投递及回执。负责人由已认证身份决定，不接受任意前端员工选择。
 
-`id`是居民ID，`eventId`是事件ID。一次持续异常的ID保持不变，数值或文案轻微变化不生成新事件。异常恢复后再次发生必须生成新ID。前端“已知晓”只进入处理中；没有真实处置结果时，不能由关闭弹窗/发送消息推导“已解决”。异常恢复由数据源决定。生产接口需补时间戳、操作者、处理结果及幂等语义。
+页面已展示、通知已发送、通知已送达必须分别建模。当前仅模拟页面展示，未实现短信，也没有后台常驻检测。真实事件与居民资料不应保存在公开静态站点中。
 
-## 浏览器存储契约
+地图目前为示意坐标，接入真实定位需定义坐标系、精度、定位时间和围栏判定。健康阈值和超时策略需要业务负责人审核。
 
-- `DataStore.set/saveChat/saveChats/remove`返回Promise；写入结果仅在事务完成后为true，失败为false或reject，调用者都必须处理。
-- AI配置只有确认保存成功后才能关闭弹窗并更新会话配置；密钥不能退化为明文localStorage。
-- 聊天采用每用户快照。IndexedDB失败时使用每用户localStorage备用快照，恢复后读取备用快照并在下一次成功保存时清理，全部存储失败时提示先导出。
-- localStorage记录只能保证本机演示，不保证多设备、隐私账号隔离或并发事务。不要把真实患者信息打包到data目录。
+## 验收和限制
 
-## AI 对接
+按 `COMMUNITY-PLAN.md` 复现健康异常、漏服药、越界的完整页面流程。测试入口在 README。浏览器的本机持久化、演示登录和一致性校验不能视为生产级后端安全保证。此轮不推送、不部署、不声称短信可用。
 
-`js/config.js`集中提供`aiMode`和`aiEndpoint`。当前为用户自行填写密钥、浏览器直连DeepSeek。关闭健康上下文只阻止自动附加的模拟档案，不阻止聊天本身发送。若以后使用后端代理，应由后端持有服务密钥，前端不提交或内嵌机构密钥。
-
-## 本地回归
-
-```sh
-python -m pip install -r requirements-test.txt
-python -m playwright install chromium
-python tests/check_static.py
-python -m unittest discover -s tests -v
-```
-
-需要Node.js运行语法检查。浏览器测试会自行启动临时HTTP服务和独立上下文，不操作个人浏览器或线上数据，拦截外部AI请求。
-
-GitHub Actions会在main推送及PR时运行上述检查。工作流成功不是医疗业务认证。GitHub Pages现有部署与测试可能并行；若团队要求失败禁止上线，需要把该检查设为保护规则，并将Pages发布串接到检查成功后。
-
-## 维护与验收
-
-新增页面/控件时测试正常、空、失败、存储受限和键盘路径。修改全局样式时回归320/390/768/1440px；新增异步写入必须测试失败返回。部署后对比发布提交并冒烟内容页、登录及关键菜单。回滚使用git revert生成新提交，保留历史。
+前端验收覆盖：三条核心事件闭环、存储失败与损坏数据恢复、跨标签竞争与恢复备份、登录依赖异常、输出转义、姓名打码、主题回滚、四档宽度和键盘交互。浏览器验证使用实际 Chromium / Firefox / WebKit 引擎；WebKit 结果不等同于已经验证 iOS 真机 Safari。服务端与短信待其负责人集成后单独验收。

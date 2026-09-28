@@ -25,7 +25,12 @@
         });
 
     var SESSION_KEY = "hm-login";
-    var DEFAULT_PWD = "123456";
+    /* 演示口令摘要集中在 js/config.js。校验模块缺失时拒绝登录；
+       window.__DEMO_CRED__ 可覆盖演示配置，真实鉴权由后端承担。 */
+    var PWD_CFG = window.__DEMO_CRED__ || (function() {
+        var C = window.YIHE_CONFIG || {};
+        return {hash: C.userHash, hashWeak: C.userHashWeak};
+    })();
 
     function showError(msg) {
         var hint = document.getElementById("loginHint");
@@ -35,7 +40,9 @@
         }
     }
 
+    var pending = false;
     function doLogin() {
+        if (pending) return;
         var nameEl = document.getElementById("loginName");
         var pwdEl = document.getElementById("loginPassword");
         var name = nameEl ? nameEl.value.trim() : "";
@@ -46,33 +53,52 @@
             return;
         }
 
+        var savedResidents = {};
+        try { savedResidents = JSON.parse(localStorage.getItem('yihe-community-v1') || '{}').residents || {}; }
+        catch (_) { /* Keep built-in demo identities available when profile data is unreadable. */ }
         var user = PATIENTS.filter(function(p) {
-            return p.name === name;
+            return p.name === name || savedResidents[p.id] && savedResidents[p.id].name === name;
         })[0];
         if (!user) {
             showError("姓名不存在，请核对后重试");
             return;
         }
 
-        if (pwd !== DEFAULT_PWD) {
-            showError("密码错误，请核对后重试");
+        if (!window.DemoCredentials || typeof DemoCredentials.verify !== 'function') {
+            showError("登录校验未能加载，请刷新页面后重试");
             return;
         }
-
-        try {
-            localStorage.setItem(
-                SESSION_KEY,
-                JSON.stringify({
-                    uid: user.id,
-                    name: user.name,
-                    ts: Date.now()
-                })
-            );
-        } catch (e) {
-            showError("浏览器无法保存演示会话，请允许本机存储后重试"); return; }
-
-        // 写入标准会话后跳转个人端
-        location.href = "index.html";
+        pending = true;
+        var submit = document.getElementById('loginSubmit');
+        if (submit) { submit.disabled = true; submit.setAttribute('aria-busy', 'true'); }
+        Promise.resolve().then(function() {
+            return DemoCredentials.verify(PWD_CFG, pwd, (window.YIHE_CONFIG || {}).userSalt);
+        }).then(function(r) {
+            if (!r.ok) {
+                showError("密码错误，请核对后重试");
+                return;
+            }
+            try {
+                localStorage.setItem(
+                    SESSION_KEY,
+                    JSON.stringify({
+                        uid: user.id,
+                        name: user.name,
+                        ts: Date.now()
+                    })
+                );
+            } catch (e) {
+                showError("浏览器无法保存演示会话，请允许本机存储后重试");
+                return;
+            }
+            // 写入标准会话后跳转个人端
+            location.href = "index.html";
+        }).catch(function() {
+            showError("登录校验暂时不可用，请稍后重试");
+        }).finally(function() {
+            pending = false;
+            if (submit) { submit.disabled = false; submit.removeAttribute('aria-busy'); }
+        });
     }
 
     // 表单提交（拦截默认刷新，避免冲掉重定向）

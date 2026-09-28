@@ -1,1 +1,3 @@
+# 浏览器回归测试依赖。已固定版本，避免上游 breaking change 让 CI 突然变红。
+# 浏览器由此版本的 Playwright 安装器管理，避免混用其他版本的浏览器。
 playwright==1.60.0

@@ -38,7 +38,6 @@
         shield: '<path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z"/>',
         food: '<path d="M5 3v8a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 3-3 7s1 5 3 5v6"/>',
         rehab: '<path d="M4 18l7-7 3 3-7 7z"/><path d="M14 11l5-5M18 4l3 3"/>',
-        chat: '<path d="M4 5h16v11H9l-5 4z"/>',
         users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M16 5a3 3 0 0 1 0 6M21 20c0-2.6-1.6-4.2-4-4.8"/>',
         leaf: '<path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19c4-4 7-7 11-9"/>',
         sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
@@ -85,12 +84,8 @@
         label: "服务内容",
         icon: "service"
     }, {
-        href: "news.html",
-        label: "养老资讯",
-        icon: "news"
-    }, {
         href: "guide.html",
-        label: "入住指南",
+        label: "服务接入",
         icon: "guide"
     }, {
         href: "contact.html",
@@ -151,10 +146,9 @@
             '<li><a href="home.html">首页</a></li>' +
             '<li><a href="about.html">机构简介</a></li>' +
             '<li><a href="services.html">服务内容</a></li>' +
-            '<li><a href="news.html">养老资讯</a></li>' +
             '</ul></div>' +
             '<div class="foot-col"><h5>了解更多</h5><ul>' +
-            '<li><a href="guide.html">入住指南</a></li>' +
+            '<li><a href="guide.html">服务接入</a></li>' +
             '<li><a href="contact.html">联系我们</a></li>' +
             '<li><a href="contact.html#message">在线留言咨询</a></li>' +
             '<li><a href="index.html">居民康养平台</a></li>' +
@@ -167,7 +161,7 @@
             '</div>' +
             '<div class="foot-bottom">' +
             '<span>© ' + y + ' 颐和康养服务中心 · 前端演示作品</span>' +
-            '<span><a href="about.html">关于我们</a><a href="guide.html">入住流程</a><a href="privacy.html">隐私与数据说明</a></span>' +
+            '<span><a href="about.html">关于我们</a><a href="guide.html">服务接入</a><a href="privacy.html">隐私与数据说明</a></span>' +
             '</div>' +
             '</div></footer>';
     }
@@ -205,16 +199,14 @@
     function bindThemeToggle() {
         var btn = document.getElementById("themeToggle");
         if (!btn) return;
+        function syncIcon() {
+            btn.innerHTML = siteIcon(YiheTheme.get() === "dark" ? "sun" : "moon", 20);
+        }
         btn.addEventListener("click", function() {
-            var dark = document.documentElement.getAttribute("data-theme") === "dark";
-            var next = dark ? "light" : "dark";
-            document.documentElement.setAttribute("data-theme", next);
-            try {
-                localStorage.setItem("yihe-theme", next);
-            } catch (e) {}
-            btn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
-            btn.innerHTML = siteIcon(next === "dark" ? "sun" : "moon", 20);
+            YiheTheme.set(YiheTheme.get() === "dark" ? "light" : "dark");
         });
+        window.addEventListener("yihe:themechange", syncIcon);
+        syncIcon();
     }
 
     /* ---------- 4. 字号调节（老年友好，持久化） ---------- */
@@ -330,61 +322,6 @@
     }
 
     /* ---------- 9. 资讯：分类筛选 + 关键词搜索 + 空状态 ---------- */
-    function bindNewsFilter() {
-        var bar = document.querySelector(".filter-bar");
-        var search = document.getElementById("newsSearch");
-        var grid = document.querySelector(".news-grid");
-        if (!grid) return;
-        var cards = Array.prototype.slice.call(grid.querySelectorAll(".news-card"));
-
-        // 空状态节点（缺失则创建）
-        var empty = grid.parentNode.querySelector(".empty-state");
-        if (!empty) {
-            empty = document.createElement("div");
-            empty.className = "empty-state";
-            empty.innerHTML = '<span class="es-ico">' + siteIcon("inbox", 28) + '</span>' +
-                '<h3>没有找到匹配的资讯</h3><p>换个关键词，或点“全部”查看所有养老资讯。</p>';
-            grid.insertAdjacentElement("afterend", empty);
-        }
-
-        var curCat = "全部";
-        var curQ = "";
-
-        function apply() {
-            var shown = 0;
-            cards.forEach(function(c) {
-                var cat = c.getAttribute("data-cat") || "";
-                var hay = (c.textContent || "").toLowerCase();
-                var okCat = (curCat === "全部") || (cat === curCat);
-                var okQ = !curQ || hay.indexOf(curQ) !== -1;
-                var ok = okCat && okQ;
-                c.style.display = ok ? "" : "none";
-                if (ok) shown++;
-            });
-            empty.classList.toggle("show", shown === 0);
-        }
-
-        if (bar) {
-            bar.addEventListener("click", function(e) {
-                var btn = e.target.closest("button");
-                if (!btn) return;
-                curCat = btn.getAttribute("data-cat");
-                bar.querySelectorAll("button").forEach(function(b) {
-                    b.classList.remove("active");
-                });
-                btn.classList.add("active");
-                apply();
-            });
-        }
-        if (search) {
-            search.addEventListener("input", function() {
-                curQ = (search.value || "").trim().toLowerCase();
-                apply();
-            });
-        }
-    }
-
-    /* ---------- 10. 留言表单校验 + 本地提交 ---------- */
     function bindForms() {
         document.querySelectorAll("form[data-form]").forEach(function(form) {
             var saveKey = form.getAttribute("data-form");
@@ -461,7 +398,6 @@
         bindImageFade();
         reveal();
         bindFaq();
-        bindNewsFilter();
         bindForms();
         paintIcons(document);
         insertCloudDividers();

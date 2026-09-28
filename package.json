@@ -1,0 +1,23 @@
+{
+  "name": "yihe-health",
+  "version": "0.1.0",
+  "private": true,
+  "description": "颐和·智慧康养 —— 纯静态前端演示站（无后端/无数据库）。npm 仅用于把既有校验命令包一层，不引入任何运行时依赖。",
+  "license": "UNLICENSED",
+  "scripts": {
+    "check": "python tests/check_static.py && python tools/check_css.py && python tools/check_docs.py && node tools/check_credentials.js",
+    "check:static": "python tests/check_static.py",
+    "check:css": "python tools/check_css.py",
+    "check:docs": "python tools/check_docs.py",
+    "check:creds": "node tools/check_credentials.js",
+    "scan:density": "python tools/scan_density.py",
+    "beautify:css": "python tools/beautify_css.py",
+    "test": "npm run check && npm run test:domain && npm run test:browser",
+    "test:domain": "node --test tests/care-domain.test.cjs",
+    "test:browser": "powershell -ExecutionPolicy Bypass -File tools/run_tests.ps1",
+    "setup:testenv": "powershell -ExecutionPolicy Bypass -File tools/setup_test_env.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
