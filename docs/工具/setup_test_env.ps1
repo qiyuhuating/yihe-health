@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    建立仓库内的隔离测试环境（.venv），用于跑浏览器回归。
+    安装仓库本地 Python 与 Playwright 浏览器依赖，准备可复现的浏览器测试环境。
 
 .DESCRIPTION
     解决一个具体的可复现性缺口：浏览器回归依赖 Playwright，而不少机器的
