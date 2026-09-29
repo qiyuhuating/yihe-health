@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# 用途：仅在 CSS 结构边界规范换行，保证所有非空白 token 原样保留。
 """
 beautify_css.py — 把压缩成"每行塞满"的 CSS 重排为可读缩进格式。
 
