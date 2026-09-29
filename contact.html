@@ -2,13 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://api.deepseek.com; font-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; base-uri 'none'; object-src 'none'; form-action 'self'">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>联系我们 | 颐和·智慧康养</title>
   <meta name="description" content="颐和·智慧康养联系方式与在线留言咨询：地址、电话、参观接待时间，以及可随时提交的咨询表单。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%239E3B2E'/%3E%3Ctext x='16' y='23' font-size='19' fill='white' text-anchor='middle' font-family='serif'%3E颐%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="site.css">
-  <script src="theme.js" defer></script>
+  <link rel="stylesheet" href="样式/reconstruction.css"><link rel="stylesheet" href="样式/ui-polish.css">
+  <script src="脚本/theme.js" defer></script><script src="脚本/care-runtime-config.js" defer></script><script src="脚本/care-transport.js" defer></script><script src="脚本/care-session.js" defer></script><script src="脚本/care-mode-ui.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主内容</a>
@@ -21,7 +21,7 @@
       <div class="container">
         <span class="eyebrow">联系我们</span>
         <h1>有问题，随时找我们</h1>
-        <p>这里展示咨询表单的前端交互。留言仅保存在当前浏览器，不会发送给机构或顾问。</p>
+        <p><span data-http-text="账号及服务问题可联系为您登记的社区工作人员，也可以通过下方表单提交咨询。">这里展示咨询表单的前端交互。留言仅保存在当前浏览器，不会发送给机构或顾问。</span></p>
       </div>
     </section>
 
@@ -29,7 +29,7 @@
       <div class="container">
         <div class="contact-grid">
           <div class="reveal">
-            <div class="info-list">
+            <div data-http-only hidden><h2>咨询前请了解</h2><p>如需更正账户资料或了解照护安排，请优先联系为您登记的社区工作人员。</p><p>通过表单咨询时，请留下方便联系的电话号码，并简要说明问题。</p><p>如有紧急情况，请使用居民端的紧急联系入口；在线咨询不用于紧急求助。</p></div><div class="info-list" data-demo-only>
               <div class="info-item">
                 <span class="icon-badge"><span data-s-icon="location"></span></span>
                 <div><h4>机构地址</h4><p>杭州市拱墅区和睦街道颐和路 18 号</p></div>
@@ -55,26 +55,26 @@
 
           <div class="reveal" style="--i:1">
             <div class="form" id="message">
-              <div class="form-success">
+              <div class="form-success" role="status" aria-live="polite">
                 <span data-s-icon="check"></span>
-                <p>已保存到当前浏览器。此演示站不会通知顾问，也不会安排回访。</p>
+                <p data-http-text="咨询已提交，请留意您填写的联系方式。">已保存到当前浏览器。此演示站不会通知顾问，也不会安排回访。</p>
               </div>
               <h3 style="font-size:1.3rem;margin-bottom:18px">在线留言咨询</h3>
               <form data-form="yihe-messages" novalidate>
                 <div class="field">
                   <label for="f-name">称呼<span class="req">*</span></label>
-                  <input id="f-name" name="name" type="text" placeholder="您怎么称呼" required>
-                  <span class="err">请填写您的称呼</span>
+                  <input id="f-name" name="name" maxlength="30" type="text" placeholder="您怎么称呼" required>
+                  <span class="err" id="f-name-error">请填写您的称呼</span>
                 </div>
                 <div class="field">
                   <label for="f-phone">联系电话<span class="req">*</span></label>
-                  <input id="f-phone" name="phone" type="tel" placeholder="手机号码或固话" required>
-                  <span class="err">请填写有效的电话（手机或固话）</span>
+                  <input id="f-phone" name="phone" maxlength="22" type="tel" placeholder="手机号码或固话" required>
+                  <span class="err" id="f-phone-error">请填写有效的电话（手机或固话）</span>
                 </div>
                 <div class="field">
                   <label for="f-type">咨询类型</label>
                   <select id="f-type" name="type">
-                    <option value="入住咨询">入住咨询</option>
+                    <option value="社区服务咨询">社区服务咨询</option>
                     <option value="收费疑问">收费疑问</option>
                     <option value="参观预约">参观预约</option>
                     <option value="其他">其他</option>
@@ -82,18 +82,18 @@
                 </div>
                 <div class="field">
                   <label for="f-msg">留言内容<span class="req">*</span></label>
-                  <textarea id="f-msg" name="message" required placeholder="简单说说长辈的情况或您想了解的问题" minlength="5"></textarea>
-                  <span class="err">请至少填写 5 个字以体验表单校验</span>
+                  <textarea id="f-msg" name="message" required placeholder="简单说说长辈的情况或您想了解的问题" minlength="5" maxlength="1000"></textarea>
+                  <span class="err" id="f-msg-error">请至少填写 5 个字以体验表单校验</span>
                 </div>
-                <button class="btn btn--primary btn--block" type="submit">保存本机留言 <span data-s-icon="arrowRight"></span></button>
-                <p class="form-note">仅用于体验，内容保存在当前浏览器。请勿填写真实健康信息；没有工作人员接收此留言。</p>
+                <button class="btn btn--primary btn--block" type="submit"><span data-http-text="提交咨询">保存本机留言</span> <span data-s-icon="arrowRight"></span></button>
+                <p id="messageError" role="alert" aria-live="assertive" hidden></p><p class="form-note" data-http-text="请只填写联系所需信息，不要在咨询中填写完整病历或身份证件。">仅用于体验，内容保存在当前浏览器。请勿填写真实健康信息；没有工作人员接收此留言。</p>
               </form>
             </div>
           </div>
         </div>
       </div>
     </section>
-    <section class="section section--tight">
+    <section class="section section--tight" data-demo-only>
       <div class="container">
         <div class="sec-head reveal">
           <span class="eyebrow">如何到达</span>
@@ -116,7 +116,7 @@
   </main>
 
   <div id="site-footer"></div>
-  <script src="data/image-map.js" defer></script>
-  <script src="site.js" defer></script>
+  <script src="数据/image-map.js" defer></script>
+  <script src="脚本/site.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,19 @@
+{
+  "revision": 1,
+  "staff": [{"id":"care-nurse","name":"测试工作人员"}],
+  "residents": {
+    "101": {
+      "revision":1,
+      "id":101,"name":"测试居民","age":70,"responsible":"care-nurse","risk":false,"deviceState":"online",
+      "lastSeen":"2026-09-29T00:00:00Z","updatedAt":"2026-09-29T00:00:00Z","locationAt":"2026-09-29T00:00:00Z",
+      "pos":{"x":150,"y":125},"contacts":[],"trend":[],"doses":[],"heartRate":72,"bloodOxygen":98,
+      "systolic":120,"diastolic":80,"temperature":36.5
+    }
+  },
+  "events": [{
+    "id":"alert-1","residentId":101,"type":"health","state":"new","severity":"warning","detail":"测试采样待核实",
+    "revision":1,"owner":null,"createdAt":"2026-09-29T00:00:00Z","dueAt":"2026-09-29T01:00:00Z",
+    "history":[],"notification":{"cycle":1,"presentedCycle":0}
+  }],
+  "logs":[]
+}

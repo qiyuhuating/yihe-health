@@ -1,15 +1,59 @@
 name: Frontend checks
 on:
   push:
-    branches: [main]
+    branches: [main, release]
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  # 快速档：只需 Python + Node，几秒出结果，不需要浏览器。
+  # 与慢档分开是为了让排错更快 —— 绝大多数回归在这一档就能发现。
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 空白错误
+        run: git diff --check HEAD^ HEAD
+      - name: JS 语法 / HTML 引用 / 脚本顺序 / innerHTML 转义
+        run: python 测试/check_static.py
+      - name: CSS 反混淆等价性
+        run: python 工具/check_css.py
+      - name: 文档数字一致性
+        run: python 工具/check_docs.py
+      - name: 凭据配置一致性
+        run: node 工具/check_credentials.js
+      - name: 事件状态与持久化
+        run: npm run test:domain
+      - name: Build production frontend
+        run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-frontend
+          path: dist/
+
+  # 慢档：社区养老双端的真实浏览器回归。
   browser-regression:
+    name: Browser regression (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      YIHE_BROWSER: ${{ matrix.browser }}
+      YIHE_ARTIFACT_DIR: test-results/${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,6 +63,12 @@ jobs:
         with:
           node-version: '22'
       - run: pip install -r requirements-test.txt
-      - run: python -m playwright install --with-deps chromium
-      - run: python tests/check_static.py
-      - run: python -m unittest discover -s tests -v
+      - run: python -m playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run build
+      - run: python -m unittest discover -s 测试 -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-${{ matrix.browser }}
+          path: test-results/${{ matrix.browser }}
+          if-no-files-found: ignore

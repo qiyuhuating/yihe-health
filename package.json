@@ -1,0 +1,24 @@
+{
+  "name": "yihe-health",
+  "version": "0.1.0",
+  "private": true,
+  "description": "颐和社区健康前端：本机演示与同源服务模式，独立发布构建，无第三方运行时依赖。",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "python 工具/build_frontend.py",
+    "check": "python 测试/check_static.py && python 工具/check_css.py && python 工具/check_docs.py && node 工具/check_credentials.js",
+    "check:static": "python 测试/check_static.py",
+    "check:css": "python 工具/check_css.py",
+    "check:docs": "python 工具/check_docs.py",
+    "check:creds": "node 工具/check_credentials.js",
+    "scan:density": "python 工具/scan_density.py",
+    "beautify:css": "python 工具/beautify_css.py",
+    "test": "npm run check && npm run test:domain && npm run test:browser",
+    "test:domain": "node --test 测试/care-domain.test.cjs 测试/care-http-adapter.test.cjs",
+    "test:browser": "powershell -ExecutionPolicy Bypass -File 工具/run_tests.ps1",
+    "setup:testenv": "powershell -ExecutionPolicy Bypass -File 工具/setup_test_env.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,32 @@
+/* Resident desktop composition and home surface. Components and state live in app-components.css. */
+@media(min-width:768px){
+ #tab-chat.active .chat-container{display:grid;grid-template-columns:270px minmax(0,1fr);grid-template-rows:auto auto minmax(500px,65vh);}
+ #tab-chat .chat-exit-btn{grid-column:1/-1;grid-row:1;justify-self:start}
+ #tab-chat .chat-disclosure{grid-column:1/-1;grid-row:2}
+ #tab-chat .msg-contacts{grid-column:1;grid-row:3;border-right:1px solid var(--sep);overflow:auto}
+ #tab-chat .chat-panel,#tab-chat .chat-empty{grid-column:2;grid-row:3}
+ #tab-chat .chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center}
+ #tab-chat .chat-container:has(.chat-panel:not([hidden])) .chat-empty{display:none}
+ #tab-chat .chat-panel:not([hidden]){min-height:0}
+ #tab-chat .chat-body{min-height:0}
+ #tab-chat .chat-search-bar{grid-column:1/-1;grid-row:4}
+ #tab-chat .msg-contacts[hidden]{display:block}
+}
+
+/* The resident dashboard uses a quiet paper-and-ink hierarchy. */
+#tab-home .home-health{position:relative;box-shadow:0 12px 36px rgba(42,44,38,.06);border-radius:18px}
+#tab-home .home-health::before{content:"";position:absolute;left:28px;right:28px;top:0;height:2px;background:linear-gradient(90deg,var(--brand),var(--gold),transparent);border-radius:2px}
+#tab-home .vital-card{border-radius:12px;background:var(--card-tint);border-color:var(--sep)}
+#tab-home .vital-card[data-state="warning"]{background:color-mix(in srgb,var(--orange) 8%,var(--card))}
+#tab-home .vital-card[data-state="danger"]{background:color-mix(in srgb,var(--red) 8%,var(--card))}
+#tab-home .home-actions .btn{min-height:54px}
+#tab-home .home-actions .btn:not(:disabled):hover{box-shadow:0 5px 14px rgba(42,44,38,.12)}
+#tab-home .home-hero{border-radius:18px;background:radial-gradient(circle at 80% 20%,var(--hover),transparent 60%),var(--card-tint)}
+body.dark #tab-home .vital-icon img,body.dark .bottom-nav .nav-icon img{filter:brightness(0) invert(1);opacity:.78}
+
+@media(min-width:1360px){
+  .bottom-nav{position:fixed;top:168px;bottom:auto;left:max(10px,calc((100vw - 1360px)/2 + 10px));transform:none;width:72px;max-width:none;flex-direction:column;gap:4px;padding:7px;border-radius:18px;box-shadow:0 12px 34px rgba(42,44,38,.11)}
+  .bottom-nav .nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-width:44px;min-height:62px;padding:6px 2px;border-radius:11px}
+  .bottom-nav .nav-item.active{box-shadow:inset 3px 0 var(--action)}
+  .bottom-nav .nav-label{font-size:13px}
+}

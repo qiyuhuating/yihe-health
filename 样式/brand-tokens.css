@@ -1,0 +1,27 @@
+/* Shared identity across the public, resident, staff and sign-in pages. */
+:root {
+  color-scheme:light;
+  --yh-paper:#F5EFE2;
+  --yh-paper-raised:#FCF8F0;
+  --yh-ink:#241F18;
+  --yh-ink-muted:#574E40;
+  --yh-vermilion:#9E3B2E;
+  --yh-vermilion-hover:#842F24;
+  --yh-pine:#365B49;
+  --yh-action:#365B49;
+  --yh-gold:#9B773B;
+  --danger-on:#fff;
+}
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --yh-paper:#1B1C1A;
+  --yh-paper-raised:#292A27;
+  --yh-ink:#F0EEE8;
+  --yh-ink-muted:#C7C5BA;
+  --yh-vermilion:#C7A77A;
+  --yh-vermilion-hover:#D5B98F;
+  --yh-pine:#A4BAA8;
+  --yh-action:#C7A77A;
+  --yh-gold:#C7A77A;
+  --danger-on:#211F20;
+}

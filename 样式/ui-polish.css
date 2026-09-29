@@ -1,0 +1,586 @@
+/* Shared visual finish for the public site and care workspaces. */
+:root {
+  color-scheme: light;
+  --bg: #f5f4ef;
+  --surface: #fffefa;
+  --surface-2: #ecefe8;
+  --ink: #202b23;
+  --ink-2: #4d5a50;
+  --ink-3: #657167;
+  --line: #d9ded5;
+  --pine: #3e6349;
+  --pine-deep: #2c4935;
+  --pine-soft: #e7eee7;
+  --on-pine: #fff;
+  --vermilion: #a04737;
+  --danger: #a7352b;
+  --warn: #875710;
+  --radius: 18px;
+  --shadow: 0 14px 38px rgb(32 43 35 / 8%);
+  --focus-ring: #54775e;
+}
+:root[data-theme="dark"],
+body.dark {
+  color-scheme: dark;
+  --bg: #202923;
+  --surface: #29342d;
+  --surface-2: #323e36;
+  --ink: #f0f0e9;
+  --ink-2: #c0c9c0;
+  --ink-3: #aab5ab;
+  --line: #455148;
+  --pine: #91ad97;
+  --pine-deep: #718d77;
+  --pine-soft: #35483a;
+  --on-pine: #1e2a21;
+  --vermilion: #d28773;
+  --danger: #e18779;
+  --warn: #e2b36d;
+  --focus-ring: #b7d0bc;
+  --shadow: 0 18px 48px rgb(0 0 0 / 24%);
+}
+body {
+  color: var(--ink);
+  background: var(--bg);
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  font-size: calc(16px * var(--text-scale, 1));
+}
+html {
+  font-size: calc(16px * var(--text-scale, 1));
+}
+body :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+:where(.btn, .btn-primary, .btn--primary, .login-btn, .login-btn-cn) {
+  min-height: 46px;
+  border-radius: 12px;
+  font-weight: 650;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+:where(.btn, .btn-primary, .btn--primary, .login-btn, .login-btn-cn):active {
+  transform: translateY(1px);
+}
+:where(.btn, .btn-primary, .btn--primary, .login-btn, .login-btn-cn):disabled {
+  cursor: not-allowed;
+  opacity: .62;
+  transform: none;
+}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="hidden"]), select, textarea) {
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+:where(input, textarea, select)::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+:where(input, textarea, select):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--pine) 52%, var(--line));
+}
+:where(input, textarea, select):disabled {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+:where(.card, .sec-card, .home-health, .panel, .stat-card, .vital-card, .medication-card, .care-dialog, .login-card-cn, .news-card, .faq-item, .price, .form, .article, .privacy-copy) {
+  border-radius: var(--radius);
+}
+:where(.sec-card, .home-health, .panel, .stat-card, .vital-card, .medication-card, .care-dialog, .login-card-cn) {
+  box-shadow: 0 5px 20px rgb(32 43 35 / 4%);
+}
+.site-header {
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  border-color: color-mix(in srgb, var(--line) 78%, transparent);
+}
+@media (max-width: 920px) {
+  .nav-links {
+    visibility: hidden;
+    transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  }
+  .nav-links.open {
+    visibility: visible;
+  }
+  .nav-links[inert] {
+    pointer-events: none;
+  }
+}
+.nav-links a,
+.nav-toggle,
+.tool-btn,
+.font-ctrl button {
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease;
+}
+.nav-links a.active {
+  font-weight: 650;
+}
+.estate-intro,
+.care-directory,
+.estate-story,
+.estate-visit {
+  max-width: 1240px;
+}
+.estate-heading h1,
+.care-directory h2,
+.estate-story h2,
+.estate-visit h2,
+.page-hero h1 {
+  text-wrap: balance;
+}
+.estate-heading p,
+.care-directory header p,
+.estate-story p,
+.estate-visit p,
+.page-hero p,
+.section p {
+  text-wrap: pretty;
+}
+.section .container > p {
+  max-width: 72ch;
+}
+.privacy-copy {
+  max-width: min(78ch, 100%);
+  margin-inline: auto;
+}
+.estate-scene img,
+.estate-story > img {
+  box-shadow: var(--shadow);
+}
+.care-directory-list > a:focus-visible,
+.news-card:focus-visible {
+  outline-offset: 4px;
+}
+.page-hero {
+  padding-block: clamp(52px, 7vw, 82px) 38px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 58%, var(--bg)), var(--bg));
+}
+.section--tint {
+  border-block: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+.field {
+  gap: 8px;
+  margin-block: 13px;
+}
+.field > :is(input, select, textarea) {
+  width: 100%;
+}
+.field label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+.field .err {
+  display: none;
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.5;
+}
+  body:not(.resident-care):not(.staff-care) :is(p, li, label, button, .data-note, .form-note, .login-sub, .menu-item, .nav-links a) {
+  font-size: 1rem;
+}
+.field.invalid .err {
+  display: block;
+}
+.field.invalid :is(input, select, textarea) {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 13%, transparent);
+}
+.field.invalid label {
+  color: var(--danger);
+}
+.form-success {
+  display: none;
+  margin-block: 0 20px;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--pine) 32%, var(--line));
+  border-radius: 14px;
+  background: var(--pine-soft);
+  color: var(--ink);
+}
+.form-success.show {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.form-success [data-s-icon] {
+  flex: 0 0 22px;
+  color: var(--pine-deep);
+}
+.form-success p {
+  margin: 0;
+  line-height: 1.65;
+}
+#messageError:not([hidden]) {
+  margin-block: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 34%, var(--line));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  color: var(--danger);
+  font-size: 14px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-block: 24px;
+}
+  .cards > .card {
+    min-height: 150px;
+    padding: clamp(20px, 3vw, 28px);
+  }
+.cards > .card h2 {
+  margin: 0 0 10px;
+  font: 650 20px/1.45 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.cards > .card p {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.8;
+}
+.care-guide {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+  padding: 0;
+  counter-reset: care-step;
+  list-style: none;
+}
+.care-guide li {
+  position: relative;
+  min-height: 86px;
+  padding: 19px 22px 19px 74px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.care-guide li::before {
+  position: absolute;
+  top: 20px;
+  left: 22px;
+  color: var(--pine);
+  content: counter(care-step, decimal-leading-zero);
+  counter-increment: care-step;
+  font: 600 18px/1.4 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.care-guide h3 {
+  margin: 0 0 5px;
+  font-size: 17px;
+}
+.care-guide p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.care-guide + .btn {
+  margin: 6px 10px 0 0;
+}
+.icon-badge--green {
+  background: var(--pine-soft);
+  color: var(--pine-deep);
+}
+.icon-badge--gold {
+  background: #f2ecdf;
+  color: #755a32;
+}
+:root[data-theme="dark"] .icon-badge--gold,
+body.dark .icon-badge--gold {
+  background: #443d30;
+  color: #e4c68f;
+}
+.req {
+  margin-left: 3px;
+  color: var(--danger);
+  font-weight: 700;
+}
+.site-footer {
+  margin-top: 20px;
+}
+.login-card-cn {
+  padding: clamp(24px, 4vw, 36px);
+}
+.login-eyebrow,
+.login-card-kicker {
+  color: var(--pine);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.login-sub {
+  margin-block: 8px 18px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.login-card-cn :is(h1, h2) {
+  max-width: 24ch;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.login-hint:not([hidden]),
+.login-sub[role="alert"]:not([hidden]) {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 36%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+  color: var(--danger);
+  font-size: 14px;
+}
+.login-form-inner {
+  gap: 12px;
+}
+.login-form-inner label {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+.login-input-cn,
+.login-input {
+  width: 100%;
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+}
+input.input:not([type="checkbox"]):not([type="radio"]),
+select.input,
+textarea.input,
+.fg .input,
+.fg-col .input,
+.staff-selector .input {
+  min-height: 46px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+}
+.login-btn-cn,
+.login-btn {
+  width: 100%;
+  min-height: 50px;
+}
+.topbar {
+  min-height: 68px;
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  box-shadow: 0 2px 12px rgb(32 43 35 / 3%);
+}
+.menu-panel {
+  background: #26372d;
+  color: #f7f6f0;
+}
+.menu-item {
+  min-height: 52px;
+  transition: background-color .16s ease, color .16s ease;
+}
+.menu-item.active {
+  background: #496652;
+}
+.main {
+  padding-top: 26px;
+}
+.stats-row {
+  gap: 16px;
+}
+.stat-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgb(32 43 35 / 4%);
+}
+.panel {
+  padding: clamp(18px, 2vw, 24px);
+}
+.panel-title {
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.panel :is(h2, h3),
+.sec-card :is(h2, h3) {
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.resident-care .home-topbar {
+  min-height: 68px;
+  border-bottom: 1px solid var(--line);
+}
+.resident-care .page {
+  width: min(1120px, calc(100% - 48px));
+}
+.resident-care .welcome-row h1,
+.resident-care .tab-view > h1 {
+  font-size: clamp(25px, 3vw, 34px);
+  letter-spacing: -.025em;
+}
+.resident-care .home-health {
+  padding: clamp(20px, 3vw, 28px);
+  box-shadow: var(--shadow);
+}
+.resident-care .sec-card {
+  border: 1px solid var(--line);
+  box-shadow: 0 5px 20px rgb(32 43 35 / 4%);
+}
+.resident-care .bottom-nav {
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 10px 32px rgb(24 34 26 / 16%);
+  backdrop-filter: blur(14px);
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.resident-care .nav-item {
+  border-radius: 12px;
+  transition: color .16s ease, background-color .16s ease;
+}
+.resident-care .nav-item.active {
+  background: var(--pine-soft);
+  color: var(--pine-deep);
+}
+.staff-care .console-workspace > .main {
+  width: min(1560px, 100%);
+  margin-inline: auto;
+}
+.staff-care .overview-heading h2 {
+  font-size: clamp(25px, 2.4vw, 34px);
+}
+.staff-care .queue-heading h3 {
+  letter-spacing: -.015em;
+}
+.staff-care .care-event {
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgb(32 43 35 / 4%);
+}
+.staff-care .care-event :is(h2, h3, p) {
+  overflow-wrap: anywhere;
+}
+.care-dialog {
+  box-shadow: 0 24px 70px rgb(0 0 0 / 22%);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  overscroll-behavior: contain;
+}
+dialog.care-dialog::backdrop {
+  background: rgb(15 22 17 / 58%);
+  backdrop-filter: blur(3px);
+}
+.care-dialog :is(input, select, textarea) {
+  max-width: 100%;
+}
+[aria-busy="true"] {
+  cursor: progress;
+}
+.care-error,
+.error-toast {
+  border-radius: 12px;
+}
+.care-error[role="status"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.care-loading[role="status"]::before {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  border: 2px solid var(--line);
+  border-top-color: var(--pine);
+  border-radius: 50%;
+  content: "";
+  animation: care-spin .8s linear infinite;
+}
+@keyframes care-spin {
+  to { transform: rotate(360deg); }
+}
+@media (max-width: 760px) {
+  .page-hero {
+    padding-block: 42px 24px;
+  }
+  .estate-heading h1 {
+    font-size: clamp(36px, 10vw, 44px);
+    line-height: 1.22;
+  }
+  .estate-scene img,
+  .estate-story > img {
+    box-shadow: 0 10px 28px rgb(32 43 35 / 10%);
+  }
+  .hero-actions > .btn,
+  .estate-visit > div:last-child > .btn {
+    flex: 1 1 auto;
+  }
+  .cards {
+    gap: 12px;
+  }
+  .stats-row {
+    gap: 10px;
+  }
+  .topbar-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .resident-care .page {
+    width: calc(100% - 28px);
+  }
+  .care-dialog {
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+  .contact-grid {
+    gap: 24px;
+  }
+  .form {
+    padding: clamp(20px, 5vw, 28px);
+  }
+  .staff-care .console-workspace > .main {
+    padding-inline: 16px;
+  }
+}
+@media (max-width: 560px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+  .care-guide li {
+    padding: 17px 16px 17px 58px;
+  }
+  .care-guide li::before {
+    top: 18px;
+    left: 16px;
+  }
+}
+.field input:not([type="checkbox"]),
+.field select,
+.field textarea,
+.login-input-cn,
+.login-input,
+.login-form-inner input,
+.staff-selector .input,
+input.input:not([type="checkbox"]):not([type="radio"]),
+select.input,
+textarea.input,
+.fg .input,
+.fg-col .input,
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  font-size: max(16px, calc(16px * var(--text-scale, 1)));
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.btn, .btn-primary, .btn--primary, .login-btn, .login-btn-cn, .nav-item, .menu-item) {
+    transition: none;
+  }
+  .nav-links {
+    transition: none;
+  }
+  html:focus-within { scroll-behavior: auto; }
+  .care-loading[role="status"]::before {
+    animation: none;
+  }
+}

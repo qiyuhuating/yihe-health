@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; object-src 'none'">
+  <title>颐和 · 前端组件校对</title>
+  <link rel="stylesheet" href="样式/brand-tokens.css">
+  <link rel="stylesheet" href="样式/common.css">
+  <link rel="stylesheet" href="样式/tokens.css">
+  <link rel="stylesheet" href="样式/design-preview.css">
+  <script src="脚本/theme.js" defer></script>
+  <script src="数据/schema.js" defer></script>
+  <script src="数据/residents.js" defer></script>
+  <script src="脚本/seed-data.js" defer></script>
+  <script src="脚本/design-preview.js" defer></script>
+</head>
+<body class="light">
+<a class="skip-link" href="#main">跳到组件</a>
+<header class="dp-top"><a href="home.html" class="dp-brand">颐和 <span>· 前端组件校对</span></a><div class="dp-top-actions"><button type="button" id="previewTheme" class="dp-button dp-secondary" aria-pressed="false">切换深色</button><a href="管理端.html">管理端</a><a href="index.html">居民端</a></div></header>
+<main class="dp-page" id="main">
+  <div class="dp-intro"><p class="dp-eyebrow">DESIGN SYSTEM / 2026</p><h1>温润的底色，明确的操作</h1><p>本页用于校对真实页面使用的颜色、排版、控件和反馈。下方居民信息取自现有演示数据；样例交互只演示控件状态，不写入档案。</p></div>
+  <section class="dp-section" aria-labelledby="colorTitle"><div class="dp-heading"><span>01 / 识别</span><h2 id="colorTitle">颜色与状态</h2></div><div class="dp-swatches"><div class="dp-swatch"><i class="dp-paper"></i><b>宣纸</b><small>页面底色</small></div><div class="dp-swatch"><i class="dp-ink"></i><b>墨色</b><small>主要文字</small></div><div class="dp-swatch"><i class="dp-pine"></i><b>松绿</b><small>执行操作</small></div><div class="dp-swatch"><i class="dp-vermilion"></i><b>朱砂</b><small>品牌点缀</small></div><div class="dp-swatch"><i class="dp-danger"></i><b>危险</b><small>异常提示</small></div></div><div class="dp-badges"><span class="dp-badge normal">正常 · 持续监测</span><span class="dp-badge warning">异常 · 需要关注</span><span class="dp-badge danger">危险 · 立即处理</span><span class="dp-badge pending">保存中…</span></div></section>
+  <section class="dp-section" aria-labelledby="controlTitle"><div class="dp-heading"><span>02 / 操作</span><h2 id="controlTitle">按键与表单</h2></div><div class="dp-grid"><div class="dp-panel"><h3>动作优先级</h3><p>同一区域只有一个主要操作；危险提示同时提供文字。</p><div class="dp-actions"><button type="button" class="dp-button dp-primary" id="previewToast">保存并查看反馈</button><button type="button" class="dp-button dp-secondary" id="previewDialog">打开确认弹窗</button><button type="button" class="dp-button dp-danger-button" id="previewDanger">危险状态示例</button><button type="button" class="dp-button" disabled>提交中，暂不可用</button></div></div><div class="dp-panel"><h3>输入</h3><p>标签常驻，错误紧邻字段，键盘焦点清晰可见。</p><label for="previewName">居民姓名</label><input id="previewName" type="text" value="王国栋" autocomplete="off"><label for="previewStatus">监测状态</label><select id="previewStatus"><option>全部状态</option><option>正常</option><option>异常</option><option>危险</option></select><p class="dp-help">搜索和筛选在真实档案页执行。</p></div></div></section>
+  <section class="dp-section" aria-labelledby="dataTitle"><div class="dp-heading"><span>03 / 信息</span><h2 id="dataTitle">监测列表样本</h2></div><div class="dp-panel"><p>前 4 位居民取自项目演示数据。完整交互请打开管理端。</p><div class="dp-table-wrap"><table><caption class="sr-only">演示居民监测样本</caption><thead><tr><th scope="col">居民</th><th scope="col">年龄</th><th scope="col">心率</th><th scope="col">状态</th></tr></thead><tbody id="previewResidents"></tbody></table></div><div class="dp-note">数据仅作前端演示，未接入设备或通知服务。</div></div></section>
+</main>
+<div class="dp-toast" id="previewToastMessage" role="status" hidden></div>
+<div class="dp-overlay" id="previewOverlay" hidden><div class="dp-dialog" role="dialog" aria-modal="true" aria-labelledby="previewDialogTitle"><h2 id="previewDialogTitle">确认操作</h2><p>这是组件状态样例，确认后不会更改居民数据。</p><div class="dp-actions"><button type="button" class="dp-button dp-secondary" id="previewCancel">取消</button><button type="button" class="dp-button dp-primary" id="previewConfirm">确认</button></div></div></div>
+</body>
+</html>

@@ -1,50 +1,32 @@
-# 颐和 · 智慧康养（静态演示版）
+# 颐和健康前端
 
-社区智慧养老服务平台的前端演示站点。纯 HTML / CSS / JavaScript，**不含后端与数据库**。
+面向居家照护场景的前端项目，包含公开页面、居民端和工作人员端。开发演示与生产 HTTP 接入使用不同运行配置；生产构建会生成独立的 `dist/` 静态发布目录。
 
-在线访问：<https://qiyuhuating.github.io/yihe-health/>
+## 快速开始
 
-## 页面一览
+需要 Node.js 18+ 和 Python 3。安装依赖后可运行项目检查或生成发布包：
 
-| 文件 | 说明 |
-|---|---|
-| `index.html` | 首页 |
-| `个人端.html` | 个人端：健康指标、提醒、AI 陪伴对话 |
-| `管理端.html` | 管理端：老人档案、告警、数据看板 |
-| `login.html` | 登录页（演示用） |
-| `services.html` / `guide.html` / `news.html` / `about.html` / `contact.html` | 服务、指南、资讯、关于、联系 |
-
-## 技术说明
-
-- **数据**：健康指标来自内置模拟数据（`data/`），模拟状态和用户输入保存在当前浏览器，部分数据刷新后仍保留。清理网站数据会删除本机记录。
-- **AI 对话**：需在界面设置中填入使用者自己的 DeepSeek API Key。Key 通过 WebCrypto
-  以 AES-GCM 加密后存于浏览器 IndexedDB，直接请求 `api.deepseek.com`，不经过第三方服务器。
-  不填 Key 时自动降级为本地规则回复。
-- **实时推送**：静态托管下 WebSocket 不可用，已自动降级为轮询模式。
-- **无后端**：登录、数据写入等均为前端模拟，不具备真实鉴权能力，请勿用于生产。
-
-## 本地预览
-
-```bash
-python -m http.server 8000
-# 打开 http://localhost:8000
+```sh
+npm run check
+npm run build
 ```
 
-直接双击 `index.html` 也能看，但部分浏览器会限制 `file://` 下的模块加载，建议起本地服务。
+开发预览以仓库提供的演示数据运行。不要将仓库源码目录直接作为生产站点根目录；生产只部署 `dist/`。
 
-## 前端检查与交付
+## 目录结构
 
-```bash
-python -m pip install -r requirements-test.txt
-python -m playwright install chromium
-python tests/check_static.py
-python -m unittest discover -s tests -v
-```
+- 根目录 HTML 页面保留现有站点入口和 URL，包含 GitHub Pages 首页 `index.html`。
+- `样式/`、`脚本/`、`数据/`、`静态资源/`：前端源码与静态资源。
+- `测试/`、`工具/`、`文档/`、`部署/`：测试、开发工具、交付文档和部署配置。
+- 构建后的 `dist/` 使用标准静态站点资源路径，不需要部署源码目录。
 
-语法检查需要 Node.js。浏览器回归使用独立的本地服务与临时浏览器，不操作线上数据。
-GitHub Actions 会检查 main 推送和 PR。接口字段、失败状态及验收方式见 [FRONTEND-HANDOFF.md](FRONTEND-HANDOFF.md)。本机存储与可选 AI 的数据说明见 [privacy.html](privacy.html)。
+## 交付文档
 
-## 部署
+- [系统架构](文档/architecture.md)
+- [后端接入交付说明](文档/handoff/backend-integration.md)：端点、数据模型、会话与 CSRF、权限、并发版本、幂等、错误语义和联调验收。
+- [前端交接说明](文档/handoff/frontend.md)：当前实现范围、前后端责任边界与接手顺序。
+- [发布与回滚手册](文档/handoff/release.md)：构建、静态部署、同源 API 代理、安全响应头、验收和回滚。
 
-推送到 `main` 分支后 GitHub Pages 自动重新构建。
-站点根目录为仓库根（`/`），已放置 `.nojekyll` 跳过 Jekyll 处理。
+## 当前交付边界
+
+仓库包含前端 HTTP 适配层和生产静态包构建脚本，不包含真实后端服务、生产数据库、身份提供方或通知投递服务。后端须按接入说明实现契约并完成联调，才能作为完整线上产品交付。

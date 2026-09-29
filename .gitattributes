@@ -1,0 +1,28 @@
+# 行尾统一：仓库内一律 LF，避免各平台 checkout 产生整文件 diff。
+* text=auto eol=lf
+
+# Windows 专有脚本保留 CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制资源，禁止行尾转换与 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.mp3 binary
+*.mp4 binary
+
+# 生成物与本地缓存不入库
+__pycache__/ binary
+*.pyc binary
+test-results/ binary
+_shots/ binary
+_backup/ binary
+.venv/ binary

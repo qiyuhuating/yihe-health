@@ -1,0 +1,34 @@
+# HTTP virtual host: replace example.org and keep this redirect enabled.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name example.org;
+    return 301 https://$host$request_uri;
+}
+# Include the following directives inside the matching HTTPS server block. Serve only dist/.
+# Supply the real certificate, server_name, root and backend upstream in deployment.
+add_header Strict-Transport-Security "max-age=31536000" always;
+add_header X-Content-Type-Options nosniff always;
+add_header Referrer-Policy same-origin always;
+add_header X-Frame-Options DENY always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; frame-ancestors 'none'" always;
+# HTML and API responses are not stored. Stable-name static files can be cached,
+# but must revalidate because this project does not fingerprint asset filenames.
+set $cache_control "no-cache";
+if ($uri = "/") { set $cache_control "no-store"; }
+if ($uri ~* "\.html$") { set $cache_control "no-store"; }
+if ($uri ~ "^/api/") { set $cache_control "no-store"; }
+add_header Cache-Control $cache_control always;
+gzip on;
+gzip_types text/css application/javascript application/json image/svg+xml;
+location /api/ {
+    proxy_pass http://yihe_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+location / {
+    index home.html;
+    try_files $uri $uri/ =404;
+}
