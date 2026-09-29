@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+defaults:
+  run:
+    working-directory: docs
 jobs:
   # 快速档：只需 Python + Node，几秒出结果，不需要浏览器。
   # 与慢档分开是为了让排错更快 —— 绝大多数回归在这一档就能发现。
@@ -40,7 +43,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: production-frontend
-          path: dist/
+          path: docs/dist/
 
   # 慢档：社区养老双端的真实浏览器回归。
   browser-regression:
@@ -70,5 +73,5 @@ jobs:
         if: always()
         with:
           name: browser-${{ matrix.browser }}
-          path: test-results/${{ matrix.browser }}
+          path: docs/test-results/${{ matrix.browser }}
           if-no-files-found: ignore
