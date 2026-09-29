@@ -86,7 +86,7 @@ const CareDemoAPI = (() => {
   }
   async function mutate(fn) {
     if (!navigator.locks?.request||!crypto.randomUUID) throw failure('ENV_UNSUPPORTED','当前浏览器无法安全保存监护记录。请通过 localhost 或 HTTPS 打开，并使用支持 Web Locks 的新版浏览器后重试。');
-    return navigator.locks.request(KEY,async()=>{
+    return navigator.locks.request(KEY,{mode:'exclusive'},async()=>{
       const original=read(),s=original||seed(Date.now()),before=JSON.stringify(s);
       const result=fn(s,Date.now());
       if(!original||before!==JSON.stringify(s)) {

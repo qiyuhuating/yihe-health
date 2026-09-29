@@ -8,7 +8,7 @@ function app() {
   class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
   const context = {console, YIHE_RUNTIME_CONFIG:{mode:'demo'}, Date:Clock, Math, JSON, structuredClone, crypto:require('node:crypto').webcrypto,
     localStorage:{getItem:k=>values.get(k)||null,setItem:(k,v)=>{if(fail)throw Error('quota');values.set(k,v);}},
-    navigator:{locks:{request:(_name,fn)=>{const task=queue.then(fn);queue=task.catch(()=>{});return task;}}},
+    navigator:{locks:{request:(_name,_options,fn)=>{const task=queue.then(fn);queue=task.catch(()=>{});return task;}}},
     dispatchEvent(){}, CustomEvent:class {}, addEventListener(){}};
   context.window=context; vm.createContext(context);
   for(const file of ['数据/residents.js','脚本/metrics.js','脚本/care-api.js']) vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context);

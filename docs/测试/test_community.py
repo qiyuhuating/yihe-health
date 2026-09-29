@@ -143,8 +143,26 @@ class CommunityTests(BrowserCase):
         self.admin();other=self.context.new_page();self.admin(other)
         self.page.evaluate('CareAPI.simulate(1,"fence")')
         event=self.page.evaluate('CareAPI.snapshot().then(s=>s.events.find(e=>e.residentId===1&&e.type==="fence"))')
+        self.page.evaluate('''() => {
+          const request=navigator.locks.request.bind(navigator.locks);
+          const channel=new BroadcastChannel('claim-race');
+          navigator.locks.request=(name,options,callback)=>request(name,options,async lock=>{
+            if(window.holdClaimLock){window.holdClaimLock=false;channel.postMessage('locked');await new Promise(resolve=>{
+              channel.onmessage=({data})=>{if(data==='release')resolve();};
+            });}
+            return callback(lock);
+          });
+          window.holdClaimLock=true;
+        }''')
+        other.evaluate('''(e) => {
+          const channel=new BroadcastChannel('claim-race');
+          channel.onmessage=({data})=>{
+            if(data!=='locked')return;
+            window.claimResult=CareAPI.transition(e.id,'claim','staff-2','',e.revision).then(()=>"ok",()=>"rejected");
+            channel.postMessage('release');
+          };
+        }''',event)
         self.page.evaluate('(e)=>{window.claimResult=CareAPI.transition(e.id,"claim","staff-1","",e.revision).then(()=>"ok",()=>"rejected")}',event)
-        other.evaluate('(e)=>{window.claimResult=CareAPI.transition(e.id,"claim","staff-2","",e.revision).then(()=>"ok",()=>"rejected")}',event)
         self.assertEqual(sorted([self.page.evaluate('claimResult'),other.evaluate('claimResult')]),['ok','rejected'])
         owner=other.evaluate('(id)=>CareAPI.snapshot().then(s=>s.events.find(e=>e.id===id).owner)',event['id'])
         self.assertIn(owner,['staff-1','staff-2'])
