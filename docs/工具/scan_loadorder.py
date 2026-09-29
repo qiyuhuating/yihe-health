@@ -3,7 +3,7 @@
 """scan_loadorder.py — 打印每个页面实际加载的 CSS / JS 顺序。
 
 用途：文档/architecture.md 的加载顺序表必须与代码一致，手写容易失准；
-本脚本让"改脚本顺序"这件事有一个可复核的输出。改动 HTML 的
+本脚本导出 HTML 中真实的 script/link 顺序，供架构文档与代码复核使用。改动 HTML 的
 script/link 标签后请重跑并同步文档。
 """
 import pathlib
