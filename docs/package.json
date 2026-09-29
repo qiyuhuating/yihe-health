@@ -6,7 +6,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "python 工具/build_frontend.py",
-    "check": "python 测试/check_static.py && python 工具/check_css.py && python 工具/check_docs.py && node 工具/check_credentials.js",
+    "check": "python 测试/check_static.py && python 工具/check_css.py && python 工具/check_docs.py && node 工具/check_credentials.js && npm run check:dist",
+    "check:dist": "npm run build && python 工具/check_dist.py",
     "check:static": "python 测试/check_static.py",
     "check:css": "python 工具/check_css.py",
     "check:docs": "python 工具/check_docs.py",

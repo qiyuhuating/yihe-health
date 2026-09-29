@@ -38,8 +38,8 @@ jobs:
         run: node 工具/check_credentials.js
       - name: 事件状态与持久化
         run: npm run test:domain
-      - name: Build production frontend
-        run: npm run build
+      - name: Build and verify production frontend
+        run: npm run check:dist
       - uses: actions/upload-artifact@v4
         with:
           name: production-frontend
