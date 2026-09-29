@@ -296,6 +296,8 @@ class CommunityTests(BrowserCase):
             self.assertGreaterEqual(ratio,4.5,theme)
 
     def test_resident_dose_disabled_until_window_and_offline_sample_label(self):
+        # Keep the future dose within the resident's local day regardless of CI start time.
+        self.page.clock.install(time='2026-09-29T12:00:00+08:00')
         self.admin()
         self.page.evaluate("CareAPI.addDose(1,'UX dose window',new Date(Date.now()+60*60000).toISOString(),'staff-1')")
         self.page.wait_for_function("()=>JSON.parse(localStorage.getItem(CareAPI.KEY)).residents[1].doses.some(d=>d.name==='UX dose window')")
