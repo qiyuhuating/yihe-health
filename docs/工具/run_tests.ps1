@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    跑全部校验：静态检查 + CSS 等价性 + 文档数字 + 凭据 + 浏览器回归。
+    编排静态、CSS、文档、凭据和浏览器回归；-StaticOnly 可跳过浏览器阶段。
 
 .DESCRIPTION
     优先使用仓库内 .venv（由 工具/setup_test_env.ps1 创建）。
