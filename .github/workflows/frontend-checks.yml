@@ -36,6 +36,8 @@ jobs:
         run: python 工具/check_docs.py
       - name: 凭据配置一致性
         run: node 工具/check_credentials.js
+      - name: UTF-8 and mojibake checks
+        run: python 工具/check_encoding.py
       - name: 事件状态与持久化
         run: npm run test:domain
       - name: Build and verify production frontend
