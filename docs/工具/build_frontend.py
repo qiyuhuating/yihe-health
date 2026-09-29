@@ -1,4 +1,4 @@
-"""Build a standalone HTTP-only frontend; never publish the working tree."""
+"""构建可独立部署的 HTTP 前端产物，排除本地演示数据并改写发布资源路径。"""
 from pathlib import Path
 from html.parser import HTMLParser
 from html import escape
