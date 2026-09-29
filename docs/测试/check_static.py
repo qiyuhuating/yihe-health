@@ -25,8 +25,6 @@ CONFIG_CONSUMERS = {
     "脚本/admin-credentials.js",
     "脚本/admin-login.js",
     "脚本/login-page.js",
-    "脚本/login.js",
-    "脚本/ai-chat.js",
 }
 CONFIG_SRC = "脚本/config.js"
 

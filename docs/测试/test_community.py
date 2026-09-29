@@ -1,4 +1,4 @@
-"""Current community workflows. Retired feature suites are preserved in legacy/."""
+"""Current community workflows; retired feature suites are not part of this test set."""
 import functools
 import http.server
 import json

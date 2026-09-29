@@ -46,7 +46,6 @@ def main():
         print(f"{mean:6.1f} {longest:6d} {count:6d}  {rel}")
     print(f"\n共 {len(rows)} 个 JS/CSS 文件，其中 {len(dense)} 个平均行长 > {THRESHOLD:.0f} 字符")
     print("注意：平均行长小不代表可读 —— 还需检查标识符是否被混淆")
-    print("（如 脚本/mock-api.js 平均行长不高，但全是单字母变量且多层遮蔽）。")
     if "--verbose" in sys.argv:
         print("\n全部文件：")
         for mean, longest, count, rel in sorted(rows, key=lambda r: r[3]):

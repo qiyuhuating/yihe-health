@@ -16,7 +16,7 @@
  *       slots:[ {name:'清晨'|'上午'|'中午'|'下午'|'晚间', heartRate, bloodOxygen,
  *                temperature, systolic, diastolic, bloodSugar} x5 ]
  *   }}
- * 说明：当前/五时段指标为演示基线；接入穿戴设备后由 mock-api.js 运行时覆盖。
+ * 说明：当前及五时段指标为演示基线；实时设备指标须由后端接口提供。
  */
 
 (function(g) {

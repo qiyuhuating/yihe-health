@@ -2,14 +2,11 @@
  * 登录页专用脚本（login.html）
  * -------------------------------------------------------------
  * 设计说明：
- *   login.html 是「独立登录页」，而 脚本/login.js 是原项目为「个人端内登录浮层」
- *   设计的模块，依赖 window.PATIENTS / Audit / App 等仅在个人端加载的全局变量，
- *   在 login.html 下缺失，会导致校验失败、重定向错页、且会因缺依赖抛错。
- *   因此登录页使用本自包含脚本，直接对接全站唯一数据源 数据/residents.js。
+ *   登录由 login.html 与本脚本处理，并直接对接全站唯一数据源 数据/residents.js。
  *
- * 会话契约（与 脚本/login.js / 个人端.html 保持一致）：
+ * 会话契约：
  *   成功登录后写入 localStorage["hm-login"] = JSON.stringify({uid, name, ts})
- *   个人端.html 加载时读取该会话，有效则直接进入，无效则跳回本页。
+ *   index.html 加载时读取该会话；有效则进入居民端，无效则跳回登录页。
  */
 (function() {
     "use strict";
