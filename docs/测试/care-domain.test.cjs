@@ -10,6 +10,17 @@ test('stale presentation cannot consume a newer cycle',async()=>{
   const latest=(await api.snapshot()).events.find(e=>e.id===old.id);
   assert.equal(latest.notification.presentedCycle,0);assert.equal(latest.notification.acknowledgedCycle,0);
 });
+test('recovered but open incident queues a new cycle when danger recurs',async()=>{
+  const {api}=app();await api.init();await api.simulate(1,'health');
+  let e=(await api.snapshot()).events.find(e=>e.residentId===1&&e.type==='health');
+  await api.markPresented([e.id],'staff-1',[e.notification.cycle]);
+  e=await api.transition(e.id,'claim','staff-1','',e.revision);
+  await api.simulate(1,'recover');await api.simulate(1,'health');
+  const latest=(await api.snapshot()).events.find(x=>x.id===e.id);
+  assert.equal(latest.notification.cycle,2);assert.equal(latest.notification.deliveredCycle,2);
+  assert.equal(latest.notification.acknowledgedCycle,1);assert.equal(latest.sourceRecoveredAt,undefined);
+  await assert.rejects(api.markPresented([e.id],'staff-1',[1]),error=>error.code==='CONFLICT');
+});
 test('stale resident edits conflict and contact patches preserve other contacts',async()=>{
   const {api}=app();await api.init();let p=(await api.snapshot()).residents[1];
   await api.saveResident(1,{contacts:[{name:'甲',phone:'12345'},{name:'乙',phone:'54321'}]},'staff-1',p.revision);

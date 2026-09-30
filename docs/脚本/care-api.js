@@ -117,6 +117,7 @@ const CareDemoAPI = (() => {
             current.severity='danger';current.revision++;
             current.dueAt=iso(Math.min(Date.parse(current.dueAt),now+15*60000));
             current.notification.cycle=(current.notification.cycle||1)+1;
+            current.notification.deliveredCycle=current.notification.cycle;current.notification.queuedAt=iso(now);
             entry(current,'信号恶化，重新提醒','system',detail,now);
           }
           prior.severity=severity;prior.lastDetectedAt=iso(now);return;
@@ -130,7 +131,12 @@ const CareDemoAPI = (() => {
           previousIncidentId:prior?.eventId||null,
           notification:{channel:'page',queuedAt:iso(now),cycle:1,deliveredCycle:1,presentedCycle:0,acknowledgedCycle:0,externalDelivered:false,label:'仅页面提醒，未发送短信'}};
         entry(event,'发现并生成页面提醒','system',detail,now);s.events.push(event);
-      } else {delete event.sourceRecoveredAt;event.revision++;entry(event,'信号再次异常','system',detail,now);}
+      } else {
+        delete event.sourceRecoveredAt;event.detail=detail;event.severity=severity;event.revision++;
+        event.notification.cycle=(event.notification.cycle||1)+1;
+        event.notification.deliveredCycle=event.notification.cycle;event.notification.queuedAt=iso(now);
+        entry(event,'信号再次异常，重新提醒','system',detail,now);
+      }
       s.conditions[key]={id:key,residentId:p.id,type,active:true,eventId:event.id,severity,firstDetectedAt:prior?.active?prior.firstDetectedAt||iso(now):iso(now),lastDetectedAt:iso(now),generation:(prior?.generation||0)+1};
     }
     for(const p of Object.values(s.residents)) {
