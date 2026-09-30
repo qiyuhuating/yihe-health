@@ -28,7 +28,7 @@ _backup/ binary
 .venv/ binary
 
 # 前端源码位于 docs/；解除 Linguist 对该目录的默认文档排除
-docs/*.html linguist-documentation=false
-docs/脚本/** linguist-documentation=false
-docs/样式/** linguist-documentation=false
-docs/数据/*.js linguist-documentation=false
+docs/*.html -linguist-documentation
+docs/脚本/** -linguist-documentation
+docs/样式/** -linguist-documentation
+docs/数据/*.js -linguist-documentation
