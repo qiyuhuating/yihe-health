@@ -295,7 +295,7 @@ class CareStore:
                 else: e['closedAt'] = stamp(self.clock())
                 e['state'] = action
         e['revision'] += 1; e['updatedAt'] = stamp(self.clock())
-        self.history(db, e, user['username'], action, note); self.save(db, 'care_events', eid, e, e['residentId']); self.revision(db); self.audit(db, e['residentId'], user['username'], action, eventId=eid)
+        self.history(db, e, user['staffId'], action, note); self.save(db, 'care_events', eid, e, e['residentId']); self.revision(db); self.audit(db, e['residentId'], user['username'], action, eventId=eid)
         if e['state'] in CLOSED:
             row = db.execute('SELECT data FROM signal_conditions WHERE id=?', (e['signalId'],)).fetchone()
             c = json.loads(row['data']) if row else None
@@ -322,7 +322,7 @@ class CareStore:
         for e in targets:
             if e['notification']['presentedCycle'] == e['notification']['cycle']: continue
             e['notification']['presentedCycle'] = e['notification']['cycle']
-            self.save(db, 'care_events', e['id'], e, e['residentId']); self.history(db, e, user['username'], '页面提醒已展示'); self.revision(db)
+            self.save(db, 'care_events', e['id'], e, e['residentId']); self.history(db, e, user['staffId'], '页面提醒已展示'); self.revision(db)
 
 
 class CareApplication:
