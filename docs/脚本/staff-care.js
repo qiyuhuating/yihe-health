@@ -94,7 +94,7 @@
     const minute=Math.floor(Date.now()/60000);
     if(force||next.revision!==revision||minute!==renderedMinute||document.body.hasAttribute('data-care-unavailable')){state=next;revision=next.revision;renderedMinute=minute;render();}
     recovery.restored();
-    const fresh=state.events.filter(e=>CareAPI.isOpen(e)&&!seen.has(e.id+':'+e.notification.cycle)&&e.notification.cycle>(e.notification.presentedCycle||0));
+    const fresh=state.events.filter(e=>CareAPI.isOpen(e)&&!seen.has(e.id+':'+e.notification.cycle)&&e.notification.cycle>(e.notification.acknowledgedCycle||0));
     if(fresh.length&&!el('residentDialog').open&&!el('eventDialog').open){
       el('newAlertText').textContent=fresh.length+' 条新增或变化的预警：'+fresh.map(e=>name(state.residents[e.residentId])+' · '+CareAPI.TYPES[e.type]).join('；');
       if(!el('dangerModal').open)el('dangerModal').showModal();
@@ -186,7 +186,7 @@
       const expectedRevision=Number(form.dataset.revision);
       perform(event.submitter,async()=>{
         if(form.id==='responsibilityForm')return CareAPI.saveResident(id,{responsible:data.get('responsible')},actor,expectedRevision);
-        if(form.id==='staffContactForm')return CareAPI.saveResident(id,{contacts:[{name:data.get('name'),phone:data.get('phone')},...state.residents[id].contacts.slice(1)]},actor,expectedRevision);
+        if(form.id==='staffContactForm')return CareAPI.saveResident(id,{contactUpdates:[{index:0,value:{name:data.get('name'),phone:data.get('phone')}}]},actor,expectedRevision);
         if(form.id==='doseForm'){
           const name=data.get('name'),dueAt=new Date(data.get('dueAt')).toISOString(),intent=JSON.stringify([id,name,dueAt]);
           if(!doseIntent||doseIntent.intent!==intent)doseIntent={intent,key:CareTransport.newIdempotencyKey()};

@@ -82,7 +82,7 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 | 操作 | 请求 | 成功 |
 |---|---|---|
 | 事件处置 | `POST /api/v1/events/{eventId}/transitions`，JSON `{ "action": string, "note": string, "revision": number, "targetStaffId"?: string }` | `204`；随后前端读取新快照 |
-| 修改居民资料 | `PATCH /api/v1/residents/{residentId}`，允许字段 `name`、`age`、`contacts`、`responsible`，并必须含 `expectedRevision` | `204`；递增该居民 `revision` 和根 `revision` |
+| 修改居民资料 | `PATCH /api/v1/residents/{residentId}`，允许字段 `name`、`age`、`contacts`、`contactUpdates`、`responsible`，并必须含 `expectedRevision` | `204`；递增该居民 `revision` 和根 `revision` |
 | 新增用药任务 | `POST /api/v1/residents/{residentId}/doses`，JSON `{ "name": string, "dueAt": ISO8601 }`，并带 `Idempotency-Key` | `204`；随后前端读取新快照 |
 | 确认服药 | `POST /api/v1/residents/{residentId}/doses/{doseId}/confirm`，JSON `{}` | `204`；重复确认幂等 |
 | 确认提醒已展示 | `POST /api/v1/events/presented`，JSON `{ "events": [{ "id": string, "cycle": number }] }` | `204`；只确认请求中展示的轮次，不代表短信或推送已送达 |
@@ -99,7 +99,7 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 
 ### 并发与幂等
 
-- 居民 PATCH 使用居民级 `expectedRevision` 做比较并交换。版本不匹配返回 `409` 且不写入；成功后递增居民和根 revision。联系人数组是整组替换，必须依赖版本检查防止覆盖并发修改。
+- 居民 PATCH 使用居民级 `expectedRevision` 做比较并交换。版本不匹配返回 `409` 且不写入；成功后递增居民和根 revision。`contactUpdates: [{index: 0..2, value: {name, phone}}]` 只修改指定联系人槽位；整组 `contacts` 替换仍必须依赖版本检查。两个字段不得同时提交。
 - 新增用药任务和咨询使用 `Idempotency-Key`。同一认证主体（匿名咨询使用匿名会话）及同一接口下，同键同请求体重放应返回原结果、不得重复建单；同键不同请求体应拒绝。请定义并记录服务端幂等记录的保留期限，覆盖实际重试窗口。
 - 用药确认按任务 ID 幂等。事件 transition 用事件 revision 防止重复状态推进。提醒展示确认按事件 ID 与 cycle 幂等。
 - 前端对写请求不自动重试。超时、断网、5xx 或无效响应代表结果未知；用户会先重新读取。服务端仍必须正确实现幂等，因为响应可能在写入后丢失。
@@ -144,3 +144,12 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 - 部署响应头与 Nginx 示例：`部署/headers`、`部署/nginx.conf.example`；部署方须填入实际域名、证书、静态根目录和 API upstream。
 - 合成快照：`测试/fixtures/http-snapshot.json`，不得作为生产数据。
 - 当前未交付：真实后端、真实账号、数据库迁移、生产域名/证书、设备连接、医学规则审批、通知服务及生产数据验收。
+
+
+## 10. 持续信号与提醒语义
+
+- 信号仍 active 时结案不能停止检测。生成新的 incident，记录 previousIncidentId，保留旧事件历史；设备离线不能证明健康异常已恢复。
+- deliveredCycle 仅表示页面通道可读取；presentedCycle 表示实际展示；acknowledgedCycle 表示工作人员主动接单。showModal 不得写 acknowledgedCycle。每次新的告警 cycle 都需要新的确认。
+- 页面展示回执必须携带实际展示的 cycle。旧 cycle 遇到新 cycle 返回 409，整批不写入；同 cycle 重放幂等。
+- 刷新后尚未 acknowledged 的事件需要重新提示。页面内 seen 仅用于同一次访问去重。
+- Demo 居民 revision 从 0 开始；旧格式缺失 revision 时补 0。保存居民资料递增居民版本；采样与提醒展示不改变资料编辑版本。

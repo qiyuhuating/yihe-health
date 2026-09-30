@@ -22,6 +22,7 @@ const CareDemoAPI = (() => {
     check(record(s.residents)&&Array.isArray(s.events)&&record(s.conditions)&&Array.isArray(s.logs),'集合');
     for(const [id,p] of Object.entries(s.residents)) {
       check(record(p)&&Number.isSafeInteger(p.id)&&p.id>0&&String(p.id)===id,'居民编号');
+      check(Number.isSafeInteger(p.revision)&&p.revision>=0,'居民版本');
       check(text(p.name)&&Number.isInteger(p.age)&&p.age>0&&p.age<=120&&knownStaff(p.responsible),'居民资料');
       check(['lastSeen','updatedAt','locationAt','stationarySince'].every(k=>date(p[k])),'采样时间');
       check(['devicePaused','locationPaused','risk','outside'].every(k=>typeof p[k]==='boolean'),'设备状态');
@@ -62,7 +63,7 @@ const CareDemoAPI = (() => {
         if(typeof saved.name==='string'&&saved.name.trim())profile.name=saved.name.trim();
         if(Number.isInteger(saved.age)&&saved.age>0&&saved.age<=120)profile.age=saved.age;
       } catch (_) { /* Old entries remain untouched; do not guess an owner. */ }
-      residents[p.id] = {...clone(p),...profile,responsible:STAFF[index%STAFF.length].id,contacts,doses:[],
+      residents[p.id] = {...clone(p),...profile,responsible:STAFF[index%STAFF.length].id,revision:0,contacts,doses:[],
         lastSeen:iso(now),updatedAt:iso(now),devicePaused:false,locationPaused:false,
         locationAt:iso(now),stationarySince:iso(now),risk:p.careLevel!=='自理',
         pos:{x:p.posX||150,y:p.posY||125},outside:false,trend:[]};
@@ -77,6 +78,8 @@ const CareDemoAPI = (() => {
     if (raw===null) return null;
     try {value=JSON.parse(raw);}
     catch (_) {throw failure('DATA_INVALID','本机监护记录无法解析。原记录已保留，请联系维护人员修复后重新读取。');}
+    // Upgrade only absent fields from the previous demo schema.
+    if(record(value?.residents))for(const p of Object.values(value.residents))if(record(p)&&p.revision===undefined)p.revision=0;
     return validate(value);
   }
   function sample(p,now) {
@@ -116,18 +119,19 @@ const CareDemoAPI = (() => {
             current.notification.cycle=(current.notification.cycle||1)+1;
             entry(current,'信号恶化，重新提醒','system',detail,now);
           }
-          prior.severity=severity;return;
+          prior.severity=severity;prior.lastDetectedAt=iso(now);return;
         }
-        if(severity!=='danger'||prior.severity==='danger'){prior.severity=severity;return;}
+        // Closing an incident does not recover the underlying signal.
       }
       let event=s.events.find(e=>e.source===key&&isOpen(e));
       if(!event) {
         event={id:crypto.randomUUID(),residentId:p.id,type,source:key,detail,severity,state:'new',owner:null,
           createdAt:iso(now),dueAt:iso(now+(severity==='danger'?15:60)*60000),revision:1,history:[],
-          notification:{channel:'page',queuedAt:iso(now),cycle:1,externalDelivered:false,label:'仅页面提醒，未发送短信'}};
+          previousIncidentId:prior?.eventId||null,
+          notification:{channel:'page',queuedAt:iso(now),cycle:1,deliveredCycle:1,presentedCycle:0,acknowledgedCycle:0,externalDelivered:false,label:'仅页面提醒，未发送短信'}};
         entry(event,'发现并生成页面提醒','system',detail,now);s.events.push(event);
       } else {delete event.sourceRecoveredAt;event.revision++;entry(event,'信号再次异常','system',detail,now);}
-      s.conditions[key]={active:true,eventId:event.id,severity};
+      s.conditions[key]={id:key,residentId:p.id,type,active:true,eventId:event.id,severity,firstDetectedAt:prior?.active?prior.firstDetectedAt||iso(now):iso(now),lastDetectedAt:iso(now),generation:(prior?.generation||0)+1};
     }
     for(const p of Object.values(s.residents)) {
       const offline=now-Date.parse(p.lastSeen)>5*60000;
@@ -135,7 +139,10 @@ const CareDemoAPI = (() => {
       const abnormal=Object.keys(METRICS).filter(k=>Metrics.metricStatus(k,p[k])!=='normal');
       if(!offline&&abnormal.length)condition(p,'health','metrics',abnormal.map(k=>METRICS[k]+' '+(Metrics.metricStatus(k,p[k])==='unknown'?'数据不足，请核实采样':p[k])).join('；'),abnormal.some(k=>Metrics.metricStatus(k,p[k])==='danger')?'danger':'warning');
       // An absent heartbeat cannot demonstrate recovery of a previous health signal.
-      if(offline&&s.conditions[p.id+':health:metrics']?.active)active.add(p.id+':health:metrics');
+      if(offline&&s.conditions[p.id+':health:metrics']?.active){
+        const c=s.conditions[p.id+':health:metrics'],e=s.events.find(e=>e.id===c.eventId);
+        condition(p,'health','metrics',e.detail,c.severity);
+      }
       for(const dose of p.doses)if(!dose.confirmedAt&&now>Date.parse(dose.dueAt)+30*60000)condition(p,'medication',dose.id,dose.name+' · 超过计划时间 30 分钟未确认');
       if(p.outside)condition(p,'fence','outside','模拟定位超出社区安全围栏','danger');
       if(now-Date.parse(p.locationAt)>10*60000)condition(p,'fence','location','超过 10 分钟未收到模拟定位');
@@ -168,12 +175,12 @@ const CareDemoAPI = (() => {
   function transition(id,action,actor,note,revision,target) {return mutate((s,now)=>{
     if(!knownStaff(actor))throw Error('请选择当前工作人员');
     const e=s.events.find(x=>x.id===id);if(!e)throw Error('事件不存在');
-    if(e.revision!==revision)throw Error('事件已被更新，请刷新后重试');
+    if(e.revision!==revision)throw failure('CONFLICT','事件已被更新，请刷新后重试');
     if(!isOpen(e))throw Error('事件已经结束');
     const result=String(note||'').trim();
     if(action==='claim'){
       if(e.state!=='new'||e.owner)throw Error('事件已被接单');
-      e.owner=actor;e.state='claimed';
+      e.owner=actor;e.state='claimed';e.notification.acknowledgedCycle=e.notification.cycle;
     }else{
       if(e.owner!==actor)throw Error('仅当前负责人可处理该事件');
       if(action==='processing'&&['claimed','escalated'].includes(e.state))e.state='processing';
@@ -188,8 +195,20 @@ const CareDemoAPI = (() => {
     }
     e.updatedAt=iso(now);e.revision++;entry(e,STATES[e.state],actor,result,now);return e;
   });}
-  function saveResident(id,patch,actor) {return mutate((s,now)=>{
+  function saveResident(id,patch,actor,expectedRevision) {return mutate((s,now)=>{
     const p=resident(s,id);
+    if(!Number.isSafeInteger(expectedRevision))throw failure('VALIDATION_ERROR','保存必须携带居民版本');
+    if(p.revision!==expectedRevision)throw failure('CONFLICT','居民资料已被更新，请重新读取后保存');
+    if(patch.contacts!==undefined&&patch.contactUpdates!==undefined)throw failure('VALIDATION_ERROR','联系人更新方式不能混用');
+    if(patch.contactUpdates!==undefined){
+      if(!Array.isArray(patch.contactUpdates))throw failure('VALIDATION_ERROR','联系人更新格式错误');
+      const next=p.contacts.map(c=>({...c}));
+      for(const update of patch.contactUpdates){
+        if(!record(update)||!Number.isInteger(update.index)||update.index<0||update.index>2||!record(update.value))throw failure('VALIDATION_ERROR','联系人位置错误');
+        next[update.index]=update.value;
+      }
+      patch={...patch,contacts:next.filter(Boolean)};
+    }
     if(patch.responsible!==undefined){if(!knownStaff(actor)||!knownStaff(patch.responsible))throw Error('请选择责任人员');p.responsible=patch.responsible;}
     if(patch.contacts!==undefined){
       if(!Array.isArray(patch.contacts)||patch.contacts.length>3)throw Error('最多保存三位联系人');
@@ -198,12 +217,15 @@ const CareDemoAPI = (() => {
     }
     if(patch.name!==undefined){if(!text(patch.name)||patch.name.trim().length>20)throw Error('姓名须为 1 至 20 个字符');p.name=patch.name.trim();}
     if(patch.age!==undefined){if(!Number.isInteger(patch.age)||patch.age<1||patch.age>120)throw Error('请填写有效年龄');p.age=patch.age;}
+    p.revision++;p.updatedAt=iso(now);
     s.logs.push({at:iso(now),actor:actor||'resident-'+id,residentId:Number(id),action:'更新责任或个人资料'});
   });}
-  function addDose(id,name,dueAt,actor) {return mutate((s,now)=>{
+  function addDose(id,name,dueAt,actor,idempotencyKey) {return mutate((s,now)=>{
+    const p=resident(s,id);
+    if(idempotencyKey&&text(name)&&date(dueAt)){const previous=p.doses.find(d=>d.idempotencyKey===idempotencyKey);if(previous){if(previous.name!==name.trim()||previous.dueAt!==iso(Date.parse(dueAt)))throw failure('CONFLICT','重复请求的内容不一致');return previous;}}
     if(!knownStaff(actor)||!text(name)||name.trim().length>100||!date(dueAt))throw Error('请填写核对后的用药名称（最多 100 字）与时间');
     if(Date.parse(dueAt)<now-60000)throw Error('计划时间不能早于当前时间');
-    resident(s,id).doses.push({id:crypto.randomUUID(),name:name.trim(),dueAt:iso(Date.parse(dueAt)),createdAt:iso(now),source:'工作人员登记',actor});
+    resident(s,id).doses.push({id:crypto.randomUUID(),name:name.trim(),dueAt:iso(Date.parse(dueAt)),createdAt:iso(now),source:'工作人员登记',actor,idempotencyKey});
     s.logs.push({at:iso(now),actor,residentId:Number(id),action:'登记已核对的用药任务'});
   });}
   function confirmDose(id,doseId) {return mutate((s,now)=>{
@@ -212,9 +234,17 @@ const CareDemoAPI = (() => {
     if(Date.parse(d.dueAt)>now+30*60000)throw Error('尚未到本次确认时间');
     d.confirmedAt=iso(now);s.logs.push({at:iso(now),actor:'resident-'+id,residentId:Number(id),action:'确认服药：'+d.name});detect(s,now);
   });}
-  function markPresented(ids,actor) {return mutate((s,now)=>{
-    for(const e of s.events)if(ids.includes(e.id)&&(!e.notification.pagePresentedAt||(e.notification.presentedCycle||0)<(e.notification.cycle||1))){
-      e.notification.pagePresentedAt=iso(now);e.notification.presentedCycle=e.notification.cycle||1;entry(e,'页面提醒已展示',actor,'仅页面展示，无外部通知',now);
+  function markPresented(ids,actor,cycles) {return mutate((s,now)=>{
+    if(!Array.isArray(ids)||!Array.isArray(cycles)||ids.length!==cycles.length)throw failure('VALIDATION_ERROR','展示回执必须携带轮次');
+    const targets=ids.map((id,index)=>{
+      const e=s.events.find(e=>e.id===id),cycle=cycles[index];
+      if(!e||!Number.isSafeInteger(cycle)||cycle<1)throw failure('VALIDATION_ERROR','展示回执无效');
+      if(cycle!==e.notification.cycle)throw failure('CONFLICT','告警轮次已更新，请读取新的报警');
+      return e;
+    });
+    for(const e of targets)if((e.notification.presentedCycle||0)<e.notification.cycle){
+      e.notification.pagePresentedAt=iso(now);e.notification.presentedCycle=e.notification.cycle;
+      entry(e,'页面提醒已展示',actor,'仅页面展示，未确认处置，无外部通知',now);
     }
   });}
   return {KEY,STAFF,TYPES,STATES,METRICS,isOpen,init:()=>mutate((s,now)=>detect(s,now)),snapshot:async()=>clone(read()||seed(Date.now())),scan,simulate,transition,saveResident,addDose,confirmDose,markPresented,
