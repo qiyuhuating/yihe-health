@@ -27,7 +27,13 @@ window.CareTransport = (() => {
         const code=({401:'UNAUTHENTICATED',403:'FORBIDDEN',409:'CONFLICT',400:'VALIDATION_FAILED',422:'VALIDATION_FAILED',429:'RATE_LIMITED'})[response.status]
           ||(response.status>=500?'SERVICE_UNAVAILABLE':'REQUEST_FAILED');
         if(code==='UNAUTHENTICATED'&&authenticated){csrfToken='';window.dispatchEvent(new CustomEvent('care:unauthenticated'));}
-        throw failure(code,messages[code],response.status);
+        let message=messages[code];
+        if(code==='VALIDATION_FAILED'&&response.headers.get('content-type')?.includes('application/json')){
+          // Only fixed, public codes become UI text; never display arbitrary server prose.
+          const publicErrors={NOTE_REQUIRED:'请填写处置记录后再提交。',INVALID_TIME:'请检查带时区的计划时间。',IDEMPOTENCY_REQUIRED:'请求缺少登记意图，请重新打开表单。',LIMIT_EXCEEDED:'未完成任务已达上限，请先处理现有任务。'};
+          try{const value=await response.json();if(Object.hasOwn(publicErrors,value?.error?.code))message=publicErrors[value.error.code];}catch(_){/* Generic message remains safe. */}
+        }
+        throw failure(code,message,response.status);
       }
       if(response.status===204)return null;
       if(!response.headers.get('content-type')?.includes('application/json'))throw failure('INVALID_RESPONSE','服务返回的数据格式不正确，请联系维护人员。');

@@ -3,6 +3,7 @@
 const CareDemoAPI = (() => {
   'use strict';
   const KEY = 'yihe-community-v1';
+  let cachedRaw=null,cachedValue=null;
   const STAFF = [{id:'staff-1',name:'张护士'},{id:'staff-2',name:'李社工'},{id:'staff-3',name:'值班主管'}];
   const TYPES = {health:'健康指标异常',medication:'漏服药',offline:'设备离线',fence:'安全围栏'};
   const STATES = {new:'新预警',claimed:'已接单',processing:'处理中',resolved:'已解决',false_alarm:'误报',escalated:'已升级'};
@@ -75,12 +76,13 @@ const CareDemoAPI = (() => {
     let raw,value;
     try {raw=localStorage.getItem(KEY);}
     catch (_) {throw failure('STORAGE_UNAVAILABLE','无法读取本机监护记录，请允许此网站使用浏览器存储后重新读取。');}
-    if (raw===null) return null;
+    if (raw===null){cachedRaw=null;cachedValue=null;return null;}
+    if(raw===cachedRaw)return cachedValue;
     try {value=JSON.parse(raw);}
     catch (_) {throw failure('DATA_INVALID','本机监护记录无法解析。原记录已保留，请联系维护人员修复后重新读取。');}
     // Upgrade only absent fields from the previous demo schema.
     if(record(value?.residents))for(const p of Object.values(value.residents))if(record(p)&&p.revision===undefined)p.revision=0;
-    return validate(value);
+    cachedValue=validate(value);cachedRaw=raw;return cachedValue;
   }
   function sample(p,now) {
     p.updatedAt=iso(now);p.lastSeen=iso(now);
@@ -90,17 +92,27 @@ const CareDemoAPI = (() => {
   async function mutate(fn) {
     if (!navigator.locks?.request||!crypto.randomUUID) throw failure('ENV_UNSUPPORTED','当前浏览器无法安全保存监护记录。请通过 localhost 或 HTTPS 打开，并使用支持 Web Locks 的新版浏览器后重试。');
     return navigator.locks.request(KEY,{mode:'exclusive'},async()=>{
-      const original=read(),s=original||seed(Date.now()),before=JSON.stringify(s);
+      const original=read(),s=original?clone(original):seed(Date.now()),before=original?cachedRaw:JSON.stringify(s);
       const result=fn(s,Date.now());
+      retain(s);
       if(!original||before!==JSON.stringify(s)) {
         s.revision++;
         validate(s);
-        try { localStorage.setItem(KEY,JSON.stringify(s)); }
+        try { const raw=JSON.stringify(s);localStorage.setItem(KEY,raw);cachedRaw=raw;cachedValue=s; }
         catch (_) { throw Error('本机保存失败，操作未完成，请检查存储空间后重试'); }
         window.dispatchEvent(new CustomEvent('care:change'));
       }
       return clone(result===undefined?s:result);
     });
+  }
+  function retain(s){
+    // Demo history is disposable; never evict an open incident or active signal.
+    const closed=s.events.filter(e=>!isOpen(e)).slice(-1000),keep=new Set(closed.map(e=>e.id));
+    for(const e of s.events)if(isOpen(e))keep.add(e.id);
+    for(const [key,c] of Object.entries(s.conditions)){if(c.active)keep.add(c.eventId);else if(!keep.has(c.eventId))delete s.conditions[key];}
+    s.events=s.events.filter(e=>keep.has(e.id));s.logs=s.logs.slice(-1000);
+    for(const e of s.events){e.history=e.history.slice(-100);if(e.previousIncidentId&&!keep.has(e.previousIncidentId))e.previousIncidentArchived=true;}
+    for(const p of Object.values(s.residents)){const completed=p.doses.filter(d=>d.confirmedAt).slice(-200),ids=new Set(completed.map(d=>d.id));p.doses=p.doses.filter(d=>!d.confirmedAt||ids.has(d.id));}
   }
   function resident(s,id) {const p=s.residents[id];if(!p)throw Error('居民不存在');return p;}
   function entry(e,action,actor,note,now) {e.history.push({at:iso(now),action,actor,note,owner:e.owner,state:e.state});}
@@ -120,7 +132,7 @@ const CareDemoAPI = (() => {
             current.notification.deliveredCycle=current.notification.cycle;current.notification.queuedAt=iso(now);
             entry(current,'信号恶化，重新提醒','system',detail,now);
           }
-          prior.severity=severity;prior.lastDetectedAt=iso(now);return;
+          prior.severity=severity;if(p.updatedAt>prior.lastDetectedAt)prior.lastDetectedAt=p.updatedAt;return;
         }
         // Closing an incident does not recover the underlying signal.
       }
@@ -165,6 +177,7 @@ const CareDemoAPI = (() => {
   });}
   function simulate(id,type) {return mutate((s,now)=>{
     const p=resident(s,id);
+    if(type==='medication'&&p.doses.filter(d=>!d.confirmedAt).length>=500)throw failure('LIMIT_EXCEEDED','未完成用药任务已达演示上限');
     if(type==='health'){p.bloodOxygen=80;p.devicePaused=false;sample(p,now);}
     else if(type==='medication')p.doses.push({id:crypto.randomUUID(),name:'演示服药确认（非医嘱）',dueAt:iso(now-45*60000),createdAt:iso(now),source:'模拟信号'});
     else if(type==='fence'){p.outside=true;p.pos={x:790,y:310};p.locationAt=iso(now);}
@@ -203,14 +216,15 @@ const CareDemoAPI = (() => {
   });}
   function saveResident(id,patch,actor,expectedRevision) {return mutate((s,now)=>{
     const p=resident(s,id);
-    if(!Number.isSafeInteger(expectedRevision))throw failure('VALIDATION_ERROR','保存必须携带居民版本');
+    if(!record(patch)||Object.keys(patch).some(key=>!['name','age','contacts','contactUpdates','responsible'].includes(key)))throw failure('VALIDATION_FAILED','资料字段不受支持');
+    if(!Number.isSafeInteger(expectedRevision))throw failure('VALIDATION_FAILED','保存必须携带居民版本');
     if(p.revision!==expectedRevision)throw failure('CONFLICT','居民资料已被更新，请重新读取后保存');
-    if(patch.contacts!==undefined&&patch.contactUpdates!==undefined)throw failure('VALIDATION_ERROR','联系人更新方式不能混用');
+    if(patch.contacts!==undefined&&patch.contactUpdates!==undefined)throw failure('VALIDATION_FAILED','联系人更新方式不能混用');
     if(patch.contactUpdates!==undefined){
-      if(!Array.isArray(patch.contactUpdates))throw failure('VALIDATION_ERROR','联系人更新格式错误');
+      if(!Array.isArray(patch.contactUpdates))throw failure('VALIDATION_FAILED','联系人更新格式错误');
       const next=p.contacts.map(c=>({...c}));
       for(const update of patch.contactUpdates){
-        if(!record(update)||!Number.isInteger(update.index)||update.index<0||update.index>2||!record(update.value))throw failure('VALIDATION_ERROR','联系人位置错误');
+        if(!record(update)||!Number.isInteger(update.index)||update.index<0||update.index>2||!record(update.value))throw failure('VALIDATION_FAILED','联系人位置错误');
         next[update.index]=update.value;
       }
       patch={...patch,contacts:next.filter(Boolean)};
@@ -229,6 +243,7 @@ const CareDemoAPI = (() => {
   function addDose(id,name,dueAt,actor,idempotencyKey) {return mutate((s,now)=>{
     const p=resident(s,id);
     if(idempotencyKey&&text(name)&&date(dueAt)){const previous=p.doses.find(d=>d.idempotencyKey===idempotencyKey);if(previous){if(previous.name!==name.trim()||previous.dueAt!==iso(Date.parse(dueAt)))throw failure('CONFLICT','重复请求的内容不一致');return previous;}}
+    if(p.doses.filter(d=>!d.confirmedAt).length>=500)throw failure('LIMIT_EXCEEDED','未完成用药任务已达演示上限');
     if(!knownStaff(actor)||!text(name)||name.trim().length>100||!date(dueAt))throw Error('请填写核对后的用药名称（最多 100 字）与时间');
     if(Date.parse(dueAt)<now-60000)throw Error('计划时间不能早于当前时间');
     resident(s,id).doses.push({id:crypto.randomUUID(),name:name.trim(),dueAt:iso(Date.parse(dueAt)),createdAt:iso(now),source:'工作人员登记',actor,idempotencyKey});
@@ -241,10 +256,10 @@ const CareDemoAPI = (() => {
     d.confirmedAt=iso(now);s.logs.push({at:iso(now),actor:'resident-'+id,residentId:Number(id),action:'确认服药：'+d.name});detect(s,now);
   });}
   function markPresented(ids,actor,cycles) {return mutate((s,now)=>{
-    if(!Array.isArray(ids)||!Array.isArray(cycles)||ids.length!==cycles.length)throw failure('VALIDATION_ERROR','展示回执必须携带轮次');
+    if(!Array.isArray(ids)||!Array.isArray(cycles)||ids.length!==cycles.length)throw failure('VALIDATION_FAILED','展示回执必须携带轮次');
     const targets=ids.map((id,index)=>{
       const e=s.events.find(e=>e.id===id),cycle=cycles[index];
-      if(!e||!Number.isSafeInteger(cycle)||cycle<1)throw failure('VALIDATION_ERROR','展示回执无效');
+      if(!e||!Number.isSafeInteger(cycle)||cycle<1)throw failure('VALIDATION_FAILED','展示回执无效');
       if(cycle!==e.notification.cycle)throw failure('CONFLICT','告警轮次已更新，请读取新的报警');
       return e;
     });

@@ -62,7 +62,7 @@ npm --prefix docs run build
 
 ## 当前边界
 
-这是**前端演示和后端接入准备项目**，不是已完成后端联调的线上服务。仓库不包含真实后端、生产数据库、身份提供方或外部通知投递；生产启用前需由后端实现接口契约并完成授权、数据隔离和部署联调。
+这是**前端 Demo 与单社区 HTTP/SQLite 后端基线**。仓库已包含可运行的服务端与合成数据联调测试；生产数据、正式设备、短信投递、TLS 与运营部署仍需配置和验收。
 
 ## 后续路线
 
@@ -71,3 +71,8 @@ npm --prefix docs run build
 3. 按[发布手册](docs/文档/handoff/release.md)部署并验证生产构建。
 
 更多细节见[系统架构](docs/文档/architecture.md)和[前端交接说明](docs/文档/handoff/frontend.md)。
+
+
+## 最小后端
+
+现提供单社区 Python/SQLite API，包含服务端会话、居民版本比较、信号与事件状态机、设备输入、用药、审计及通知假实现。运行、测试与部署边界见 [backend/README.md](backend/README.md)。静态 GitHub Pages 仍是 Demo；运行真实 HTTP 需要同源后端。
