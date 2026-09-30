@@ -135,3 +135,7 @@ test('staff idle timeout locks locally and requests server revocation',async()=>
   assert.equal(c.CareSession.current,null);assert.ok(methods.includes('DELETE'));
   assert.ok(c.events.includes('care:unauthenticated'));
 });
+test('public validation codes produce fixed hints without exposing server prose',async()=>{
+  const c=app(async()=>response(422,{error:{code:'NOTE_REQUIRED'},message:'private server data'}));
+  await assert.rejects(c.CareAPI.transition('id','resolved','forged','',1),e=>e.code==='VALIDATION_FAILED'&&e.message==='请填写处置记录后再提交。');
+});
