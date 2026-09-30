@@ -6,10 +6,12 @@ window.CareHttpAdapter = (() => {
   const text=value=>typeof value==='string'&&!!value.trim();
   const date=value=>typeof value==='string'&&/(Z|[+-]\d{2}:\d{2})$/.test(value)&&Number.isFinite(Date.parse(value));
   function create(metadata) {
-    let staff=[],readSequence=0;
+    let staff=[],readSequence=0,serverEpoch=null,receivedAt=0;
+    const now=()=>serverEpoch===null?NaN:serverEpoch+Math.max(0,performance.now()-receivedAt);
     function validate(value){
       const check=(ok,field)=>{if(!ok)throw failure('INVALID_RESPONSE','服务数据不完整（'+field+'），请联系维护人员。');};
       check(object(value)&&Number.isSafeInteger(value.revision)&&value.revision>=0,'版本');
+      check(date(value.serverTime),'服务端时间');
       check(object(value.residents)&&Array.isArray(value.events)&&Array.isArray(value.logs)&&Array.isArray(value.staff),'集合');
       check(value.staff.every(s=>object(s)&&text(s.id)&&text(s.name))&&new Set(value.staff.map(s=>s.id)).size===value.staff.length,'工作人员');
       const knownStaff=id=>value.staff.some(s=>s.id===id);
@@ -31,15 +33,15 @@ window.CareHttpAdapter = (() => {
         check(Number.isSafeInteger(e.revision)&&e.revision>0&&date(e.createdAt)&&date(e.dueAt)&&(!e.sourceRecoveredAt||date(e.sourceRecoveredAt)),'事件版本与时间');
         check(e.state==='new'?e.owner===null:knownStaff(e.owner),'事件负责人');
         check(Array.isArray(e.history)&&e.history.every(t=>object(t)&&date(t.at)&&text(t.action)&&text(t.actor)&&typeof t.note==='string'),'事件历史');
-        check(object(e.notification)&&Number.isSafeInteger(e.notification.cycle)&&e.notification.cycle>=1&&Number.isSafeInteger(e.notification.presentedCycle)&&e.notification.presentedCycle>=0&&e.notification.presentedCycle<=e.notification.cycle,'提醒轮次');
+        check(object(e.notification)&&Number.isSafeInteger(e.notification.cycle)&&e.notification.cycle>=1&&['deliveredCycle','presentedCycle','acknowledgedCycle'].every(key=>Number.isSafeInteger(e.notification[key])&&e.notification[key]>=0&&e.notification[key]<=e.notification.cycle),'提醒轮次');
       }
       check(value.logs.every(l=>object(l)&&date(l.at)&&text(l.actor)&&text(l.action)&&Object.hasOwn(value.residents,l.residentId)),'操作记录');
       return value;
     }
-    async function snapshot(){const sequence=++readSequence,value=validate(await request('/care/snapshot'));if(sequence===readSequence)staff=value.staff;return value;}
+    async function snapshot(){const sequence=++readSequence,value=validate(await request('/care/snapshot'));if(sequence===readSequence){staff=value.staff;serverEpoch=Date.parse(value.serverTime);receivedAt=performance.now();}return value;}
     return {
       TYPES:metadata.TYPES,STATES:metadata.STATES,METRICS:metadata.METRICS,isOpen:metadata.isOpen,
-      get STAFF(){return staff;},mode:'http',init:snapshot,snapshot,
+      get STAFF(){return staff;},now,mode:'http',init:snapshot,snapshot,
       scan:snapshot,
       simulate:()=>Promise.reject(failure('FEATURE_DISABLED','服务模式不支持演示信号。')),
       setSimulator:()=>Promise.reject(failure('FEATURE_DISABLED','服务模式不支持演示开关。')),

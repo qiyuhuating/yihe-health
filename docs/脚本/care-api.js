@@ -247,7 +247,7 @@ const CareDemoAPI = (() => {
       entry(e,'页面提醒已展示',actor,'仅页面展示，未确认处置，无外部通知',now);
     }
   });}
-  return {KEY,STAFF,TYPES,STATES,METRICS,isOpen,init:()=>mutate((s,now)=>detect(s,now)),snapshot:async()=>clone(read()||seed(Date.now())),scan,simulate,transition,saveResident,addDose,confirmDose,markPresented,
+  return {KEY,STAFF,TYPES,STATES,METRICS,isOpen,now:()=>Date.now(),init:()=>mutate((s,now)=>detect(s,now)),snapshot:async()=>clone(read()||seed(Date.now())),scan,simulate,transition,saveResident,addDose,confirmDose,markPresented,
     setSimulator:enabled=>mutate(s=>{s.simulator=!!enabled;})};
 })();
 

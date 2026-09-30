@@ -4,7 +4,7 @@
   const titles={summary:'工作台',alerts:'预警',residents:'居民',map:'地图',more:'更多'};
   const remote=CareAPI.mode==='http';
   let state,view='summary',actor='staff-1',masked=false,page=1,eventId=null,eventRevision=null,activeResidentId=null,busy=false;
-  let initialized=false,revision=-1,renderedMinute=-1,refreshRequest=0,doseIntent=null;const seen=new Set();
+  let initialized=false,revision=-1,renderedMinute=-1,refreshRequest=0,doseIntent=null,suspendedDraft=null;const seen=new Set();
   function setBusy(value){
     busy=value;
     document.querySelectorAll('#eventBody input,#eventBody textarea,#eventBody select,#eventBody [data-event-action],#residentBody input,#residentBody select,#residentBody button[type="submit"],#currentStaff,[data-sim]').forEach(node=>node.disabled=value);
@@ -33,11 +33,11 @@
     document.querySelectorAll('.menu-item').forEach(x=>{x.classList.toggle('active',x.dataset.view===next);x.setAttribute('aria-current',x.dataset.view===next?'page':'false');});
     el('topbarTitle').textContent=titles[next];history.replaceState(null,'','#'+next);render();el('topbarTitle').focus();
   }
-  function eventList(id,list){mount(id,list.length?list.slice().sort((a,b)=>Number(b.severity==='danger')-Number(a.severity==='danger')||Number(Date.now()>Date.parse(b.dueAt))-Number(Date.now()>Date.parse(a.dueAt))||Date.parse(a.createdAt)-Date.parse(b.createdAt)).map(e=>CareUI.eventCard(e,state,masked)).join(''):empty('当前范围没有事件'));}
+  function eventList(id,list){mount(id,list.length?list.slice().sort((a,b)=>Number(b.severity==='danger')-Number(a.severity==='danger')||Number(CareAPI.now()>Date.parse(b.dueAt))-Number(CareAPI.now()>Date.parse(a.dueAt))||Date.parse(a.createdAt)-Date.parse(b.createdAt)).map(e=>CareUI.eventCard(e,state,masked)).join(''):empty('当前范围没有事件'));}
   function render(){
     if(!state)return;
     const focusTarget=document.activeElement,focusView=focusTarget.closest?.('.view'),focused=focusTarget?.dataset?.todo?['todo',focusTarget.dataset.todo]:focusTarget?.dataset?.event?['event',focusTarget.dataset.event]:focusTarget?.dataset?.resident?['resident',focusTarget.dataset.resident]:null;
-    const pending=openEvents(),mine=pending.filter(e=>e.owner===actor),unassigned=pending.filter(e=>!e.owner),overdue=pending.filter(e=>Date.now()>Date.parse(e.dueAt));
+    const pending=openEvents(),mine=pending.filter(e=>e.owner===actor),unassigned=pending.filter(e=>!e.owner),overdue=pending.filter(e=>CareAPI.now()>Date.parse(e.dueAt));
     const selected=el('todoFilter').value;
     mount('workCounts',[['all','待处理',pending.length],['mine','我的待办',mine.length],['unassigned','未分配',unassigned.length],['overdue','超时',overdue.length]].map(([key,label,count])=>`<button class="work-count" data-todo="${h(key)}" aria-pressed="${selected===key}"><strong>${count}</strong><span>${h(label)}</span></button>`).join(''));
     const filters={all:pending,mine,unassigned,overdue},todo=filters[selected];
@@ -67,7 +67,7 @@
   function renderMap(){
     const safety=pendingSafety();
     mount('safetyMap','<div class="safety-fence"><span>'+(remote?'社区安全围栏 · 位置示意':'社区安全围栏 · 模拟')+'</span></div>'+Object.values(state.residents).map(p=>{
-      const active=safety.some(e=>e.residentId===p.id),lost=Date.now()-Date.parse(p.locationAt)>600000;
+      const active=safety.some(e=>e.residentId===p.id),lost=CareAPI.now()-Date.parse(p.locationAt)>600000;
       return `<button class="map-resident ${active?'map-alert':p.risk?'map-risk':'map-normal'}" style="left:${Math.max(4,Math.min(96,p.pos.x/8))}%;top:${Math.max(10,Math.min(92,p.pos.y/6))}%" data-resident="${p.id}" aria-label="${h(name(p))}，${active?'安全事件待处理':p.risk?'高风险居民':'暂无安全事件'}${lost?'，最后定位已过期':''}">${h(name(p))}</button>`;
     }).join(''));
     eventList('safetyEvents',safety);
@@ -91,7 +91,7 @@
       if(!CareAPI.STAFF.some(person=>person.id===actor))throw Object.assign(Error('当前工作人员不在服务返回的授权人员列表中。'),{code:'FORBIDDEN'});
       mount('currentStaff',options(actor));el('currentStaff').disabled=true;
     }
-    const minute=Math.floor(Date.now()/60000);
+    const minute=Math.floor(CareAPI.now()/60000);
     if(force||next.revision!==revision||minute!==renderedMinute||document.body.hasAttribute('data-care-unavailable')){state=next;revision=next.revision;renderedMinute=minute;render();}
     recovery.restored();
     const fresh=state.events.filter(e=>CareAPI.isOpen(e)&&!seen.has(e.id+':'+e.notification.cycle)&&e.notification.cycle>(e.notification.acknowledgedCycle||0));
@@ -206,8 +206,23 @@
       if(event.key==='hm-settings'){masked=!!loadJSON('hm-settings',{}).mask;el('settingMask').checked=masked;render();if(el('eventDialog').open)openEvent(eventId,el('eventNote')?.value||'');}
     });
   }
+  window.addEventListener('care:unauthenticated',()=>{
+    suspendedDraft=suspendedDraft||{actor,eventOpen:el('eventDialog').open,residentOpen:el('residentDialog').open};
+  },true);
   AdminLogin.onReady(async(session)=>{
-    if(initialized)return;initialized=true;el('staffApp').hidden=false;el('staffApp').inert=false;
+    if(initialized){
+      if(remote&&session.staffId!==actor){mount('eventBody','');mount('residentBody','');location.reload();return;}
+      el('staffApp').hidden=false;el('staffApp').inert=false;document.querySelector('main').inert=false;
+      try{
+        await refresh(true);
+        if(suspendedDraft?.actor===actor){
+          if(suspendedDraft.eventOpen)el('eventDialog').showModal();
+          else if(suspendedDraft.residentOpen)el('residentDialog').showModal();
+        }
+        suspendedDraft=null;
+      }catch(e){error(e);}
+      return;
+    }initialized=true;el('staffApp').hidden=false;el('staffApp').inert=false;
     if(remote){actor=session.staffId;el('accountDescription').textContent='当前账号：'+session.name;}
     recovery.loading();
     try{
@@ -215,6 +230,6 @@
       mount('typeFilter','<option value="">全部类型</option>'+Object.entries(CareAPI.TYPES).map(([key,label])=>`<option value="${h(key)}">${h(label)}</option>`).join(''));
       wire();const initial=await CareAPI.init();await refresh(true,initial);navigate(location.hash.slice(1)||'summary');
     }catch(e){error(e);}
-    CareUI.poll(async()=>{if(busy)return;if(!remote)await CareAPI.scan();await refresh();},error);
+    CareUI.poll(async()=>{if(busy||remote&&!CareSession.current)return;if(!remote)await CareAPI.scan();await refresh();},error);
   });
 })();

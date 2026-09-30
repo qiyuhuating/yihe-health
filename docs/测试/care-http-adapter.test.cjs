@@ -6,7 +6,7 @@ const fixture=require('./fixtures/http-snapshot.json');
 const root=require('node:path').resolve(__dirname,'..');
 const response=(status,body)=>new Response(status===204?null:JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
 function app(fetch,timeout=1000){
-  const c={fetch,Headers,AbortController,setTimeout,clearTimeout,URL,console,
+  const c={fetch,performance,Headers,AbortController,setTimeout,clearTimeout,URL,console,
     YIHE_RUNTIME_CONFIG:{mode:'http',apiBaseUrl:'/api/v1',requestTimeoutMs:timeout},events:[],
     CustomEvent:class{constructor(type){this.type=type;}},dispatchEvent(event){this.events.push(event.type);},addEventListener(){}};
   c.window=c;vm.createContext(c);
@@ -87,4 +87,51 @@ test('missing CSRF session prevents any write request',async()=>{
   c.CareTransport.setCsrfToken('');
   await assert.rejects(c.CareAPI.confirmDose(101,'dose-1'),e=>e.code==='SESSION_REQUIRED');
   assert.equal(calls,0);
+});
+
+test('server clock ignores local wall-clock changes and rejects missing time',async()=>{
+  const c=app(async()=>response(200,fixture));let elapsed=100;
+  c.performance={now:()=>elapsed};await c.CareAPI.snapshot();
+  const start=Date.parse(fixture.serverTime);assert.equal(c.CareAPI.now(),start);
+  vm.runInContext('Date.now=()=>0',c);elapsed+=60000;
+  assert.equal(c.CareAPI.now(),start+60000);
+  const bad=app(async()=>response(200,{...fixture,serverTime:undefined}));
+  await assert.rejects(bad.CareAPI.snapshot(),e=>e.code==='INVALID_RESPONSE');
+});
+test('wrong-role login revokes server session and clears local identity',async()=>{
+  const methods=[];const c=app(async(_url,options)=>{
+    methods.push(options.method);
+    return options.method==='DELETE'?response(204):response(200,{user:options.method==='POST'?{name:'居民',role:'resident',residentId:101}:null,csrfToken:'token'});
+  });
+  await assert.rejects(c.CareSession.login('staff','account','secret'),e=>e.code==='FORBIDDEN');
+  assert.deepEqual(methods,['GET','POST','DELETE']);assert.equal(c.CareSession.current,null);
+  await assert.rejects(c.CareAPI.confirmDose(101,'dose'),e=>e.code==='SESSION_REQUIRED');
+});
+test('failed wrong-role revocation is reported as an unknown result',async()=>{
+  const c=app(async(_url,options)=>{
+    if(options.method==='DELETE')throw new TypeError('offline');
+    return response(200,{user:options.method==='POST'?{name:'居民',role:'resident',residentId:101}:null,csrfToken:'token'});
+  });
+  await assert.rejects(c.CareSession.login('staff','account','secret'),e=>e.code==='SESSION_REVOKE_FAILED');
+  assert.equal(c.CareSession.current,null);
+});
+test('offline dangerous sample keeps its severity and freshness warning',async()=>{
+  const c=app(async()=>response(200,fixture));c.escapeHtml=value=>String(value);
+  vm.runInContext(fs.readFileSync(root+'/脚本/care-ui.js','utf8'),c);
+  const markup=c.CareUI.vitals({...fixture.residents[101],deviceState:'offline',bloodOxygen:80,metricStates:{bloodOxygen:'danger'}});
+  assert.match(markup,/data-status="danger"/);assert.match(markup,/离线前危险采样，当前状态未知/);
+});
+test('staff idle timeout locks locally and requests server revocation',async()=>{
+  const methods=[];const c=app(async(_url,options)=>{
+    methods.push(options.method);
+    if(options.method==='DELETE')return response(204);
+    return response(200,{user:options.method==='POST'?{name:'工作人员',role:'staff',staffId:'care-nurse'}:null,csrfToken:'token'});
+  });
+  let elapsed=0,idleCallback;
+  c.performance={now:()=>elapsed};const realTimeout=c.setTimeout;
+  c.setTimeout=(fn,ms)=>ms>1000?(idleCallback=fn,123):realTimeout(fn,ms);
+  await c.CareSession.login('staff','account','secret');elapsed=16*60000;idleCallback();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(c.CareSession.current,null);assert.ok(methods.includes('DELETE'));
+  assert.ok(c.events.includes('care:unauthenticated'));
 });

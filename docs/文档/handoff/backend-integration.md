@@ -47,6 +47,7 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 
 根对象：
 
+- `serverTime`：服务端生成快照时的带时区 ISO 8601 时间。前端用它加单调计时增量显示时限，不依赖用户系统时间；后台恢复后重新读取快照。真实超时、离线和用药时间窗仍由后端判定。
 - `revision`：非负安全整数。任何会改变客户端可见快照的业务写入都必须递增。
 - `residents`：以居民 ID 字符串为键的对象；对象中的 `id` 必须与键相同。
 - `events`、`logs`、`staff`：数组，空集合返回 `[]`，不能返回 `null`。
@@ -70,7 +71,7 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 - `state`：`new`、`claimed`、`processing`、`resolved`、`false_alarm`、`escalated`。
 - `severity`：`warning` 或 `danger`。`new` 状态的 `owner` 必须为 `null`；其他状态必须引用 `staff[].id`。
 - `history[]` 项含 `{ "at": ISO8601, "action": string, "actor": string, "note": string }`。自由文本须按敏感健康信息保护。
-- `notification` 至少含 `{ "cycle": 正整数, "presentedCycle": 非负整数 }`，且 `presentedCycle <= cycle`。`sourceRecoveredAt` 可选；信号恢复不自动关闭事件。
+- `notification` 必须含 `cycle` 正整数以及 `deliveredCycle`、`presentedCycle`、`acknowledgedCycle` 非负整数，三个水位均不得大于 cycle。`sourceRecoveredAt` 可选；信号恢复不自动关闭事件。
 - 日志项含 `at`、`actor`、`action`、`residentId`，可含 `note`；引用的居民必须在当前快照中。
 
 全量快照目前面向社区规模。服务端必须按当前会话裁剪并限制响应体大小；人数增长后应另行设计分页/查询接口，不能无限增大单次响应。
@@ -151,5 +152,14 @@ window.YIHE_RUNTIME_CONFIG_OVERRIDE = {
 - 信号仍 active 时结案不能停止检测。生成新的 incident，记录 previousIncidentId，保留旧事件历史；设备离线不能证明健康异常已恢复。
 - deliveredCycle 仅表示页面通道可读取；presentedCycle 表示实际展示；acknowledgedCycle 表示工作人员主动接单。showModal 不得写 acknowledgedCycle。每次新的告警 cycle 都需要新的确认。
 - 页面展示回执必须携带实际展示的 cycle。旧 cycle 遇到新 cycle 返回 409，整批不写入；同 cycle 重放幂等。
-- 刷新后尚未 acknowledged 的事件需要重新提示。页面内 seen 仅用于同一次访问去重。
+- 提醒作用域：所有有权查看事件的页面独立展示；presentedCycle 是审计水位，不是全局排他锁。页面内 seen 只对本次页面访问的 eventId + cycle 去重；其他页面的展示不能抑制本页面。acknowledgedCycle 表示当前轮次已由工作人员主动接单，允许所有页面停止重复提示。每次恶化 cycle 增长后再次提示。
+- 刷新后尚未 acknowledged 的事件需要重新提示。
 - Demo 居民 revision 从 0 开始；旧格式缺失 revision 时补 0。保存居民资料递增居民版本；采样与提醒展示不改变资料编辑版本。
+
+
+## 11. 会话恢复与空闲
+
+- 401 时锁定业务区，草稿只留在当前页面内存，不刷新、不写入浏览器持久存储。原账号登录后恢复表单；不同账号丢弃原草稿，重新读取授权数据。原表单 revision 不因重新登录而自动推进，避免把旧草稿当成新版本保存。
+- HTTP 工作人员页面 15 分钟无键盘/指针交互即锁定并请求 DELETE /session；退出结果未知必须明确提示。前端空闲锁定不能代替后端会话 TTL 与吊销。
+- 登录返回角色与入口不符时，撤销该服务端会话并清空内存身份和 token。吊销请求失败时报告“退出结果未确认”，不得显示成功退出。
+- 离线前危险采样保留 severity，同时标明当前状态未知；后端需返回最后有效采样的 metricStates，不能因离线把历史危险标为 normal。

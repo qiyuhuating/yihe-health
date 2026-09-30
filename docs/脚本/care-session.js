@@ -1,7 +1,24 @@
 /* Server session stays in memory; cookies are managed by the browser. */
 window.CareSession = (() => {
   'use strict';
-  let current=null,checking=null;
+  let current=null,checking=null,idleTimer=null,lastActivity=0,idleRevocation=null,sessionGeneration=0;
+  const IDLE_MS=15*60000;
+  function expire(){current=null;clearTimeout(idleTimer);CareTransport.setCsrfToken('');window.dispatchEvent(new CustomEvent('care:unauthenticated'));}
+  function checkIdle(){
+    if(current?.role!=='staff')return;
+    const remaining=IDLE_MS-(performance.now()-lastActivity);
+    if(remaining<=0){
+      idleRevocation=request('/session',{method:'DELETE',authenticated:false}).catch(()=>{
+        const notice=document.getElementById('adminLoginHint');if(notice){notice.textContent='页面已锁定，但服务端退出结果未确认。请重新登录；草稿仍保留在本页面。';notice.hidden=false;}
+      }).finally(()=>{idleRevocation=null;});
+      expire();
+    }
+    else {clearTimeout(idleTimer);idleTimer=setTimeout(checkIdle,remaining);}
+  }
+  function activity(){if(current?.role==='staff'){lastActivity=performance.now();checkIdle();}}
+  for(const type of ['pointerdown','keydown'])window.addEventListener(type,event=>{if(event.isTrusted)activity();});
+  window.addEventListener('pageshow',checkIdle);
+  window.addEventListener('visibilitychange',checkIdle);
   const {request,failure}=CareTransport;
   function accept(value){
     const user=value?.user;
@@ -13,13 +30,19 @@ window.CareSession = (() => {
     current=user;CareTransport.setCsrfToken(value.csrfToken);return user;
   }
   function read(){
-    if(!checking)checking=request('/session',{authenticated:false}).then(accept).finally(()=>{checking=null;});
+    if(!checking){const generation=sessionGeneration;checking=request('/session',{authenticated:false}).then(value=>{if(generation!==sessionGeneration)throw failure('UNAUTHENTICATED','登录已失效，请重新登录。');return accept(value);}).finally(()=>{checking=null;});}
     return checking;
   }
   async function login(role,username,password){
-    await read();
+    await idleRevocation;await read();
     const user=accept(await request('/session',{method:'POST',body:{role,username,password},authenticated:false}));
-    if(user?.role!==role)throw failure('FORBIDDEN','该账号不能访问此入口，请使用对应的登录入口。');
+    if(user?.role!==role){
+      try{await request('/session',{method:'DELETE',authenticated:false});}
+      catch(_){current=null;CareTransport.setCsrfToken('');throw failure('SESSION_REVOKE_FAILED','账号入口不符，退出结果未确认。请重新读取会话后重试。');}
+      current=null;CareTransport.setCsrfToken('');
+      throw failure('FORBIDDEN','该账号不能访问此入口，已退出该会话。');
+    }
+    activity();
     return user;
   }
   async function requireRole(role){
@@ -30,7 +53,7 @@ window.CareSession = (() => {
   }
   async function logout(){
     await read();await request('/session',{method:'DELETE',authenticated:false});
-    current=null;CareTransport.setCsrfToken('');
+    current=null;clearTimeout(idleTimer);CareTransport.setCsrfToken('');
   }
   function staffGate(){
     const el=id=>document.getElementById(id),callbacks=[];
@@ -40,8 +63,9 @@ window.CareSession = (() => {
     const hint=(message,invalidFields=[],focusField=null)=>{const node=el('adminLoginHint');node.textContent=message;node.hidden=false;for(const field of [nameField,passwordField])field.setAttribute('aria-describedby',node.id);for(const field of invalidFields)field.setAttribute('aria-invalid','true');(focusField||passwordField).focus();};
     function publish(user){
       if(user?.role!=='staff')return;
-      ready=user;el('adminLoginOverlay').hidden=true;passwordField.value='';clearHint();
-      callbacks.splice(0).forEach(cb=>Promise.resolve(cb(user)).catch(e=>hint(e.message)));
+      ready=user;activity();el('adminLoginOverlay').hidden=true;passwordField.value='';clearHint();
+      callbacks.forEach(cb=>Promise.resolve(cb(user)).catch(e=>hint(e.message)));
+      window.dispatchEvent(new CustomEvent('care:authenticated'));
     }
     async function submit(){
       if(pending)return;
@@ -64,13 +88,33 @@ window.CareSession = (() => {
       finally{el('btnAdminLogout').disabled=false;}
     });
     read().then(user=>{if(user&&user.role!=='staff')hint('当前是居民账号，请使用工作人员账号登录。');else publish(user);}).catch(e=>hint(e.message));
-    return {onReady:cb=>{if(ready)Promise.resolve(cb(ready)).catch(e=>hint(e.message));else callbacks.push(cb);},getLogin:()=>ready,isLoggedIn:()=>!!ready};
+    window.addEventListener('care:unauthenticated',()=>{ready=null;el('adminLoginOverlay').hidden=false;hint('登录已失效；草稿仅保留在当前页面，请使用原账号重新登录。',[],nameField);});
+    return {onReady:cb=>{callbacks.push(cb);if(ready)Promise.resolve(cb(ready)).catch(e=>hint(e.message));},getLogin:()=>ready,isLoggedIn:()=>!!ready};
   }
+  let residentReauth=null;
   window.addEventListener('care:unauthenticated',()=>{
-    current=null;document.querySelector('#staffApp')?.setAttribute('hidden','');
+    sessionGeneration++;current=null;clearTimeout(idleTimer);CareTransport.setCsrfToken('');
+    document.querySelector('#staffApp')?.setAttribute('hidden','');
     document.querySelector('main')?.setAttribute('inert','');
     document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
-    if(document.querySelector('#staffApp'))location.reload();else if(!document.querySelector('#loginForm'))location.replace('login.html');
+    if(document.querySelector('#staffApp')||document.querySelector('#loginForm'))return;
+    if(!residentReauth){
+      const dialog=document.createElement('dialog'),form=document.createElement('form'),heading=document.createElement('h2'),hint=document.createElement('p');
+      dialog.className='care-dialog';heading.textContent='登录已失效';hint.textContent='草稿仅保留在当前页面，请使用原账号重新登录。';hint.setAttribute('role','alert');
+      const name=document.createElement('input'),password=document.createElement('input'),button=document.createElement('button');
+      name.className='input';password.className='input';button.className='btn btn-primary';name.autocomplete='username';password.type='password';password.autocomplete='current-password';button.textContent='重新登录';button.type='submit';
+      form.append(heading,hint);
+      for(const [label,field] of [['账号',name],['密码',password]]){const node=document.createElement('label');node.textContent=label;node.append(field);form.append(node);}
+      form.append(button);dialog.append(form);document.body.append(dialog);
+      dialog.addEventListener('cancel',event=>event.preventDefault());
+      form.addEventListener('submit',async event=>{
+        event.preventDefault();button.disabled=true;
+        try{await login('resident',name.value.trim(),password.value);password.value='';dialog.close();window.dispatchEvent(new CustomEvent('care:authenticated'));}
+        catch(e){hint.textContent=e.message;password.value='';}finally{button.disabled=false;}
+      });
+      residentReauth=dialog;
+    }
+    residentReauth.showModal();
   });
   return {read,login,requireRole,logout,staffGate,get current(){return current;}};
 })();
