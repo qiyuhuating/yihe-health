@@ -206,9 +206,9 @@
       if(event.key==='hm-settings'){masked=!!loadJSON('hm-settings',{}).mask;el('settingMask').checked=masked;render();if(el('eventDialog').open)openEvent(eventId,el('eventNote')?.value||'');}
     });
   }
-  window.addEventListener('care:unauthenticated',()=>{
-    suspendedDraft=suspendedDraft||{actor,eventOpen:el('eventDialog').open,residentOpen:el('residentDialog').open};
-  },true);
+  window.addEventListener('care:before-session-lock',()=>{
+    suspendedDraft=suspendedDraft||{actor,eventOpen:el('eventDialog').open,residentOpen:el('residentDialog').open,residentId:activeResidentId};
+  });
   AdminLogin.onReady(async(session)=>{
     if(initialized){
       if(remote&&session.staffId!==actor){mount('eventBody','');mount('residentBody','');location.reload();return;}
@@ -217,7 +217,7 @@
         await refresh(true);
         if(suspendedDraft?.actor===actor){
           if(suspendedDraft.eventOpen)el('eventDialog').showModal();
-          else if(suspendedDraft.residentOpen)el('residentDialog').showModal();
+          else if(suspendedDraft.residentOpen){activeResidentId=suspendedDraft.residentId;el('residentDialog').showModal();}
         }
         suspendedDraft=null;
       }catch(e){error(e);}

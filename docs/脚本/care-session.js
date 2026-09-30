@@ -93,6 +93,8 @@ window.CareSession = (() => {
   }
   let residentReauth=null;
   window.addEventListener('care:unauthenticated',()=>{
+    // Snapshot drafts before any listener hides the workspace or closes dialogs.
+    window.dispatchEvent(new CustomEvent('care:before-session-lock'));
     sessionGeneration++;current=null;clearTimeout(idleTimer);CareTransport.setCsrfToken('');
     document.querySelector('#staffApp')?.setAttribute('hidden','');
     document.querySelector('main')?.setAttribute('inert','');
