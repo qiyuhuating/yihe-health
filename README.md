@@ -71,3 +71,8 @@ npm --prefix docs run build
 3. 按[发布手册](docs/文档/handoff/release.md)部署并验证生产构建。
 
 更多细节见[系统架构](docs/文档/architecture.md)和[前端交接说明](docs/文档/handoff/frontend.md)。
+
+
+## 最小后端
+
+现提供单社区 Python/SQLite API，包含服务端会话、居民版本比较、信号与事件状态机、设备输入、用药、审计及通知假实现。运行、测试与部署边界见 [backend/README.md](backend/README.md)。静态 GitHub Pages 仍是 Demo；运行真实 HTTP 需要同源后端。

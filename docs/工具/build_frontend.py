@@ -10,7 +10,7 @@ import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'dist'
-OMIT = {'js/config.js', 'js/demo-credentials.js', 'js/admin-credentials.js', 'data/residents.js', 'js/seed-data.js'}
+OMIT = {'js/config.js', 'js/demo-credentials.js', 'js/admin-credentials.js', 'data/residents.js', 'js/seed-data.js', 'js/metrics.js'}
 SOURCE_URLS = (('静态资源/', 'assets/'), ('样式/', 'css/'), ('数据/', 'data/'), ('脚本/', 'js/'))
 VOID = {'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
 
@@ -81,8 +81,6 @@ def build():
     for path in (OUT / 'css').rglob('*.css'):
         text = path.read_text(encoding='utf-8-sig')
         path.write_text(text.replace('静态资源/', 'assets/'), encoding='utf-8')
-    for name in ('site.js','theme.js'):
-        shutil.copyfile(ROOT / '脚本' / name, OUT / name)
     for name in OMIT:
         (OUT / name).unlink(missing_ok=True)
     (OUT / 'js/design-preview.js').unlink(missing_ok=True)
@@ -125,6 +123,7 @@ def build():
             if not target.scheme and not target.netloc and target.path and not (OUT / unquote(target.path)).is_file():
                 raise SystemExit('Missing release reference: '+name+' -> '+ref)
     shutil.copyfile(ROOT / '部署/headers', OUT / '_headers')
+    shutil.copyfile(ROOT.parent / 'LICENSE', OUT / 'LICENSE')
     manifest = {str(p.relative_to(OUT)).replace('\\','/'):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(OUT.rglob('*')) if p.is_file()}
     (OUT / 'release-manifest.json').write_text(json.dumps({'mode':'http','files':manifest},ensure_ascii=False,indent=2),encoding='utf-8')
     print('PASS: HTTP-only release in dist; mode=http; demo substitutions=1+1; all page references resolved')

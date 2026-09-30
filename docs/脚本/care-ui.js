@@ -70,14 +70,14 @@ window.CareUI = (() => {
     return `<article class="care-event" data-state="${h(e.state)}" data-severity="${h(e.severity)}"><div class="event-identity"><div class="event-tags"><span class="severity-tag">${e.severity==='danger'?'紧急':'关注'}</span><span class="badge">${h(CareAPI.STATES[e.state])}</span></div><h3>${h(displayName(p.name,masked))}</h3><span class="event-type">${h(CareAPI.TYPES[e.type])}</span></div><div class="event-detail"><p>${h(e.detail)}</p><div class="event-meta">发现 ${h(time(e.createdAt))}</div><div class="signal-note">${e.sourceRecoveredAt?'信号恢复 · 仍需人工复核':'待核实的异常信号'}</div></div><div class="event-owner"><span class="event-meta">当前负责人</span><strong>${h(staff(e.owner))}</strong><span class="event-deadline ${open&&minutes<=0?'is-overdue':''}" title="处理时限 ${h(time(e.dueAt))}">${h(deadline)}</span><span class="event-meta">责任人 ${h(staff(p.responsible))}</span></div><div class="event-action"><button class="btn" data-event="${h(e.id)}" aria-label="${h(displayName(p.name,masked))}，${h(CareAPI.TYPES[e.type])}，${open?'进入处置':'查看留痕'}">${open?'进入处置':'查看留痕'} <span aria-hidden="true">→</span></button></div></article>`;
   }
   function poll(task,onError){
-    let timer=null,running=false,stopped=false;
+    let timer=null,running=false,stopped=false,failures=0;
     const delay=CareAPI.mode==='http'?YIHE_RUNTIME_CONFIG.pollIntervalMs:5000;
-    const schedule=()=>{clearTimeout(timer);if(!stopped)timer=setTimeout(tick,delay);};
+    const schedule=()=>{clearTimeout(timer);if(!stopped)timer=setTimeout(tick,Math.min(120000,delay*2**failures));};
     async function tick(){
       if(running||stopped)return;
       if(document.hidden||navigator.onLine===false){schedule();return;}
       running=true;
-      try{await task();}catch(e){onError(e);}finally{running=false;schedule();}
+      try{await task();failures=0;}catch(e){failures=Math.min(4,failures+1);onError(e);}finally{running=false;schedule();}
     }
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
     window.addEventListener('online',tick);

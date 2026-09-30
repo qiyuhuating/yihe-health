@@ -26,3 +26,9 @@ _audit_*_out.txt
 审核报告_*.md
 体检报告_*.md
 全维度审核报告_*.md
+
+# 服务端数据与本地凭据
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+.env

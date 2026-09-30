@@ -34,6 +34,15 @@ test('duplicate dose intent creates one task',async()=>{
   await Promise.all([api.addDose(1,'演示任务',due,'staff-1','intent-1'),api.addDose(1,'演示任务',due,'staff-1','intent-1')]);
   assert.equal((await api.snapshot()).residents[1].doses.length,1);
 });
+test('demo retention keeps active alerts while bounding disposable history',async()=>{
+  const {api,values}=app();await api.init();await api.simulate(1,'fence');
+  const s=await api.snapshot(),active=s.events.find(e=>e.residentId===1&&e.type==='fence');
+  for(let i=0;i<1500;i++)s.events.push({...structuredClone(active),id:'archive-'+i,state:'resolved',owner:'staff-1',closedAt:active.createdAt});
+  for(let i=0;i<1500;i++)s.logs.push({at:active.createdAt,actor:'staff-1',action:'合成日志',residentId:1});
+  values.set(api.KEY,JSON.stringify(s));await api.scan();const saved=await api.snapshot();
+  assert.equal(saved.events.filter(e=>!api.isOpen(e)).length,1000);assert.equal(saved.logs.length,1000);
+  assert.ok(saved.events.some(e=>e.id===active.id&&api.isOpen(e)));
+});
 function app() {
   const values = new Map(); let fail = false, queue = Promise.resolve(), now = Date.UTC(2026,8,27,4);
   class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}

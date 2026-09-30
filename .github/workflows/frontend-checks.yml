@@ -10,6 +10,16 @@ defaults:
   run:
     working-directory: docs
 jobs:
+  backend:
+    name: Backend state and security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s backend/tests -v
+        working-directory: .
   # 快速档：只需 Python + Node，几秒出结果，不需要浏览器。
   # 与慢档分开是为了让排错更快 —— 绝大多数回归在这一档就能发现。
   static:

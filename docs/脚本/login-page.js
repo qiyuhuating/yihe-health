@@ -70,11 +70,12 @@
         var savedResidents = {};
         try { savedResidents = JSON.parse(localStorage.getItem('yihe-community-v1') || '{}').residents || {}; }
         catch (_) { /* Keep built-in demo identities available when profile data is unreadable. */ }
-        var user = PATIENTS.filter(function(p) {
-            return p.name === name || savedResidents[p.id] && savedResidents[p.id].name === name;
-        })[0];
+        var matches = PATIENTS.filter(function(p) {
+            return 'resident-'+p.id === name || p.name === name || savedResidents[p.id] && savedResidents[p.id].name === name;
+        });
+        var user=matches.length===1?matches[0]:null;
         if (!user) {
-            showError("姓名不存在，请核对后重试", nameEl, nameEl);
+            showError("账号不存在或姓名重复，请使用 resident-居民编号", nameEl, nameEl);
             return;
         }
 
