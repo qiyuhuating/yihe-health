@@ -49,16 +49,32 @@ npm --prefix docs run build
 
 开发演示可通过本地静态 HTTP 服务打开 `docs/`。生产构建生成到 `docs/dist/`。
 
-## 项目结构
+## 文件说明
+
+| 文件 | 职责 |
+| --- | --- |
+| [backend/service.py](backend/service.py) | 提供 Python/SQLite API，处理会话、居民版本冲突、告警流转、设备输入、用药记录与审计。 |
+| [backend/README.md](backend/README.md) | 说明后端依赖、数据库初始化、启动方式、配置项和部署边界。 |
+| [backend/tests/test_service.py](backend/tests/test_service.py) | 验证后端接口、权限、状态机、并发版本和幂等行为。 |
+| [docs/index.html](docs/index.html) | 居民健康端入口，呈现健康信息并加载前端运行配置与会话模块。 |
+| [docs/home.html](docs/home.html) | 社区服务介绍页，说明居家健康监护与照护服务流程。 |
+| [docs/脚本/care-api.js](docs/脚本/care-api.js) | 实现本地演示适配器，供前端演示业务流程和状态变化。 |
+| [docs/脚本/care-http-adapter.js](docs/脚本/care-http-adapter.js) | 将前端领域操作映射到后端 HTTP 接口，并处理响应和业务错误。 |
+| [docs/脚本/care-transport.js](docs/脚本/care-transport.js) | 统一发送同源 JSON 请求，处理超时、CSRF、幂等键和网络错误。 |
+| [docs/脚本/care-runtime-config.js](docs/脚本/care-runtime-config.js) | 为页面提供运行模式及 API 基础路径等配置。 |
+| [docs/数据/residents.js](docs/数据/residents.js) | 提供演示模式使用的虚构居民资料，不作为生产数据源。 |
+| [docs/数据/schema.js](docs/数据/schema.js) | 定义并校验前端演示数据结构，阻止不符合预期的数据进入存储流程。 |
+| [docs/package.json](docs/package.json) | 声明前端检查、领域测试、生产构建和浏览器测试命令。 |
+| [.github/workflows/frontend-checks.yml](.github/workflows/frontend-checks.yml) | 在 GitHub Actions 中运行后端测试、前端静态检查、生产构建和浏览器回归。 |
+
+## 目录
 
 | 路径 | 内容 |
 | --- | --- |
-| `docs/` | 页面、脚本、样式、虚构数据与静态资源 |
-| `docs/脚本/` | 页面逻辑、演示 API、HTTP 适配层与会话处理 |
-| `docs/测试/` | 静态检查、领域测试和浏览器回归 |
-| `docs/工具/` | 构建、质量检查和测试环境工具 |
-| `docs/文档/` | 架构、前端交接、后端接入和发布说明 |
-| `.github/workflows/` | GitHub Actions 检查与 Pages 部署流程 |
+| `docs/样式/` | 居民端、管理端和公开页面使用的样式表。 |
+| `docs/测试/` | 前端静态检查、领域测试和浏览器回归用例。 |
+| `docs/工具/` | 前端构建、质量检查和本地测试辅助脚本。 |
+| `docs/文档/` | 系统架构、前端交接、后端接入与发布手册。 |
 
 ## 当前边界
 
