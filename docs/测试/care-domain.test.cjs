@@ -3,6 +3,37 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+test('stale presentation cannot consume a newer cycle',async()=>{
+  const {api}=app();await api.init();const old=(await api.snapshot()).events.find(e=>e.residentId===3&&e.type==='health');
+  await api.simulate(3,'health');
+  await assert.rejects(api.markPresented([old.id],'staff-1',[old.notification.cycle]),e=>e.code==='CONFLICT');
+  const latest=(await api.snapshot()).events.find(e=>e.id===old.id);
+  assert.equal(latest.notification.presentedCycle,0);assert.equal(latest.notification.acknowledgedCycle,0);
+});
+test('recovered but open incident queues a new cycle when danger recurs',async()=>{
+  const {api}=app();await api.init();await api.simulate(1,'health');
+  let e=(await api.snapshot()).events.find(e=>e.residentId===1&&e.type==='health');
+  await api.markPresented([e.id],'staff-1',[e.notification.cycle]);
+  e=await api.transition(e.id,'claim','staff-1','',e.revision);
+  await api.simulate(1,'recover');await api.simulate(1,'health');
+  const latest=(await api.snapshot()).events.find(x=>x.id===e.id);
+  assert.equal(latest.notification.cycle,2);assert.equal(latest.notification.deliveredCycle,2);
+  assert.equal(latest.notification.acknowledgedCycle,1);assert.equal(latest.sourceRecoveredAt,undefined);
+  await assert.rejects(api.markPresented([e.id],'staff-1',[1]),error=>error.code==='CONFLICT');
+});
+test('stale resident edits conflict and contact patches preserve other contacts',async()=>{
+  const {api}=app();await api.init();let p=(await api.snapshot()).residents[1];
+  await api.saveResident(1,{contacts:[{name:'甲',phone:'12345'},{name:'乙',phone:'54321'}]},'staff-1',p.revision);
+  await assert.rejects(api.saveResident(1,{name:'旧编辑'},'staff-2',p.revision),e=>e.code==='CONFLICT');
+  p=(await api.snapshot()).residents[1];
+  await api.saveResident(1,{contactUpdates:[{index:0,value:{name:'丙',phone:'67890'}}]},'staff-1',p.revision);
+  p=(await api.snapshot()).residents[1];assert.equal(p.contacts[1].name,'乙');assert.equal(p.contacts[0].name,'丙');
+});
+test('duplicate dose intent creates one task',async()=>{
+  const {api,now}=app();await api.init();const due=new Date(now()+60000).toISOString();
+  await Promise.all([api.addDose(1,'演示任务',due,'staff-1','intent-1'),api.addDose(1,'演示任务',due,'staff-1','intent-1')]);
+  assert.equal((await api.snapshot()).residents[1].doses.length,1);
+});
 function app() {
   const values = new Map(); let fail = false, queue = Promise.resolve(), now = Date.UTC(2026,8,27,4);
   class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
@@ -23,7 +54,7 @@ for(const type of ['health','medication','fence','offline']) test(type+' complet
   const saved=(await api.snapshot()).events.find(x=>x.id===e.id);
   assert.equal(saved.state,'resolved'); assert.equal(saved.owner,'staff-1'); assert.equal(saved.history.length,4);
   assert.ok(saved.closedAt); await api.scan();
-  assert.equal((await api.snapshot()).events.filter(x=>x.residentId===1&&x.type===type).length,1);
+  assert.equal((await api.snapshot()).events.filter(x=>x.residentId===1&&x.type===type).length,2);
 });
 test('illegal, ownerless and stale transitions reject',async()=>{
   const {api}=app();await api.init();await api.simulate(1,'health');let e=(await api.snapshot()).events.find(e=>e.residentId===1&&e.type==='health');
@@ -69,22 +100,22 @@ test('confirmed schedule detects overdue only after grace boundary',async()=>{
   assert.equal((await api.snapshot()).events.filter(e=>e.type==='medication').length,0);
   advance(1);await api.scan();assert.equal((await api.snapshot()).events.filter(e=>e.type==='medication').length,1);
 });
-test('resolved episode can recur only after recovered signal',async()=>{
+test('closed episode cannot silence an active signal',async()=>{
   const {api}=app();await api.init();await api.simulate(1,'fence');let e=(await api.snapshot()).events.find(e=>e.type==='fence');
   e=await api.transition(e.id,'claim','staff-1','',e.revision);e=await api.transition(e.id,'processing','staff-1','',e.revision);
   await api.transition(e.id,'false_alarm','staff-1','定位复核为误报',e.revision);
-  await api.scan();assert.equal((await api.snapshot()).events.filter(e=>e.type==='fence').length,1);
+  await api.scan();assert.equal((await api.snapshot()).events.filter(e=>e.type==='fence').length,2);
   await api.simulate(1,'recover');await api.simulate(1,'fence');assert.equal((await api.snapshot()).events.filter(e=>e.type==='fence').length,2);
 });
 test('presentation trace is idempotent and never implies SMS delivery',async()=>{
   const {api}=app();await api.init();await api.simulate(1,'health');const e=(await api.snapshot()).events.find(e=>e.residentId===1&&e.type==='health');
-  await api.markPresented([e.id],'staff-1');await api.markPresented([e.id],'staff-2');
+  await api.markPresented([e.id],'staff-1',[e.notification.cycle]);await api.markPresented([e.id],'staff-2',[e.notification.cycle]);
   const saved=(await api.snapshot()).events.find(x=>x.id===e.id);
   assert.equal(saved.history.length,2);assert.ok(saved.notification.pagePresentedAt);assert.equal(saved.notification.externalDelivered,false);
 });
 test('worsening signal updates current event severity and queues a new presentation',async()=>{
   const {api}=app();await api.init();const before=(await api.snapshot()).events.find(e=>e.residentId===3&&e.type==='health');
-  assert.equal(before.severity,'warning');await api.markPresented([before.id],'staff-1');
+  assert.equal(before.severity,'warning');await api.markPresented([before.id],'staff-1',[before.notification.cycle]);
   await api.simulate(3,'health');const after=(await api.snapshot()).events.find(e=>e.id===before.id);
   assert.equal(after.severity,'danger');assert.match(after.detail,/80/);assert.ok(Date.parse(after.dueAt)<Date.parse(before.dueAt));
   assert.ok(after.notification.cycle>after.notification.presentedCycle);

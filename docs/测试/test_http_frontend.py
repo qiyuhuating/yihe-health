@@ -49,12 +49,14 @@ class HttpFrontendTests(community.BrowserCase):
             resident=self.snapshot['residents']['101']
             if body.get('expectedRevision')!=resident['revision']:
                 route.fulfill(status=409,json={});return
-            resident.update({key:value for key,value in body.items() if key!='expectedRevision'})
+            for patch in body.get('contactUpdates',[]):resident['contacts'][patch['index']]=patch['value']
+            resident.update({key:value for key,value in body.items() if key not in ['expectedRevision','contactUpdates']})
             resident['revision']+=1;self.snapshot['revision']+=1
         elif path.endswith('/transitions'):
             event=self.snapshot['events'][0]
             if body['revision']!=event['revision']:route.fulfill(status=409,json={});return
             event['state']={'claim':'claimed'}.get(body['action'],body['action'])
+            if body['action']=='claim':event['notification']['acknowledgedCycle']=event['notification']['cycle']
             event['owner']='care-nurse';event['revision']+=1;self.snapshot['revision']+=1
         route.fulfill(status=204)
 
@@ -121,7 +123,8 @@ class HttpFrontendTests(community.BrowserCase):
         self.page.locator('#careError').wait_for(state='visible')
         self.assertIn('服务数据不完整',self.page.inner_text('#careError'))
         self.fail_snapshot=401;self.page.click('#retryCare')
-        self.page.wait_for_url('**/dist/login.html')
+        self.page.locator('dialog:has-text("登录已失效")').wait_for(state='visible')
+        self.assertIn('/dist/index.html',self.page.url)
 
     def test_inquiry_failure_keeps_draft_and_success_only_after_service_accepts(self):
         self.page.goto(self.base+'contact.html')
@@ -153,3 +156,42 @@ class HttpFrontendTests(community.BrowserCase):
         self.resident();self.page.locator('.resident-metrics summary').click()
         self.assertEqual(self.page.locator('.vital-card[data-status="unknown"]').count(),4)
         self.assertNotIn('参考范围内',self.page.inner_text('#residentVitals'))
+
+
+    def test_staff_reauthentication_keeps_unsaved_note(self):
+        self.staff();self.page.locator('#todoEvents [data-event]').first.click()
+        self.page.click('[data-event-action="claim"]');self.page.click('[data-event-action="processing"]')
+        self.page.fill('#eventNote','会话过期前的处置草稿');self.fail_write=401
+        self.page.click('[data-event-action="resolved"]')
+        self.page.locator('#adminLoginOverlay').wait_for(state='visible')
+        self.fail_write=None
+        self.page.fill('#adminLoginName','server-staff');self.page.fill('#adminLoginPassword','test-password');self.page.click('#adminLoginSubmit')
+        self.page.wait_for_function('() => document.querySelector("#eventDialog").open')
+        self.assertEqual(self.page.input_value('#eventNote'),'会话过期前的处置草稿')
+
+    def test_resident_reauthentication_keeps_profile_draft(self):
+        self.resident();self.page.click('[data-tab="me"]');self.page.fill('#profileName','未提交姓名')
+        self.fail_write=401;self.page.click('#residentProfileForm button')
+        dialog=self.page.locator('dialog:has-text("登录已失效")');dialog.wait_for(state='visible')
+        self.fail_write=None
+        dialog.locator('input[autocomplete="username"]').fill('server-resident')
+        dialog.locator('input[type="password"]').fill('test-password');dialog.locator('button').click()
+        self.page.wait_for_function('() => !document.querySelector("main").inert')
+        self.assertEqual(self.page.input_value('#profileName'),'未提交姓名')
+
+    def test_http_idle_locks_staff_page_without_destroying_note(self):
+        self.staff();self.page.locator('#todoEvents [data-event]').first.click()
+        self.page.fill('#eventNote','空闲锁定前的草稿')
+        self.page.evaluate('''() => {const original=performance.now.bind(performance);performance.now=()=>original()+16*60*1000;window.dispatchEvent(new Event('pageshow'));}''')
+        self.page.locator('#adminLoginOverlay').wait_for(state='visible')
+        self.assertEqual(self.page.input_value('#eventNote'),'空闲锁定前的草稿')
+        self.page.wait_for_function('() => CareSession.current===null')
+
+
+    def test_another_staff_page_still_presents_after_global_receipt(self):
+        self.staff()
+        self.assertEqual(self.snapshot['events'][0]['notification']['presentedCycle'],1)
+        second=self.context.new_page();second.goto(self.base+'管理端.html')
+        second.wait_for_function('() => document.querySelector("#dangerModal").open')
+        self.assertTrue(second.locator('#dangerModal').is_visible())
+        second.close()

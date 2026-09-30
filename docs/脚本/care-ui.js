@@ -4,7 +4,7 @@ window.CareUI = (() => {
   const staff = id => CareAPI.STAFF.find(s=>s.id===id)?.name || '未分配';
   const mount = (id,markup) => {document.getElementById(id).innerHTML=markup;};
   const empty = text => '<p class="empty">'+h(text)+'</p>';
-  const device = p => CareAPI.mode==='http'?({online:'设备在线',offline:'离线 / 数据可能过期',unknown:'设备状态未知'}[p.deviceState]||'设备状态未知'):Date.now()-Date.parse(p.lastSeen)>300000?'离线 / 数据可能过期':'模拟设备在线';
+  const device = p => CareAPI.mode==='http'?({online:'设备在线',offline:'离线 / 数据可能过期',unknown:'设备状态未知'}[p.deviceState]||'设备状态未知'):CareAPI.now()-Date.parse(p.lastSeen)>300000?'离线 / 数据可能过期':'模拟设备在线';
   const metric = value => Number.isFinite(value)?String(value):'—';
   function recovery(retry) {
     const error=document.getElementById('careError'),button=document.createElement('button');
@@ -51,13 +51,13 @@ window.CareUI = (() => {
     return p.contacts.map(c=>`<div class="contact-row"><span>${h(displayName(c.name,masked))}</span>${/^\+?[\d -]{5,22}$/.test(c.phone)?`<a class="btn" href="tel:${h(c.phone.replace(/[ -]/g,''))}">拨打 ${h(c.phone)}</a>`:'<span>号码需要核对</span>'}</div>`).join('');
   }
   function vitals(p) {
-    const stale=CareAPI.mode==='http'?p.deviceState==='offline':Date.now()-Date.parse(p.lastSeen)>300000;
-    const statusOf=key=>CareAPI.mode==='http'?(p.deviceState==='online'&&Number.isFinite(p[key])?p.metricStates?.[key]||'unknown':'unknown'):Metrics.metricStatus(key,p[key]);
+    const stale=CareAPI.mode==='http'?p.deviceState==='offline':CareAPI.now()-Date.parse(p.lastSeen)>300000;
+    const statusOf=key=>CareAPI.mode==='http'?(Number.isFinite(p[key])?p.metricStates?.[key]||'unknown':'unknown'):Metrics.metricStatus(key,p[key]);
     return [['heartRate','心率',metric(p.heartRate),'bpm'],['bloodOxygen','血氧',metric(p.bloodOxygen),'%'],['temperature','体温',metric(p.temperature),'°C'],['systolic','血压',metric(p.systolic)+'/'+metric(p.diastolic),'mmHg']].map(([key,label,value,unit])=>{
       const levels=key==='systolic'?[statusOf(key),statusOf('diastolic')]:[statusOf(key)];
-      const status=stale?'stale':levels.includes('danger')?'danger':levels.includes('unknown')?'unknown':levels.includes('warning')?'warning':'normal';
+      const status=levels.includes('danger')?'danger':stale?'stale':levels.includes('unknown')?'unknown':levels.includes('warning')?'warning':'normal';
       const text={stale:'离线前采样',unknown:'数据不足，请核实采样',danger:'需及时核实',warning:'需关注',normal:CareAPI.mode==='http'?'参考范围内':'演示范围内'}[status];
-      return `<div class="vital-card" data-status="${status}"><div class="vital-label">${h(label)} <span class="vital-unit">${h(unit)}</span></div><div class="vital-number">${h(value)}</div><span class="vital-status">${text}</span></div>`;
+      return `<div class="vital-card" data-status="${status}"><div class="vital-label">${h(label)} <span class="vital-unit">${h(unit)}</span></div><div class="vital-number">${h(value)}</div><span class="vital-status">${text}${stale&&status==='danger'?' · 离线前危险采样，当前状态未知':''}</span></div>`;
     }).join('');
   }
   function record(p) {
@@ -65,7 +65,7 @@ window.CareUI = (() => {
   }
   function eventCard(e,s,masked=false) {
     const p=s.residents[e.residentId];
-    const open=CareAPI.isOpen(e),minutes=Math.ceil((Date.parse(e.dueAt)-Date.now())/60000);
+    const open=CareAPI.isOpen(e),minutes=Math.ceil((Date.parse(e.dueAt)-CareAPI.now())/60000);
     const deadline=open?(minutes<=0?'已超时 '+Math.abs(minutes)+' 分钟':'剩余 '+minutes+' 分钟'):'已归档';
     return `<article class="care-event" data-state="${h(e.state)}" data-severity="${h(e.severity)}"><div class="event-identity"><div class="event-tags"><span class="severity-tag">${e.severity==='danger'?'紧急':'关注'}</span><span class="badge">${h(CareAPI.STATES[e.state])}</span></div><h3>${h(displayName(p.name,masked))}</h3><span class="event-type">${h(CareAPI.TYPES[e.type])}</span></div><div class="event-detail"><p>${h(e.detail)}</p><div class="event-meta">发现 ${h(time(e.createdAt))}</div><div class="signal-note">${e.sourceRecoveredAt?'信号恢复 · 仍需人工复核':'待核实的异常信号'}</div></div><div class="event-owner"><span class="event-meta">当前负责人</span><strong>${h(staff(e.owner))}</strong><span class="event-deadline ${open&&minutes<=0?'is-overdue':''}" title="处理时限 ${h(time(e.dueAt))}">${h(deadline)}</span><span class="event-meta">责任人 ${h(staff(p.responsible))}</span></div><div class="event-action"><button class="btn" data-event="${h(e.id)}" aria-label="${h(displayName(p.name,masked))}，${h(CareAPI.TYPES[e.type])}，${open?'进入处置':'查看留痕'}">${open?'进入处置':'查看留痕'} <span aria-hidden="true">→</span></button></div></article>`;
   }

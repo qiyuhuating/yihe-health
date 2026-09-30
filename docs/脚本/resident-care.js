@@ -37,7 +37,7 @@
   }
   document.querySelectorAll('[data-tab]').forEach(x=>x.addEventListener('click',()=>tab(x.dataset.tab,true)));
   function renderDoses(p){
-    const now=Date.now(),today=new Date().toDateString();
+    const now=CareAPI.now(),today=new Date(now).toDateString();
     const doses=p.doses.filter(d=>new Date(d.dueAt).toDateString()===today||(!d.confirmedAt&&Date.parse(d.dueAt)<now));
     const markup=doses.length?doses.map(d=>{
       const canConfirm=now>=Date.parse(d.dueAt)-30*60000;
@@ -102,6 +102,10 @@
     }
     const initial=await CareAPI.init();await refresh(true,initial);
   }
+  window.addEventListener('care:authenticated',()=>{
+    if(CareSession.current?.residentId!==id){document.querySelector('main').hidden=true;el('residentProfileForm').reset();el('contactForm').reset();location.reload();return;}
+    initialize().then(()=>{document.querySelector('main').inert=false;}).catch(fail);
+  });
   recovery.loading();initialize().catch(fail);tab(location.hash.slice(1));
-  CareUI.poll(async()=>{if(!id||busy)return;if(!remote)await CareAPI.scan();await refresh();},fail);
+  CareUI.poll(async()=>{if(!id||busy||remote&&!CareSession.current)return;if(!remote)await CareAPI.scan();await refresh();},fail);
 })();

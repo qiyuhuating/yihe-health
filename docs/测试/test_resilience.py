@@ -119,7 +119,7 @@ class ResilienceTests(community.BrowserCase):
     def test_interpolated_resident_and_event_text_stays_text_in_dom_and_export(self):
         self.admin()
         payload = '<img src=x>'
-        self.page.evaluate('''async name=>{await CareAPI.saveResident(1,{name});await CareAPI.simulate(1,'health');
+        self.page.evaluate('''async name=>{const before=await CareAPI.snapshot();await CareAPI.saveResident(1,{name},'staff-1',before.residents[1].revision);await CareAPI.simulate(1,'health');
             const s=await CareAPI.snapshot(),e=s.events.find(e=>e.residentId===1&&e.type==='health');
             let current=await CareAPI.transition(e.id,'claim','staff-1','',e.revision);
             current=await CareAPI.transition(e.id,'processing','staff-1','',current.revision);
