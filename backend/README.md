@@ -4,7 +4,7 @@ Python 3.12 标准库 + SQLite，单社区、单实例部署。无预置账号�
 
 ## 本地运行
 
-先在仓库根目录构建网页：`npm --prefix docs run build`。
+先在仓库根目录构建网页：`python docs/工具/build_frontend.py`。完整安装流程见根目录 `README.md`。
 
 ```sh
 python backend/service.py --db /tmp/yihe-care.sqlite3 init
@@ -43,7 +43,10 @@ python backend/service.py --db /tmp/yihe-care.sqlite3 serve --port 8000 --origin
 - Signal 与 Incident 分开。持续信号结案立即创建关联旧事件的新事件；信号恢复不自动结案，恢复后再异常增加 notification cycle。
 - delivered / presented / acknowledged 分离；展示回执核对实际 cycle，旧回执整批回滚。页面展示不等于接单或短信送达。
 - NotificationService 已提供接口，当前 Page 状态为 available，SMS 为 disabled；没有发送短信。正式供应商接入需增加可靠 outbox 消费、重试与供应商回执。
-- staff 会话固定 15 分钟、resident 会话固定 24 小时，Cookie HttpOnly + SameSite=Lax，生产额外 Secure。固定 TTL 不因轮询续期；工作人员需原页重新登录，草稿仍由前端内存保留。
+- staff 会话默认 12 小时（`--staff-session-hours`，允许 0.25–24）、resident 会话 24 小时，Cookie HttpOnly + SameSite=Lax，生产额外 Secure。值班台需要持续接收预警，因此不再用 15 分钟固定 TTL；无人操作的保护由前端“锁屏”承担：15 分钟无操作隐藏内容、需重新输入密码，会话与轮询保持，预警仍会在锁屏上提示（不含居民信息）。固定 TTL 不因轮询续期，到期后需原页重新登录，草稿仍由前端内存保留。
+- 反向代理后请加 `--trusted-proxy`：登录限流按 `X-Forwarded-For` 最后一跳（由本机代理追加）区分客户端；不加该参数时使用 `REMOTE_ADDR`，此时所有经代理的访客共享同一个限流桶，任何人连续输错 5 次都会锁住该账号 60 秒。
+- 升级（escalated）会开启新的提醒轮次，接收人的页面会弹出提醒；开始处理即视为确认该轮次。
+- v0.3.2 居民快照继续由 `serializers.py` 的嵌套白名单生成：固定公开照护团队取代真实 staff、responsible 与非空 owner，历史 actor 使用通用标签，处置 note 为空，用药 actor / 内部来源及审计 logs 不公开。字段契约见 `docs/文档/resident-privacy-contract.md`。
 - 操作者来自会话。单社区工作人员可访问本社区所有居民；居民仅访问自身数据和允许字段。多机构隔离、细粒度工作人员范围不在当前版本范围内。
 - 密码使用 scrypt 与随机盐。登录失败 5 次后限制 60 秒；生产入口还应对匿名会话、设备与咨询设置网关速率和连接限制。
 - 用药和设备请求持久化幂等键；写成功后响应丢失可用同一键读取原结果，改变内容返回 409。
@@ -52,9 +55,11 @@ python backend/service.py --db /tmp/yihe-care.sqlite3 serve --port 8000 --origin
 ## 验证与部署
 
 ```sh
-python -m unittest discover -s backend/tests -v
+python tools/run_unit_tests.py
 ```
 
-CI 另有三浏览器的真实 HTTP/SQLite 端到端测试和 Demo/HTTP 共享场景，接口测试不以模拟返回替代服务端行为。
+本包提供 Chromium 的真实 HTTP/SQLite 回归与居民隐私联调；安装测试依赖后可执行 `python tools/check_release.py --e2e`。GitHub Actions 已配置基础发布门禁和 Chromium E2E；分支保护仍需在仓库设置中启用。
+
+v0.3.2 已分离读写事务：快照与审计 GET 使用 `PRAGMA query_only=ON` 的只读事务，不再取得写锁；`snapshot()` 不再调用 `tick()`。后台 worker 启动即扫描并每 5 秒继续，是生产运行时时间驱动状态变化的唯一入口。
 
 生产通过 TLS 反向代理访问该服务；进程只监听 loopback，`--origin` 必须与对外 HTTPS 源一致，禁用 `--insecure-local`。WSGI 开发服务器提供可运行基线，正式运营前应替换生产 WSGI 容器、执行容量测试、配置备份恢复、密钥管理及机构数据保留政策。当前不提供多租户、医疗阈值审批、短信供应商、生产运维部署或无限规模承诺。

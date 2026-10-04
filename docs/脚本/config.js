@@ -12,32 +12,28 @@
  * 见根目录 README.md 与 文档/handoff/frontend.md「入口和状态」。
  * =========================================================================== */
 (function (global) {
-    "use strict";
+  'use strict';
 
-    var CONFIG = {
-        /* 演示标记：用于在界面上显示"这是演示"，并供脚本判断是否可跳过安全提示 */
-        demo: true,
+  var CONFIG = {
+    /* 演示标记：用于在界面上显示"这是演示"，并供脚本判断是否可跳过安全提示 */
+    demo: true,
+    adminUser: 'admin',
+    adminSalt: 'yihe-admin-v1',
+    adminHash: '8c3d52a4e79b956214fb45e0b3e5199d3055f55b71c5f83e4f2be2166d2a80c8',
+    adminHashWeak: '95ed9b1a',
+    /* 管理端会话签名盐。算法为 djb2，同样属"提高门槛"而非真实鉴权。 */
+    adminSigSalt: 'yihe-admin-sig-v1',
+    /* ---------------- 居民端演示凭据 ---------------- */
+    userSalt: 'yihe-user-v1',
+    userHash: 'ae9a109cfbe2913fe68e61a9844a7e135aa339270b27afe0e13ab87d2a33ac52',
+    userHashWeak: '8ed45aa9',
+  };
 
-        adminUser: "admin",
-        adminSalt: "yihe-admin-v1",
-        adminHash: "8c3d52a4e79b956214fb45e0b3e5199d3055f55b71c5f83e4f2be2166d2a80c8",
-        adminHashWeak: "95ed9b1a",
-
-        /* 管理端会话签名盐。算法为 djb2，同样属"提高门槛"而非真实鉴权。 */
-        adminSigSalt: "yihe-admin-sig-v1",
-
-        /* ---------------- 居民端演示凭据 ---------------- */
-        userSalt: "yihe-user-v1",
-        userHash: "ae9a109cfbe2913fe68e61a9844a7e135aa339270b27afe0e13ab87d2a33ac52",
-        userHashWeak: "8ed45aa9"
-    };
-
-    /* 允许部署方在 config.js 之后覆盖单个字段（不改动本文件即可换配置） */
-    if (global.YIHE_CONFIG_OVERRIDE && typeof global.YIHE_CONFIG_OVERRIDE === "object") {
-        Object.keys(global.YIHE_CONFIG_OVERRIDE).forEach(function (key) {
-            CONFIG[key] = global.YIHE_CONFIG_OVERRIDE[key];
-        });
-    }
-
-    global.YIHE_CONFIG = CONFIG;
+  /* 允许部署方在 config.js 之后覆盖单个字段（不改动本文件即可换配置） */
+  if (global.YIHE_CONFIG_OVERRIDE && typeof global.YIHE_CONFIG_OVERRIDE === 'object') {
+    Object.keys(global.YIHE_CONFIG_OVERRIDE).forEach(function (key) {
+      CONFIG[key] = global.YIHE_CONFIG_OVERRIDE[key];
+    });
+  }
+  global.YIHE_CONFIG = CONFIG;
 })(window);

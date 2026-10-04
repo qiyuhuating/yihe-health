@@ -1,4 +1,4 @@
-﻿# 当前架构
+# 当前架构
 
 纯 HTML/CSS/JavaScript，无框架迁移或运行时依赖。
 
@@ -14,7 +14,7 @@
 | 脚本/staff-care.js | 工作台、预警处置、居民、地图、设置 |
 | 脚本/theme.js | 全站主题及跨标签同步 |
 | 脚本/audit.js | 旧本机日志兼容与保留记录一致性校验 |
-| 样式/reconstruction.css、样式/community.css | 既有视觉基础与本轮业务布局 |
+| 样式源/*.css、工具/build_styles.py | 去重的样式源与四个单文件页面 bundle 构建 |
 
 初始化顺序：公共工具、居民数据和指标规则先于 CareAPI；CareAPI/CareUI 先于页面控制器。管理员凭据配置先于登录脚本。具体加载标签由静态检查验证。
 
@@ -37,3 +37,11 @@ DATA_INVALID、STORAGE_UNAVAILABLE、ENV_UNSUPPORTED 错误由页面统一呈现
 模拟器只在页面运行时推进采样。趋势来自实际生成的模拟采样，不预填历史曲线。真实部署必须由服务端接管检测、授权、并发与持久化。
 
 本机审计新时间戳使用 UTC ISO 8601，既有时间与哈希链保持原值。损坏的 JSON 不会被当成空日志覆盖。显式清空在一次写入中保留“清空本机审计记录”操作，保存失败则此前日志完全不变；此后只能校验保留记录。
+
+## v0.3.2 后端职责与事务
+
+后端不再把认证、领域存储和 WSGI 全部放在一个文件：`common.py` 管公共校验，`auth.py` 管 session / 登录限流，`care.py` 管照护领域持久化，`incidents.py` 管事件状态转换规则，`notifications.py` 管通知通道能力声明，`serializers.py` 管居民公开 DTO，`service.py` 只保留 HTTP/WSGI、设备入口、静态文件、CLI 与 worker。
+
+读写事务明确分离。`GET /api/v1/care/snapshot` 与 `GET /api/v1/audit` 使用 SQLite `query_only` 只读事务；其余写接口使用 `BEGIN IMMEDIATE`。`snapshot()` 不产生业务副作用；后台 worker 是离线/逾期等时间驱动状态变化的唯一生产入口。
+
+工作人员前端仍按 core / events / residents / map / settings / boot 六个文件拆分，保留当前公开契约；进一步取消 `window.StaffConsole` 共享状态不作为本版强制改动，避免无业务收益的前端重写。

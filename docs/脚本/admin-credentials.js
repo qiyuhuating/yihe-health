@@ -10,53 +10,58 @@
  *
  * 摘要算法与降级策略见 脚本/demo-credentials.js。
  */
-window.AdminCredentials = function() {
-    "use strict";
-    /* 凭据常量集中在 脚本/config.js（须在本文件之前加载）。此处只做"取值 + 允许覆盖"。 */
-    var CFG = window.YIHE_CONFIG || {};
-    var SALT = CFG.adminSalt;
-    var DEFAULT_USER = CFG.adminUser;
+window.AdminCredentials = (function () {
+  'use strict';
 
-    function cfg() {
-        var o = window.__ADMIN_CRED__;
-        if (o && o.user && (o.hash || o.hashWeak || o.password)) return o;
-        return {
-            user: DEFAULT_USER,
-            hash: CFG.adminHash,
-            hashWeak: CFG.adminHashWeak
-        };
-    }
-
+  /* 凭据常量集中在 脚本/config.js（须在本文件之前加载）。此处只做"取值 + 允许覆盖"。 */
+  var CFG = window.YIHE_CONFIG || {};
+  var SALT = CFG.adminSalt;
+  var DEFAULT_USER = CFG.adminUser;
+  function cfg() {
+    var o = window.__ADMIN_CRED__;
+    if (o && o.user && (o.hash || o.hashWeak || o.password)) return o;
     return {
-        /**
-         * @returns Promise<{ok:boolean, mode:string, reason?:string}>
-         */
-        verify: function(user, password) {
-            var c = cfg();
-            if (user !== c.user) return Promise.resolve({
-                ok: !1,
-                mode: "none",
-                reason: "账号或密码错误"
-            });
-            if (!window.DemoCredentials) return Promise.resolve({
-                ok: !1,
-                mode: "none",
-                reason: "凭据模块未加载"
-            });
-            return DemoCredentials.verify({
-                hash: c.hash,
-                hashWeak: c.hashWeak,
-                password: c.password
-            }, password, SALT);
-        },
-        weakDigest: function(password) {
-            return DemoCredentials.weakDigest(SALT, password);
-        },
-        username: function() {
-            return cfg().user;
-        },
-        detectMode: function() {
-            return !!(window.DemoCredentials && DemoCredentials.detectMode());
-        }
+      user: DEFAULT_USER,
+      hash: CFG.adminHash,
+      hashWeak: CFG.adminHashWeak,
     };
-}();
+  }
+  return {
+    /**
+     * @returns Promise<{ok:boolean, mode:string, reason?:string}>
+     */
+    verify: function (user, password) {
+      var c = cfg();
+      if (user !== c.user)
+        return Promise.resolve({
+          ok: !1,
+          mode: 'none',
+          reason: '账号或密码错误',
+        });
+      if (!window.DemoCredentials)
+        return Promise.resolve({
+          ok: !1,
+          mode: 'none',
+          reason: '凭据模块未加载',
+        });
+      return DemoCredentials.verify(
+        {
+          hash: c.hash,
+          hashWeak: c.hashWeak,
+          password: c.password,
+        },
+        password,
+        SALT,
+      );
+    },
+    weakDigest: function (password) {
+      return DemoCredentials.weakDigest(SALT, password);
+    },
+    username: function () {
+      return cfg().user;
+    },
+    detectMode: function () {
+      return !!(window.DemoCredentials && DemoCredentials.detectMode());
+    },
+  };
+})();

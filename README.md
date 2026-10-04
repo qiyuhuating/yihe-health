@@ -1,94 +1,94 @@
-# 颐和 · 智慧康养
+# 颐和健康 v0.3.2
 
-[![Frontend checks](https://github.com/qiyuhuating/yihe-health/actions/workflows/frontend-checks.yml/badge.svg?branch=main)](https://github.com/qiyuhuating/yihe-health/actions/workflows/frontend-checks.yml)
+社区照护与风险事件原型：居民资料、设备信号、风险事件、用药任务、工作人员处置、审计与页面提醒。系统不提供医疗诊断；短信通道仍明确为 `disabled`。v0.3.2 的重点是**维护与可靠性**，不扩张业务功能。
 
-面向社区照护场景的原生 HTML、CSS、JavaScript 前端项目，包含公开站点、居民端和工作人员管理端。项目提供本地演示模式与面向同源服务的 HTTP 适配层。
+## v0.3.2 关键变化
 
-**在线体验：** [GitHub Pages 演示站](https://qiyuhuating.github.io/yihe-health/) · [工作人员管理端](https://qiyuhuating.github.io/yihe-health/管理端.html) · [v0.1.0 发布说明](https://github.com/qiyuhuating/yihe-health/releases/tag/v0.1.0)
+- `GET /api/v1/care/snapshot` 与 `GET /api/v1/audit` 使用 SQLite 强制只读事务（`PRAGMA query_only=ON` + `BEGIN`），不再取得写锁。
+- `snapshot()` 不再调用 `tick()`；时间驱动状态只由后台 worker 处理，worker 启动后立即扫描并每 5 秒继续扫描。
+- 写事务仍使用 `BEGIN IMMEDIATE`；登录失败限流不再由业务函数手工 `commit()`。
+- 后端按职责拆成 `common.py`、`care.py`、`incidents.py`、`notifications.py`、`auth.py`、`serializers.py` 与薄 WSGI `service.py`。
+- CSS 的可编辑源移动到 `docs/样式源/`，四个页面单 CSS 包由脚本生成；发布运行时仍保持每页一个 CSS 请求。
+- 新增 GitHub Actions：基础发布核验 + Chromium 真实后端 E2E。
+- 新增 v0.3.2 事务/纯读契约测试；严格测试当前为 54 项。
 
-## 项目亮点
+## Development
 
-- **双端业务流程：** 居民健康信息、用药反馈、工作人员预警工作台与事件处置。
-- **风险事件状态流转：** 覆盖接单、处理中、解决、误报和升级，并保留操作历史。
-- **并发与本地一致性：** 演示数据通过 Web Locks 串行写入、Revision 检查和跨标签同步；冲突或存储失败不会静默覆盖。
-- **后端接入准备：** 页面通过稳定调用面访问 HTTP 适配层，统一处理会话、CSRF、超时、错误状态和快照校验。
-- **可验证的交付：** 静态规则检查、Node 领域测试、46 项浏览器回归测试，以及 Chromium、Firefox、WebKit 三浏览器 CI。
-- **独立生产构建：** CI 构建并检查 HTTP-only 的 `dist/` 静态包；GitHub Pages 当前展示演示模式。
-
-## 架构
-
-```mermaid
-flowchart LR
-  A[公开页面] --> D[CareAPI 稳定调用面]
-  B[居民端] --> D
-  C[工作人员端] --> D
-  D --> E[演示适配器<br/>本地存储与并发保护]
-  D --> F[HTTP 适配器<br/>同源 /api/v1]
-  F --> G[待接入的后端服务]
-  H[静态与领域检查] --> I[GitHub Actions]
-  J[Chromium / Firefox / WebKit 回归] --> I
-  I --> K[生产 dist 构建与校验]
-```
-
-## 技术特点
-
-- 无前端框架迁移或第三方运行时依赖。
-- 演示模式使用虚构数据；写入前后校验数据结构，存储失败时保留原记录。
-- HTTP 模式不会在网络失败时回退到演示数据，也不在浏览器中保存服务端密钥。
-- 前端提供 API 契约与适配层；认证授权、持久化、事务和通知仍由后端负责。
-
-## 本地运行与检查
-
-需要 Node.js 18+ 和 Python 3。在仓库根目录执行：
+需要 Python 3.12+；发布核验还需要 Node.js 18+。在项目根目录：
 
 ```sh
-npm --prefix docs run check
-npm --prefix docs run test:domain
-npm --prefix docs run build
+python docs/工具/build_styles.py
+python docs/工具/build_frontend.py
+python backend/service.py --db care.sqlite3 init
+python backend/service.py --db care.sqlite3 add-user staff-account staff staff-1 工作人员
+python backend/service.py --db care.sqlite3 add-resident examples/resident.json
+python backend/service.py --db care.sqlite3 add-user resident-account resident 1 居民账户
+python backend/service.py --db care.sqlite3 serve --port 8000 --origin http://127.0.0.1:8000 --insecure-local --static docs/dist
 ```
 
-开发演示可通过本地静态 HTTP 服务打开 `docs/`。生产构建生成到 `docs/dist/`。
+两次 `add-user` 会交互要求至少 12 字符密码。数据库和真实密钥不要加入源码或发布 ZIP。
 
-## 文件说明
+## Validation
 
-| 文件 | 职责 |
-| --- | --- |
-| [backend/service.py](backend/service.py) | 提供 Python/SQLite API，处理会话、居民版本冲突、告警流转、设备输入、用药记录与审计。 |
-| [backend/README.md](backend/README.md) | 说明后端依赖、数据库初始化、启动方式、配置项和部署边界。 |
-| [backend/tests/test_service.py](backend/tests/test_service.py) | 验证后端接口、权限、状态机、并发版本和幂等行为。 |
-| [docs/index.html](docs/index.html) | 居民健康端入口，呈现健康信息并加载前端运行配置与会话模块。 |
-| [docs/home.html](docs/home.html) | 社区服务介绍页，说明居家健康监护与照护服务流程。 |
-| [docs/脚本/care-api.js](docs/脚本/care-api.js) | 实现本地演示适配器，供前端演示业务流程和状态变化。 |
-| [docs/脚本/care-http-adapter.js](docs/脚本/care-http-adapter.js) | 将前端领域操作映射到后端 HTTP 接口，并处理响应和业务错误。 |
-| [docs/脚本/care-transport.js](docs/脚本/care-transport.js) | 统一发送同源 JSON 请求，处理超时、CSRF、幂等键和网络错误。 |
-| [docs/脚本/care-runtime-config.js](docs/脚本/care-runtime-config.js) | 为页面提供运行模式及 API 基础路径等配置。 |
-| [docs/数据/residents.js](docs/数据/residents.js) | 提供演示模式使用的虚构居民资料，不作为生产数据源。 |
-| [docs/数据/schema.js](docs/数据/schema.js) | 定义并校验前端演示数据结构，阻止不符合预期的数据进入存储流程。 |
-| [docs/package.json](docs/package.json) | 声明前端检查、领域测试、生产构建和浏览器测试命令。 |
-| [.github/workflows/frontend-checks.yml](.github/workflows/frontend-checks.yml) | 在 GitHub Actions 中运行后端测试、前端静态检查、生产构建和浏览器回归。 |
+快速且完整的本地发布门禁：
 
-## 目录
+```sh
+python tools/check_release.py
+```
 
-| 路径 | 内容 |
-| --- | --- |
-| `docs/样式/` | 居民端、管理端和公开页面使用的样式表。 |
-| `docs/测试/` | 前端静态检查、领域测试和浏览器回归用例。 |
-| `docs/工具/` | 前端构建、质量检查和本地测试辅助脚本。 |
-| `docs/文档/` | 系统架构、前端交接、后端接入与发布手册。 |
+它会验证源码 SHA-256 manifest、54 项严格后端测试、SQLite 连接归还、CSS 源/生成包一致性、CSP、HTTP-only 构建、JavaScript 语法、敏感文件扫描和前端数据契约。
 
-## 当前边界
+浏览器联调：
 
-这是**前端 Demo 与单社区 HTTP/SQLite 后端基线**。仓库已包含可运行的服务端与合成数据联调测试；生产数据、正式设备、短信投递、TLS 与运营部署仍需配置和验收。
+```sh
+python -m pip install -r requirements-test.txt
+python -m playwright install chromium
+python tools/check_release.py --e2e
 
-## 后续路线
+# 若受限环境已有系统 Chromium，也可：
+# YIHE_CHROMIUM_EXECUTABLE=/usr/bin/chromium python tools/check_release.py --e2e
+```
 
-1. 按[后端接入说明](docs/文档/handoff/backend-integration.md)实现服务端契约并完成联调。
-2. 在真实接口环境验证认证、权限、版本冲突与异常恢复。
-3. 按[发布手册](docs/文档/handoff/release.md)部署并验证生产构建。
+后端覆盖率示例：
 
-更多细节见[系统架构](docs/文档/architecture.md)和[前端交接说明](docs/文档/handoff/frontend.md)。
+```sh
+python -m coverage run --branch --include="backend/*.py" tools/run_unit_tests.py
+python -m coverage report -m
+```
 
+## Architecture
 
-## 最小后端
+```text
+HTTP / WSGI  backend/service.py
+        │
+        ├── Auth/session/rate-limit  backend/auth.py
+        ├── Care persistence         backend/care.py
+        ├── Incident state machine   backend/incidents.py
+        ├── Notification capability  backend/notifications.py
+        ├── Resident public DTO      backend/serializers.py
+        └── Shared validation/time   backend/common.py
+```
 
-现提供单社区 Python/SQLite API，包含服务端会话、居民版本比较、信号与事件状态机、设备输入、用药、审计及通知假实现。运行、测试与部署边界见 [backend/README.md](backend/README.md)。静态 GitHub Pages 仍是 Demo；运行真实 HTTP 需要同源后端。
+读路径与写路径分离：
+
+```text
+snapshot / audit GET → read_transaction → query_only → no business mutation
+other API writes      → write_transaction → BEGIN IMMEDIATE → atomic commit
+background worker     → write_transaction → tick → time-driven state changes
+```
+
+`docs/` 保留可离线演示源码；`docs/dist/` 是 HTTP-only 发布产物。生产构建排除演示凭据和演示居民数据。
+
+## Security and privacy
+
+- Resident / Staff 在后端真正做授权检查，不依赖前端隐藏按钮。
+- 居民快照通过 `serializers.py` 嵌套 allow-list 生成，真实工作人员身份、内部备注、审计信息不会进入居民响应。
+- HttpOnly Session Cookie；写请求验证 Origin + CSRF；生产要求 Secure Cookie。
+- 设备事件使用独立 Bearer key，并支持幂等键。
+- SQLite 连接由严格测试追踪，当前 0 泄漏。
+
+## Current limits
+
+这是单社区可运行原型，不宣称生产医疗系统。当前仍使用 SQLite + stdlib WSGI，短信 provider 未接入；正式运营还需要生产 WSGI 容器、备份恢复、容量测试、监控告警和实际短信供应商。
+
+更多细节见 `backend/README.md`、`docs/文档/architecture.md`、`docs/文档/resident-privacy-contract.md` 和 `REFACTOR-NOTES.md`。

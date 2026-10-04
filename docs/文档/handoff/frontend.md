@@ -4,7 +4,7 @@
 
 - 页面包括公开站点、居民端、工作人员端和管理入口。
 - HTTP 模式通过同源 `/api/v1/` 访问服务，使用浏览器会话 Cookie、CSRF token、请求超时、轮询、结构校验和并发版本字段。
-- `npm run build` 生成 HTTP-only `dist/`，构建时移除演示账号、演示居民数据和演示登录逻辑。生产只发布 `dist/`。
+- `python docs/工具/build_frontend.py` 生成 HTTP-only `docs/dist/`，构建时移除演示账号、演示居民数据和演示登录逻辑。生产只发布 `docs/dist/`。
 
 ## 接入责任
 

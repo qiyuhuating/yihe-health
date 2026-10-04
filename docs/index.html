@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'">
 <title>颐和 · 居民健康</title>
-<link rel="stylesheet" href="样式/reconstruction.css"><link rel="stylesheet" href="样式/community.css"><link rel="stylesheet" href="样式/ui-polish.css">
+<link rel="stylesheet" href="样式/resident.css">
 <script src="脚本/theme.js" defer></script><script src="脚本/care-runtime-config.js" defer></script><script src="脚本/care-transport.js" defer></script><script src="脚本/care-session.js" defer></script><script src="脚本/care-mode-ui.js" defer></script>
 </head>
 <body class="resident-care">
@@ -15,15 +15,18 @@
 <p class="demo-banner" data-demo-only>前端演示 · 设备与预警均为模拟；不会发送短信或自动拨号。</p>
 <p id="careError" class="care-error" role="alert" hidden></p>
 <section class="tab-view active" id="tab-home" aria-labelledby="greetingName">
-<header class="welcome-row"><h1 id="greetingName" tabindex="-1">今日状态</h1><time id="todayDate"></time></header>
-<a class="btn resident-contact-jump" href="#emergencyContacts" aria-label="联系家人 / 紧急联系">联系家人 / 紧急联系</a>
-<section class="home-health" data-status="normal" aria-labelledby="statusTitle"><h2 id="statusTitle">正在读取今日状态</h2><p id="healthSummary"></p><p class="data-note" id="dataUpdated"></p><details class="resident-metrics"><summary>查看本次健康指标</summary><div class="vitals-row" id="residentVitals"></div></details></section>
-<div class="resident-home-grid"><div class="resident-priority">
+<header class="welcome-row"><h1 id="greetingName" tabindex="-1">今日状态</h1><time id="todayDate"></time><p class="xz-season" id="xzSeason"></p></header>
+<div class="xz-home"><div class="xz-main"><section class="home-health" data-status="normal" aria-labelledby="statusTitle"><h2 id="statusTitle">正在读取今日状态</h2><p id="healthSummary"></p><p class="data-note" id="dataUpdated"></p><details class="resident-metrics"><summary>查看本次健康指标</summary><div class="vitals-row" id="residentVitals"></div></details></section>
+<div class="resident-priority">
 <section class="sec-card"><h2>今日用药</h2><p class="data-note" data-http-text="按已核对的计划服药。确认会记录您的反馈，不代表工作人员已核实实际服药。">按已核对的计划服药。确认仅记录本机操作，不代表已核实实际服药。</p><div id="todayDoses"></div><p id="doseError" class="care-error" role="alert" hidden></p><p id="doseStatus" class="care-error" role="status" aria-live="polite" tabindex="-1" hidden></p></section>
 <section class="sec-card"><h2>重要提醒</h2><div id="residentAlerts" aria-live="polite"></div></section>
-</div><div class="resident-support">
+</div>
+</div><aside class="xz-aside" aria-label="快捷求助与联系人">
+<a class="btn resident-contact-jump" href="#emergencyContacts" aria-label="联系家人 / 紧急联系">联系家人 / 紧急联系</a>
+<div class="resident-support">
 <section class="sec-card" id="emergencyContacts" aria-labelledby="emergencyContactsTitle"><h2 id="emergencyContactsTitle">紧急联系</h2><div id="homeContacts"></div><a class="btn btn-danger" href="tel:120">拨打急救电话 120</a><p class="data-note">点击后由设备发起拨号；本网页不会自动联系任何人。</p></section>
-</div></div>
+</div>
+</aside></div>
 </section>
 <section class="tab-view" id="tab-health" aria-labelledby="healthHeading">
 <h1 id="healthHeading" tabindex="-1">我的健康</h1>
@@ -44,5 +47,5 @@
 <button class="nav-item" data-tab="me"><span class="nav-icon"><img data-icon="person" width="22" height="22" alt=""></span><span class="nav-label">我的</span></button>
 </nav>
 <script src="脚本/common.js" defer></script><script src="数据/residents.js" defer></script><script src="脚本/metrics.js" defer></script>
-<script src="脚本/care-http-adapter.js" defer></script><script src="脚本/care-api.js" defer></script><script src="脚本/care-ui.js" defer></script><script src="脚本/resident-care.js" defer></script><script src="脚本/ui.js" defer></script>
+<script src="脚本/care-http-adapter.js" defer></script><script src="脚本/care-api.js" defer></script><script src="脚本/care-ui.js" defer></script><script src="脚本/resident-care.js" defer></script><script src="脚本/ui.js" defer></script><script src="脚本/xinzhongshi.js" defer></script>
 </body></html>

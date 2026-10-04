@@ -84,8 +84,7 @@ def build():
     for name in OMIT:
         (OUT / name).unlink(missing_ok=True)
     (OUT / 'js/design-preview.js').unlink(missing_ok=True)
-    for name in ('brand-tokens.css','common.css','design-preview.css','tokens.css'):
-        (OUT / 'css' / name).unlink(missing_ok=True)
+    (OUT / 'css' / 'design-preview.css').unlink(missing_ok=True)
     config = (OUT / 'js/care-runtime-config.js').read_text(encoding='utf-8-sig')
     default_mode = "mode:'demo'"
     allowed_modes = "['demo','http']"
@@ -130,4 +129,9 @@ def build():
 
 
 if __name__ == '__main__':
+    import build_styles, check_csp, css_audit
+    build_styles.main(['--check'])
+    check_csp.main()
+    if css_audit.main([]):
+        raise SystemExit(1)
     build()
