@@ -4,10 +4,9 @@
       <div><h2 id="care-inbox-title">{{ scope === 'verified' ? '已复核的照护任务' : '需要接手的照护任务' }}</h2><p>求助已接收不等于通知送达；只有人工接单及复核才会结束任务。</p></div>
       <div class="care-inbox-tools"><label for="care-task-scope">任务范围</label><el-select id="care-task-scope" v-model="scope" :disabled="saving" @change="changeScope"><el-option label="待复核任务" value="active"/><el-option label="已复核任务" value="verified"/></el-select><el-button plain :disabled="saving" @click="load">刷新任务</el-button></div>
     </div>
-    <CareOperationsPanel />
     <p v-if="loading && !tasks.length" role="status" class="care-loading">正在读取照护任务…（可继续刷新或切换分页）</p>
     <p v-if="error" role="alert" class="care-error">{{ error }}</p>
-    <p v-else-if="!loading && !tasks.length" class="care-empty">{{ scope === 'verified' ? '当前没有已复核任务。' : '当前没有查询到待处理任务。请继续检查设备与服务状态。' }}</p>
+    <div v-else-if="!loading && !tasks.length" class="care-empty care-inbox-empty" role="status"><img src="/static/img/care-courtyard-illustration.webp" alt="" width="112" height="84" loading="lazy" decoding="async"><p>{{ scope === 'verified' ? '当前没有已复核任务。' : '当前没有查询到待处理任务。请继续检查设备与服务状态。' }}</p></div>
     <p v-if="duty === 'auditor'" class="care-empty">当前为审计员岗位，可查看任务与履历。</p>
     <div v-if="tasks.length" class="care-task-list">
       <article v-for="task in tasks" :key="task.id" class="care-task" :class="{ overdue: task.state !== 'verified' && isOverdue(task), urgent: priorityLabel(task) === 'P0 紧急' }">
@@ -30,6 +29,7 @@
       </article>
     </div>
     <el-pagination v-if="!error && total > pageSize" :current-page="page" :page-size="pageSize" :total="total" :disabled="saving" layout="total, prev, pager, next" @current-change="changePage" />
+    <CareOperationsPanel />
     <el-dialog v-model="history.visible" title="照护事件履历" width="min(600px, 94vw)" append-to-body @close="historyReads.cancel">
       <p v-if="history.loading" role="status">正在读取记录…</p>
       <p v-if="history.error" role="alert" class="care-error">{{ history.error }}</p>
@@ -217,7 +217,7 @@ onBeforeUnmount(() => {
 .care-task-list { display: grid; gap: 12px; }
 .care-task { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--care-surface-subtle); border: 1px solid var(--care-border); border-radius: 12px; transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease); }
 .care-task:hover { border-color: var(--care-neutral-border); background: var(--care-surface-hover); }
-.care-task.overdue, .care-task.urgent { border-left: 4px solid var(--care-danger); background: var(--care-danger-bg); border-color: var(--care-danger-border); }
+.care-task.overdue, .care-task.urgent { background: var(--care-danger-bg); }
 .care-priority { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .care-priority.priority-p0 { background: var(--care-danger-bg); color: var(--care-danger); }
 .care-priority.priority-p1 { background: var(--care-warning-bg); color: var(--care-warning-strong); }
@@ -234,5 +234,9 @@ onBeforeUnmount(() => {
 .care-history small { display: block; color: var(--care-text-muted); }
 .care-history p { margin: 4px 0; color: var(--care-text); }
 .care-empty { color: var(--care-text-muted); }
+.care-inbox-empty { display: flex; align-items: center; gap: var(--care-space-4); padding: var(--care-space-2) 0; }
+.care-inbox-empty img { flex: 0 0 auto; object-fit: contain; }
+.care-inbox-empty p { margin: 0; max-width: 42em; }
+@media (max-width: 480px) { .care-inbox-empty img { width: 80px; height: 60px; } }
 @media (max-width: 700px) { .care-inbox-heading, .care-task { align-items: stretch; flex-direction: column; } }
 </style>

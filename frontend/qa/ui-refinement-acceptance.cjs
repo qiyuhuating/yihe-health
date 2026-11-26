@@ -173,6 +173,37 @@ run(async ({ page, context, base, report, setRole, setSignedIn }) => {
   check('HTTP failure retry reloads the atomic snapshot',
     (await page.locator('.alert-card strong').first().textContent()) === '4')
 
+  // The security form remains available without consuming dashboard space.
+  check('security form is not in the overview', await page.locator('.workspace-main .security-panel').count() === 0)
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  const settings = page.getByRole('dialog', { name: '常规设置' })
+  const security = settings.locator('.security-panel')
+  await security.waitFor()
+  check('administrator can manage two-factor authentication in settings', await security.locator('#security-password').isEnabled() && await security.locator('#security-otp').isEnabled())
+  await security.locator('#security-password').fill('test-only')
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  await security.waitFor()
+  check('closing settings clears the password input', await security.locator('#security-password').inputValue() === '')
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
+
+  setRole('FAMILY')
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(base + '/?large=0&family=' + width + '#/family-portal/overview')
+    const illustration = page.locator('.welcome-scene img')
+    await illustration.waitFor()
+    await illustration.evaluate(img => img.decode())
+    check('family illustration ' + width + ' loads without overflow', await illustration.evaluate(img => img.naturalWidth > 0 && img.getBoundingClientRect().width <= innerWidth) && await page.locator('.workspace-main').evaluate(el => el.scrollWidth <= el.clientWidth + 1))
+  }
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  await settings.waitFor()
+  check('family settings does not duplicate account security', await settings.locator('.security-panel').count() === 0)
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
+
   setSignedIn(false)
   await page.goto(base + '/#/sign-in')
   await page.locator('#login-password').waitFor()

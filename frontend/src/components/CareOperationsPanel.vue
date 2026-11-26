@@ -53,14 +53,12 @@
       </li>
     </ol>
   </section>
-  <SecurityPanel />
 </template>
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { isAxiosError } from 'axios'
 import { api } from '../api/client'
 import { apiErrorMessage } from '../api/httpContract'
-import SecurityPanel from './SecurityPanel.vue'
 import { startVisiblePolling } from '../composables/visiblePolling'
 import { authState } from '../auth'
 import { mayReadCareAudit, mayManageCareStaff } from '../domain/permissions'

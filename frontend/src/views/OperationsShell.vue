@@ -102,7 +102,7 @@ onMounted(() => addCurrentTab(route))
 .view-intro { margin: 0 0 20px; }
 .view-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; color: var(--care-text-muted); font-size: 13px; }
 .view-breadcrumb .el-icon { font-size: 12px; }
-.view-intro h1 { margin: 0; color: var(--care-heading); font-size: 28px; line-height: 1.3; font-weight: 500; letter-spacing: -.01em; }
+.view-intro h1 { margin: 0; color: var(--care-heading); font-size: var(--care-page-title); line-height: 1.35; font-weight: 600; letter-spacing: -.015em; }
 .view-description { margin: 8px 0 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.65; }
 @media (max-width: 900px) {
   .workspace-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }

@@ -175,6 +175,9 @@ html.large-text .submit-button { min-height: 58px; font-size: 20px; }
   .auth-story { display: none; }
 }
 @media (max-height: 640px) {
+  .auth-panel { padding-block: 8px; }
+  .auth-card { padding-block: 18px; }
+  .login-text-toggle { top: 18px; }
   .auth-intro { display: none; }
   .auth-eyebrow { display: none; }
   .auth-card h2 { margin-top: 12px; }

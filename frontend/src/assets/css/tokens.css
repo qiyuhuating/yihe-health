@@ -55,6 +55,14 @@
   --care-shadow-hover: 0 10px 28px rgba(24, 62, 51, 0.09), 0 2px 6px rgba(24, 62, 51, 0.05);
   --care-shadow-dialog: 0 24px 64px rgba(16, 43, 34, 0.18), 0 4px 16px rgba(16, 43, 34, 0.08);
 
+  /* Spacing and type scale */
+  --care-space-2: 8px;
+  --care-space-4: 16px;
+  --care-space-5: 20px;
+  --care-space-6: 24px;
+  --care-page-title: 30px;
+  --care-section-title: 20px;
+
   /* Targets & geometry */
   --care-target-min: 44px;
   --care-target-primary: 48px;

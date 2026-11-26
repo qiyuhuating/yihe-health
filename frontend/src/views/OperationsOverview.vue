@@ -8,7 +8,7 @@
     <section v-else aria-label="岗位状态" class="announcement-panel">
       <h2>账号尚未分配岗位</h2>
       <p>请联系照护主管分配岗位。当前账号不能查看照护任务或访问管理功能。</p>
-      <SecurityPanel />
+      <p class="page-subtitle">如需管理双因素认证，请打开顶部设置。</p>
     </section>
     <div v-if="!isRestricted" class="dashboard-panels">
     <section class="overview-grid" aria-label="设备告警摘要">
@@ -44,10 +44,10 @@
       </div>
       <el-table class="desktop-announcements" v-loading="isLoading" :data="notices" @row-click="getDetail" row-class-name="clickable-row">
         <el-table-column type="index" label="序号" width="64" align="center"></el-table-column>
-        <el-table-column prop="title" label="公告标题" min-width="220" show-overflow-tooltip>
+        <el-table-column prop="title" label="公告标题" min-width="160" show-overflow-tooltip>
           <template #default="scope"><span class="announcement-title">{{ scope.row.title || '未命名公告' }}</span></template>
         </el-table-column>
-        <el-table-column prop="time" label="发布时间" width="175"></el-table-column>
+        <el-table-column prop="time" label="发布时间" width="155"></el-table-column>
         <el-table-column label="查看" width="110" align="right"><template #default="scope"><el-button link @click.stop="getDetail(scope.row)">查看详情 <el-icon aria-hidden="true"><ArrowRight /></el-icon></el-button></template></el-table-column>
         <template #empty><div class="table-empty" role="status"><img v-if="!loadError && !appliedSearch" src="/static/img/care-announcement-empty.webp" alt="" width="160" height="160" loading="lazy" decoding="async"><strong>{{ emptyTitle }}</strong><span>{{ emptyDescription }}</span><el-button v-if="loadError" plain @click="loadNotices">重新加载</el-button><el-button v-else-if="appliedSearch" plain @click="clearSearch">清除搜索条件</el-button></div></template>
       </el-table>
@@ -68,13 +68,13 @@
 .mobile-notice time { display: block; margin-top: 6px; font-size: 14px; color: var(--care-text-muted); }
 .mobile-notice:focus-visible { outline: var(--care-focus-width) solid var(--care-focus-color); outline-offset: 2px; }
 .dashboard { color: var(--care-text); }
-.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
-.page-heading h1 { margin: 0; color: var(--care-heading); font-size: 28px; line-height: 1.4; font-weight: 500; letter-spacing: 0; }
+.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--care-space-5); margin-bottom: var(--care-space-6); }
+.page-heading h1 { margin: 0; color: var(--care-heading); font-size: var(--care-page-title); line-height: 1.35; font-weight: 600; letter-spacing: -.015em; }
 .page-subtitle { margin: 9px 0 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.6; }
 .page-heading :deep(.el-button) { height: var(--care-target-primary); padding: 0 20px; border-radius: var(--care-control-radius); }
-.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
-.overview-card { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-height: 142px; padding: 24px 26px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); transition: border-color var(--care-motion-fast) var(--care-ease), box-shadow var(--care-motion-fast) var(--care-ease), transform var(--care-motion-fast) var(--care-ease); }
-.overview-card:hover { border-color: var(--care-neutral-border); box-shadow: var(--care-shadow-card); transform: translateY(-1px); }
+.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--care-space-4); margin-bottom: var(--care-space-6); }
+.overview-card { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-height: 136px; padding: var(--care-space-5) var(--care-space-6); border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease); }
+.overview-card:hover { border-color: var(--care-neutral-border); background: var(--care-surface-subtle); }
 .metric-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; font-size: 20px; }
 .metric-icon.amber { background: var(--care-warning-bg); color: var(--care-warning-strong); }
 .metric-icon.rose { background: var(--care-danger-bg); color: var(--care-danger); }
@@ -84,13 +84,13 @@
 .metric-copy strong { color: var(--care-heading); font-size: 30px; line-height: 1.15; font-weight: 600; font-variant-numeric: tabular-nums; }
 .metric-copy small { color: var(--care-text-muted); font-size: 14px; line-height: 1.5; }
 .overview-card :deep(.el-button.is-link) { min-height: var(--care-target-primary); flex: 0 0 auto; color: var(--care-primary); font-size: 14px; }
-.overview-note { grid-column: 1 / -1; display: flex; gap: 12px; align-items: flex-start; padding: 16px 24px; border: 1px solid var(--care-border); border-radius: 12px; background: var(--care-surface-tint); }
+.overview-note { grid-column: 1 / -1; display: flex; gap: 12px; align-items: flex-start; padding: var(--care-space-4) 0; border-top: 1px solid var(--care-border-subtle); }
 .note-icon { color: var(--care-primary); font-size: 17px; margin-top: 2px; }
 .overview-note strong { color: var(--care-heading); font-size: 14px; }
 .overview-note p { margin: 4px 0 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.65; }
 .announcement-panel { padding: 24px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
-.panel-heading h2 { margin: 0; color: var(--care-heading); font-size: 18px; font-weight: 500; }
+.panel-heading h2 { margin: 0; color: var(--care-heading); font-size: var(--care-section-title); font-weight: 600; }
 .panel-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 14px; }
 .search-label { display: block; margin-bottom: 8px; font-size: 14px; color: var(--care-text-secondary); }
 .notice-count { display: inline-block; min-width: 28px; margin-left: 6px; padding: 1px 8px; border-radius: 6px; background: var(--care-success-bg); color: var(--care-primary); font-size: 14px; text-align: center; vertical-align: middle; }
@@ -102,8 +102,8 @@
 .table-empty span { max-width: 420px; font-size: 15px; line-height: 1.8; white-space: normal; }
 .pagination-wrap { display: flex; justify-content: flex-end; padding-top: 18px; }
 @media (min-width: 1800px) {
-  .dashboard-panels { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 24px; align-items: start; }
-  .overview-grid { grid-template-columns: 1fr; margin-bottom: 0; }
+  .dashboard-panels { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--care-space-6); align-items: start; }
+  .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0; }
   .announcement-panel { min-width: 0; }
 }
 @media (min-width: 901px) and (max-width: 1180px) {
@@ -133,7 +133,6 @@ import { apiErrorMessage } from '../api/httpContract'
 import { createLatestRead } from '../composables/latestRead'
 import { startVisiblePolling } from '../composables/visiblePolling'
 import CareInbox from '@/components/CareInbox.vue'
-import SecurityPanel from '@/components/SecurityPanel.vue'
 import { authState } from '@/auth'
 import { isRestrictedAdmin } from '@/domain/permissions'
 import store from '@/store'
