@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"time"
 	"yihe-care/internal/db"
 	"yihe-care/internal/notify"
-	"time"
 )
 
 func (e *Engine) persist(ctx context.Context, tx *sql.Tx, device, old, epoch int64, c CompactCandidate, now time.Time, scratch []byte) error {
