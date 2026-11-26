@@ -97,6 +97,10 @@ func decodeBMP(data []byte) (image.Image, int, int, bool) {
 	if unpackBMPNative(img.Pix, data[int(off):], w, h, stride, int(bpp)/8, topDown, rMask, gMask, bMask) {
 		return img, w, h, true
 	}
+	var red, green, blue maskScaler
+	if bpp == 32 && (rMask != 0xff0000 || gMask != 0xff00 || bMask != 0xff) {
+		red, green, blue = newMaskScaler(rMask), newMaskScaler(gMask), newMaskScaler(bMask)
+	}
 	for y := 0; y < h; y++ {
 		sy := y
 		if !topDown {
@@ -112,7 +116,7 @@ func decodeBMP(data []byte) (image.Image, int, int, bool) {
 		default:
 			for len(row) != 0 {
 				px := binary.LittleEndian.Uint32(row)
-				binary.LittleEndian.PutUint32(out, uint32(scaleMask(px, rMask))|uint32(scaleMask(px, gMask))<<8|uint32(scaleMask(px, bMask))<<16|0xff000000)
+				binary.LittleEndian.PutUint32(out, uint32(red.value(px))|uint32(green.value(px))<<8|uint32(blue.value(px))<<16|0xff000000)
 				row, out = row[4:], out[4:]
 			}
 		}
@@ -132,4 +136,46 @@ func scaleMask(px, mask uint32) uint8 {
 		return uint8(v >> (width - 8))
 	}
 	return uint8(v * 255 / ((1 << width) - 1))
+}
+
+// Decode the mask geometry once per image. Small extracted values use a
+// bounded lookup table; arbitrary sparse masks retain the original uint32
+// multiplication, division and truncation semantics.
+type maskScaler struct {
+	mask, divisor uint32
+	shift         uint
+	table         [256]uint8
+	lookup        bool
+}
+
+func newMaskScaler(mask uint32) maskScaler {
+	s := maskScaler{mask: mask}
+	if mask == 0 {
+		return s
+	}
+	s.shift = uint(bits.TrailingZeros32(mask))
+	width := bits.OnesCount32(mask)
+	if width >= 8 {
+		s.shift += uint(width - 8)
+		return s
+	}
+	s.divisor = (1 << width) - 1
+	if maxValue := mask >> s.shift; maxValue <= 255 {
+		s.lookup = true
+		for i := uint32(0); i <= maxValue; i++ {
+			s.table[i] = uint8(i * 255 / s.divisor)
+		}
+	}
+	return s
+}
+
+func (s *maskScaler) value(pixel uint32) uint8 {
+	v := (pixel & s.mask) >> s.shift
+	if s.lookup {
+		return s.table[uint8(v)]
+	}
+	if s.divisor != 0 {
+		return uint8(v * 255 / s.divisor)
+	}
+	return uint8(v)
 }
