@@ -9,6 +9,7 @@ import (
 
 	"yihe-care/internal/carepolicy"
 	dbstore "yihe-care/internal/db"
+	"yihe-care/internal/health"
 	"yihe-care/internal/residentprofile"
 	"yihe-care/internal/response"
 )
@@ -151,8 +152,13 @@ func (h *Handler) saveResident(w http.ResponseWriter, r *http.Request, update bo
 	}
 	values := residentprofile.Strings(fields["phone"], fields["room"], fields["illness"], fields["warn"], fields["foodLike"], fields["foodHate"], fields["drag"])
 	if internalError(w, residentprofile.Store(ctx, tx, h.Box, oldID, values)) ||
-		internalError(w, residentprofile.StoreBirthdate(ctx, tx, h.Box, oldID, birth)) ||
-		internalError(w, tx.Commit()) {
+		internalError(w, residentprofile.StoreBirthdate(ctx, tx, h.Box, oldID, birth)) {
+		return
+	}
+	if !update && internalError(w, health.ProvisionOwnerRange(ctx, tx, oldID)) {
+		return
+	}
+	if internalError(w, tx.Commit()) {
 		return
 	}
 	writeSingleMutation(w, affected)

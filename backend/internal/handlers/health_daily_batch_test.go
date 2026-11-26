@@ -2,8 +2,13 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"yihe-care/internal/health"
 )
@@ -63,5 +68,52 @@ func TestHealthDailyBatchOrderAndExistingResultsMySQL(t *testing.T) {
 	if items := api(t, admin, req)["items"].([]any); len(items) != 1 ||
 		items[0].(map[string]any)["statistics"].(map[string]any)["mean"] != float64(72) {
 		t.Fatalf("one-day query changed: %#v", items)
+	}
+}
+
+func TestDailyWarmReadUsesCommittedSnapshot(t *testing.T) {
+	pool := testDatabase(t)
+	seedDevice(t, pool)
+	seedCareAdminDuty(t, pool, 1, "supervisor")
+	h := testHandler(t, pool)
+	admin := capabilityAdmin(h, h.healthDaily)
+	req := map[string]any{"oldId": 1, "source": "watch", "sourceDevice": "WATCH001", "metric": "heart_rate", "semantics": "instant", "day": "2026-10-22", "offsetMinutes": 0, "days": 1}
+	api(t, admin, req)
+	ctx := context.Background()
+	key := health.DailyKey{OldID: 1, Source: "watch", SourceDevice: "WATCH001", Metric: "heart_rate", Semantics: "instant", Day: "2026-10-22"}.ID()
+	mustExec(t, pool, "UPDATE metric_daily SET dirty=false,result=?,computed_revision=5 WHERE cache_key=?", `{"count":1,"mean":72}`, key)
+	tx, err := pool.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if _, err = health.LockOwner(ctx, tx, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.ExecContext(ctx, "UPDATE metric_daily SET dirty=true WHERE cache_key=?", key); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(req)
+	bounded, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	w := httptest.NewRecorder()
+	admin.ServeHTTP(w, httptest.NewRequest("POST", "/api/v1/test", strings.NewReader(string(raw))).WithContext(bounded))
+	if w.Code != 200 {
+		t.Fatalf("warm read waited on writer: %d %s", w.Code, w.Body.String())
+	}
+	var reply struct {
+		Items []struct {
+			Status           string
+			ComputedRevision int64
+		}
+	}
+	if err = json.Unmarshal(w.Body.Bytes(), &reply); err != nil || len(reply.Items) != 1 || reply.Items[0].Status != "ready" || reply.Items[0].ComputedRevision != 5 {
+		t.Fatal("inconsistent snapshot", w.Body.String(), err)
+	}
+	if err = tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	if item := api(t, admin, req)["items"].([]any)[0].(map[string]any); item["status"] != "pending" {
+		t.Fatal("committed invalidation invisible", item)
 	}
 }

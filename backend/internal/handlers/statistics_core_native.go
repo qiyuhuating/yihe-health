@@ -16,6 +16,7 @@ import "C"
 
 import (
 	"math"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -25,16 +26,36 @@ import (
 
 const coreEnabled = true
 
+type coreBaselineScratch struct {
+	days   []uint8
+	values []float64
+	raw    C.yihe_baseline
+}
+
+var coreBaselineBuffers = sync.Pool{New: func() any { return &coreBaselineScratch{} }}
+
 func coreBaseline(current healthbaseline.Observation, history []healthbaseline.Observation) (healthbaseline.Result, bool) {
 	if len(history) < 128 || len(history) > 5000 || current.OwnerID <= 0 ||
 		current.BindingVersion <= 0 || current.Metric != "heart_rate" || current.At.IsZero() ||
 		!current.Valid || !(current.Value > 0 && current.Value <= 1e6) {
 		return healthbaseline.Result{}, false
 	}
-	day := current.At.UTC().Truncate(24 * time.Hour)
+	const dayDuration = 24 * time.Hour
+	day := current.At.UTC().Truncate(dayDuration)
 	firstDay := day.AddDate(0, 0, -healthbaseline.HistoryDays)
-	days := make([]uint8, 0, len(history))
-	values := make([]float64, 0, len(history))
+	scratch := coreBaselineBuffers.Get().(*coreBaselineScratch)
+	if cap(scratch.days) < len(history) {
+		scratch.days = make([]uint8, 0, len(history))
+		scratch.values = make([]float64, 0, len(history))
+	}
+	days, values := scratch.days[:0], scratch.values[:0]
+	defer func() {
+		clear(days)
+		clear(values)
+		scratch.days, scratch.values = days[:0], values[:0]
+		scratch.raw = C.yihe_baseline{}
+		coreBaselineBuffers.Put(scratch)
+	}()
 	for _, s := range history {
 		if s.OwnerID != current.OwnerID || s.DeviceID != current.DeviceID ||
 			s.BindingVersion != current.BindingVersion || s.Source != current.Source ||
@@ -42,22 +63,21 @@ func coreBaseline(current healthbaseline.Observation, history []healthbaseline.O
 			!s.Valid || s.At.IsZero() || math.IsNaN(s.Value) || math.IsInf(s.Value, 0) {
 			continue
 		}
-		at := s.At.UTC().Truncate(24 * time.Hour)
-		if at.Before(firstDay) || !at.Before(day) {
+		if s.At.Before(firstDay) || !s.At.Before(day) {
 			continue
 		}
 		if !(s.Value > 0 && s.Value <= 1e6) {
 			return healthbaseline.Result{}, false
 		}
-		days = append(days, uint8(at.Sub(firstDay)/(24*time.Hour)))
+		days = append(days, uint8(s.At.Sub(firstDay)/dayDuration))
 		values = append(values, s.Value)
 	}
 	if len(values) < 128 {
 		return healthbaseline.Result{}, false
 	}
-	var raw C.yihe_baseline
+	raw := &scratch.raw
 	if C.yihe_core_baseline_v1(C.double(current.Value), (*C.uint8_t)(unsafe.Pointer(unsafe.SliceData(days))),
-		(*C.double)(unsafe.Pointer(unsafe.SliceData(values))), C.size_t(len(values)), &raw) != 1 {
+		(*C.double)(unsafe.Pointer(unsafe.SliceData(values))), C.size_t(len(values)), raw) != 1 {
 		return healthbaseline.Result{}, false
 	}
 	result := healthbaseline.Result{SampleDays: int(raw.sample_days), TrustedDays: int(raw.trusted_days), RejectedDays: int(raw.rejected_days), Confidence: "insufficient"}

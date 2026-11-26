@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
+	"time"
 	"yihe-care/internal/health"
 	"yihe-care/internal/securestore"
 	"yihe-care/internal/vitalrepo"
-	"time"
 )
 
 type ruleDevice struct {
@@ -21,28 +21,27 @@ type ruleDevice struct {
 }
 
 func readRulePolicy(ctx context.Context, tx *sql.Tx, id int64) (Policy, error) {
-	var err error
 	p := Default()
 	var payload []byte
-	err = tx.QueryRowContext(ctx, "SELECT payload FROM rule_policy WHERE device_id=?", id).Scan(&payload)
-	if err == nil {
+	var hrf, hrl, bpf, bpl *float64
+	err := tx.QueryRowContext(ctx, `SELECT p.payload,w.hrf,w.hrl,w.bpf,w.bpl FROM device d
+ LEFT JOIN rule_policy p ON p.device_id=d.device_id
+ LEFT JOIN watch_info w ON w.device_id=d.device_id AND p.device_id IS NULL
+ WHERE d.device_id=?`, id).Scan(&payload, &hrf, &hrl, &bpf, &bpl)
+	if err != nil {
+		return Policy{}, err
+	}
+	if payload != nil {
 		if err = json.Unmarshal(payload, &p); err != nil {
 			return Policy{}, err
 		}
-	} else if errors.Is(err, sql.ErrNoRows) {
-		var hrf, hrl, bpf, bpl *float64
-		err = tx.QueryRowContext(ctx, "SELECT hrf,hrl,bpf,bpl FROM watch_info WHERE device_id=?", id).Scan(&hrf, &hrl, &bpf, &bpl)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return Policy{}, err
-		}
+	} else {
 		if hrf != nil && hrl != nil {
 			p.HRLow, p.HRHigh = min(*hrf, *hrl), max(*hrf, *hrl)
 		}
 		if bpf != nil && bpl != nil {
 			p.BPLow, p.BPHigh = min(*bpf, *bpl), max(*bpf, *bpl)
 		}
-	} else {
-		return Policy{}, err
 	}
 	if err = p.Validate(); err != nil {
 		return Policy{}, err
@@ -71,6 +70,7 @@ func collectRuleInput(ctx context.Context, tx *sql.Tx, device ruleDevice, p Poli
 	if err := readRuleBaselines(ctx, tx, device, p, &in, box); err != nil {
 		return Input{}, err
 	}
+	in.activityObserved = in.Activity != nil
 	if err := readRuleActivity(ctx, tx, device, p, &in, box); err != nil {
 		return Input{}, err
 	}
@@ -81,23 +81,22 @@ func collectRuleInput(ctx context.Context, tx *sql.Tx, device ruleDevice, p Poli
 func readLatestRuleObservations(ctx context.Context, tx *sql.Tx, device ruleDevice, p Policy, in *Input, box *securestore.Box) error {
 	id, oldID, epoch := device.id, device.oldID, device.epoch
 	now := in.Now
-	var err error
-	// Fetch one latest observation per metric so a heart-rate burst cannot hide
-	// activity or blood pressure in a shared LIMIT window.
-	for _, metric := range []string{"heart_rate", "blood_pressure_systolic", "steps"} {
-		window := 5 * time.Minute
-		if metric == "steps" {
-			window = time.Duration(p.ActivityMinutes) * time.Minute
-		}
+	end, vitalStart := now.UnixMicro(), now.Add(-5*time.Minute).UnixMicro()
+	activityStart := now.Add(-time.Duration(p.ActivityMinutes) * time.Minute).UnixMicro()
+	rows, err := tx.QueryContext(ctx, latestRuleObservationsSQL,
+		oldID, id, epoch, "heart_rate", vitalStart, end,
+		oldID, id, epoch, "blood_pressure_systolic", vitalStart, end,
+		oldID, id, epoch, "steps", activityStart, end)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var metric int
 		var sampleID string
 		var revision int64
 		var stored health.ProjectionPayload
-		err = tx.QueryRowContext(ctx, latestSampleSQL, oldID, id, epoch, metric, now.Add(-window).UnixMicro(), now.UnixMicro()).
-			Scan(&sampleID, &revision, &stored.JSON, &stored.Cipher)
-		if errors.Is(err, sql.ErrNoRows) {
-			continue
-		}
-		if err != nil {
+		if err := rows.Scan(&metric, &sampleID, &revision, &stored.JSON, &stored.Cipher); err != nil {
 			return err
 		}
 		payload, err := stored.OpenSample(box, sampleID, oldID, revision)
@@ -113,18 +112,17 @@ func readLatestRuleObservations(ctx context.Context, tx *sql.Tx, device ruleDevi
 		}
 		v := &Value{Value: *sample.Value, Key: sampleID + ":" + fmt.Sprint(revision), Source: sample.Source, Device: sample.SourceDevice, At: sample.Start}
 		switch metric {
-		case "heart_rate":
+		case 0:
 			in.Heart = v
-		case "blood_pressure_systolic":
+		case 1:
 			in.Blood = v
-		case "steps":
+		case 2:
 			if p.Night(now) {
 				in.Activity = v
 			}
 		}
 	}
-	return nil
-
+	return rows.Err()
 }
 
 func readLegacyRuleVitals(ctx context.Context, tx *sql.Tx, device ruleDevice, in *Input, box *securestore.Box) error {
@@ -193,7 +191,7 @@ func readRuleActivity(ctx context.Context, tx *sql.Tx, device ruleDevice, p Poli
 	if in.Activity != nil {
 		v := in.Activity
 		start := now.Add(-time.Duration(p.ActivityMinutes) * time.Minute)
-		rows, err := tx.QueryContext(ctx, `SELECT sample_id,revision,payload,payload_cipher FROM health_sample WHERE old_id=? AND device_id=? AND epoch=? AND metric='steps' AND NOT deleted AND BINARY source=BINARY ? AND BINARY source_device=BINARY ? AND sample_start<=? AND (sample_start>=? OR sample_end>?) ORDER BY sample_start,revision LIMIT 1001`, oldID, id, epoch, v.Source, v.Device, now.UnixMicro(), start.UnixMicro(), start.UnixMicro())
+		rows, err := tx.QueryContext(ctx, `SELECT LOWER(HEX(sample_id)),revision,payload,`+health.SampleCipherSQL+` FROM health_sample WHERE old_id=? AND device_id=? AND epoch=? AND metric='steps' AND NOT deleted AND BINARY source=BINARY ? AND BINARY source_device=BINARY ? AND sample_start<=? AND (sample_start>=? OR sample_end>?) ORDER BY sample_start,revision LIMIT 1001`, oldID, id, epoch, v.Source, v.Device, now.UnixMicro(), start.UnixMicro(), start.UnixMicro())
 		if err != nil {
 			return err
 		}

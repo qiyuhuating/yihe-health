@@ -1,9 +1,9 @@
 package rules
 
 import (
-	"yihe-care/internal/health"
 	"testing"
 	"time"
+	"yihe-care/internal/health"
 )
 
 func TestAlgorithmSameDayCounterRollback(t *testing.T) {

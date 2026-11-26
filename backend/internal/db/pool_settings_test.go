@@ -15,6 +15,19 @@ func TestMySQLStatisticsConnectionLimit(t *testing.T) {
 	}
 }
 
+func TestMySQLSOSConnectionLimit(t *testing.T) {
+	for _, tc := range []struct {
+		raw  string
+		want int
+		fail bool
+	}{{"", 0, false}, {"2", 2, false}, {"8", 8, false}, {"9", 0, true}, {"-1", 0, true}, {"bad", 0, true}} {
+		got, err := mysqlOptionalConnectionLimit(tc.raw, "MYSQL_SOS_MAX_CONNS", 8)
+		if got != tc.want || (err != nil) != tc.fail {
+			t.Fatalf("%q: %d %v", tc.raw, got, err)
+		}
+	}
+}
+
 func TestMySQLIdleConnectionLimit(t *testing.T) {
 	for _, tc := range []struct {
 		input string

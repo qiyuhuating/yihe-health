@@ -169,7 +169,7 @@ func (w *cacheTestWire) BeginTx(_ context.Context, opts driver.TxOptions) (drive
 func TestKnownSessionIsolationAvoidsRedundantSetAndDisablesOnMutation(t *testing.T) {
 	w := &cacheTestWire{}
 	c := cacheForTest(w, 2)
-	c.readCommittedSession = true
+	c.sessionIsolation = driver.IsolationLevel(sql.LevelReadCommitted)
 	opts := driver.TxOptions{Isolation: driver.IsolationLevel(sql.LevelReadCommitted), ReadOnly: true}
 	c.BeginTx(context.Background(), opts)
 	if w.lastOptions.Isolation != driver.IsolationLevel(sql.LevelDefault) || !w.lastOptions.ReadOnly {
@@ -185,9 +185,9 @@ func TestKnownSessionIsolationAvoidsRedundantSetAndDisablesOnMutation(t *testing
 		t.Fatal("session mutation did not restore explicit isolation")
 	}
 	for _, q := range []string{"/* session */ SET sql_mode=''", "CALL session_change()"} {
-		c.readCommittedSession = true
+		c.sessionIsolation = driver.IsolationLevel(sql.LevelReadCommitted)
 		c.PrepareContext(context.Background(), q)
-		if c.readCommittedSession {
+		if c.sessionIsolation != driver.IsolationLevel(sql.LevelDefault) {
 			t.Fatal("explicit prepare retained unsafe assumption", q)
 		}
 	}
@@ -203,5 +203,30 @@ func TestExecutableCommentsDoNotRetainKnownIsolation(t *testing.T) {
 		if sessionNeutralSQL(q) {
 			t.Fatal("unknown SQL retained session assumption", q)
 		}
+	}
+}
+
+func TestParameterlessDMLPreservesPlans(t *testing.T) {
+	w := &cacheTestWire{}
+	c := cacheForTest(w, 2)
+	ctx := context.Background()
+	args := []driver.NamedValue{{Ordinal: 1, Value: int64(1)}}
+	for _, q := range []string{"SELECT ?", "UPDATE t SET v=1", "SELECT ?", "DELETE FROM t WHERE v=2", "SELECT ?"} {
+		var a []driver.NamedValue
+		if q == "SELECT ?" {
+			a = args
+		}
+		if _, err := c.ExecContext(ctx, q, a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if w.prepared != 1 || w.closed != 0 || w.direct != 2 || w.executed != 3 {
+		t.Fatal("ordinary direct DML evicted plans", w)
+	}
+	if _, err := c.ExecContext(ctx, "ALTER TABLE t ADD COLUMN z INT", nil); err != nil {
+		t.Fatal(err)
+	}
+	if w.closed != 1 || len(c.plans) != 0 {
+		t.Fatal("DDL retained plans", w)
 	}
 }

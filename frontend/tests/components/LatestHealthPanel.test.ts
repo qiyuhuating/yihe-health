@@ -59,6 +59,20 @@ it('labels native sensor timestamps as application observations rather than devi
   } finally { view.unmount() }
 })
 
+it('coalesces repeated refreshes while the same read is in flight', async () => {
+  const post = vi.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}))
+  const view = mountPanel()
+  try {
+    await flushPromises()
+    const signal = post.mock.calls[0][2]?.signal
+    await view.get('button').trigger('click')
+    await view.get('button').trigger('click')
+    await flushPromises()
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(signal?.aborted).toBe(false)
+  } finally { view.unmount() }
+})
+
 it('cancels an unfinished read on leaving the page', async () => {
   const post = vi.spyOn(axios, 'post').mockReturnValue(new Promise(() => {}))
   const view = mountPanel()

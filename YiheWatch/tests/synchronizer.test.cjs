@@ -26,7 +26,7 @@ async function fixture(context) {
         return reply(200, { returnCode: '1111', bound: 1, residentId: 7, bindingVersion: state.epoch, protocolVersion: 1, maxBatchSize: 200 });
       }
       assert.equal(path, 'healthBatch');
-      if (state.uploadStatus !== 200) return reply(state.uploadStatus, { returnCode: '0000', code: 'DEVICE_AUTH_FAILED' });
+      if (state.uploadStatus !== 200) return reply(state.uploadStatus, { returnCode: '0000', code: state.uploadStatus === 503 ? 'HEALTH_WRITE_BUSY' : 'DEVICE_AUTH_FAILED' });
       if (state.failUploads) throw new Error('upload connection failure');
       if (body.bindingVersion !== state.epoch) return reply(409, { returnCode: '0000', code: 'EPOCH_EXPIRED' });
       let duplicates = 0;
@@ -211,4 +211,21 @@ test('repeated upload failures back off despite successful login, while sampling
   assert.equal(skipped.sampled, 2); assert.equal(skipped.queued, queued + 2);
   f.state.failUploads = false; f.advance(300);
   assert.equal((await f.sync.cycle(config, secret)).queued, 0);
+});
+
+test('explicit write backpressure preserves record IDs and avoids immediate retry', async context => {
+  const f = await fixture(context); f.state.uploadStatus = 503;
+  const blocked = await f.sync.cycle(config, secret);
+  assert.equal(blocked.offline, true);
+  assert.equal(blocked.queued, 1);
+  const pending = f.store.batch().samples[0].recordId;
+  const calls = f.state.calls.length;
+  f.advance(1);
+  await f.sync.cycle(config, secret);
+  assert.equal(f.state.calls.length, calls);
+  assert.equal(f.store.batch().samples[0].recordId, pending);
+  f.state.uploadStatus = 200;
+  f.advance(10);
+  assert.equal((await f.sync.cycle(config, secret)).queued, 0);
+  assert.ok(f.state.records.has(pending));
 });

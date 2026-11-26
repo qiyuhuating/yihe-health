@@ -36,6 +36,7 @@ go run ./cmd/server
 | `MYSQL_DSN` | 包含数据库名的 MySQL 连接串，必填，无默认密码 |
 | `MYSQL_MAX_IDLE_CONNS` | MySQL 业务连接池最大空闲连接数，默认 20（取值范围 0 至 20；若数据库连接数受限可设为 5） |
 | `HEALTH_LATE_DEVICE_LOCK` | 实验性健康写入加锁顺序开关，默认关闭；仅可在所有写入实例停机排空后统一设为 `1`，切勿在滚动升级中混用 |
+| `YIHE_SOS_PRIORITY` | 可选 SOS 优先准入，默认关闭；通过凭据校验后暂停同设备的新上传，等候不占用 SQL 连接，启用前应验证低负载尾延迟 |
 | `BLOB_BACKEND` | 当前仅支持 `mysql`，PostgreSQL、S3 和本地目录不可作为运行时图片存储 |
 | `ADDR` | 监听地址，直接启动时默认为 `127.0.0.1:8080`，与前端 Vite 联调时建议设为 `127.0.0.1:8795` |
 | `SESSION_TTL_HOURS` | 登录会话有效期，默认 12 小时 |

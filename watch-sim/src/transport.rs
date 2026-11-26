@@ -8,6 +8,7 @@ pub enum TransportError {
     Network(String),
     Timeout,
     Server(u16),
+    HealthWriteBusy,
     Decode(String),
 }
 impl TransportError {
@@ -16,11 +17,15 @@ impl TransportError {
             Self::Network(m) => format!("连接失败：{m}"),
             Self::Timeout => "请求超时".into(),
             Self::Server(status) => format!("服务暂不可用：HTTP {status}"),
+            Self::HealthWriteBusy => "Health upload admission busy".into(),
             Self::Decode(m) => format!("响应格式错误：{m}"),
         }
     }
     pub fn retryable(&self) -> bool {
-        matches!(self, Self::Network(_) | Self::Timeout | Self::Server(_))
+        matches!(
+            self,
+            Self::Network(_) | Self::Timeout | Self::Server(_) | Self::HealthWriteBusy
+        )
     }
 }
 pub struct Client {
@@ -121,6 +126,21 @@ impl Client {
         let status = response.status();
         // Proxies may return empty or HTML error pages. Preserve the transient
         // status before decoding; the caller owns retries and event identity.
+        if status == 503 && path.trim_start_matches('/') == "api/v1/device/healthBatch" {
+            use std::io::Read;
+            let mut body = Vec::new();
+            if response
+                .into_reader()
+                .take(4097)
+                .read_to_end(&mut body)
+                .is_ok()
+                && body.len() <= 4096
+                && explicit_health_busy(&body)
+            {
+                return Err(TransportError::HealthWriteBusy);
+            }
+            return Err(TransportError::Server(status));
+        }
         if matches!(status, 500 | 502 | 503 | 504) {
             return Err(TransportError::Server(status));
         }
@@ -157,5 +177,23 @@ impl Client {
         cred: &Credentials,
     ) -> Result<Reply, TransportError> {
         self.post(path, body, Some(cred))
+    }
+}
+
+fn explicit_health_busy(body: &[u8]) -> bool {
+    serde_json::from_slice::<Value>(body)
+        .ok()
+        .is_some_and(|reply| reply.get("code").and_then(Value::as_str) == Some("HEALTH_WRITE_BUSY"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::explicit_health_busy;
+
+    #[test]
+    fn only_explicit_admission_rejection_is_safe_to_retry() {
+        assert!(explicit_health_busy(br#"{"code":"HEALTH_WRITE_BUSY"}"#));
+        assert!(!explicit_health_busy(br#"{"code":"DB_UNAVAILABLE"}"#));
+        assert!(!explicit_health_busy(b"<html>503</html>"));
     }
 }

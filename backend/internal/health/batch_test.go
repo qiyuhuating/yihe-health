@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"yihe-care/internal/db/dbtest"
 	"testing"
 	"time"
+	"yihe-care/internal/db/dbtest"
 )
 
 func TestBatchVersionsHistoryAndConflictRollback(t *testing.T) {

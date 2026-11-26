@@ -35,7 +35,7 @@ func TestCoreColumnCacheParity(t *testing.T) {
 	samples := coreSamples(at, 256)
 	key := coreKey{1, "watch", "WATCH001"}
 	c := newCoreCache(4 << 20)
-	series := makeCoreSeries(key, 7, at.UnixNano(), at.Add(256*time.Minute).UnixNano(), samples, len(samples), at)
+	series := makeCoreSeries(key, 7, at.UnixNano(), at.Add(256*time.Minute).UnixNano(), samples, nil, len(samples), at)
 	if series == nil {
 		t.Fatal("admission rejected valid samples")
 	}
@@ -65,7 +65,7 @@ func TestCoreColumnCacheParity(t *testing.T) {
 		if fractional {
 			x[17].Value = health.Number(71.125)
 		}
-		s := makeCoreSeries(key, 7, at.UnixNano(), at.Add(256*time.Minute).UnixNano(), x, len(x), at)
+		s := makeCoreSeries(key, 7, at.UnixNano(), at.Add(256*time.Minute).UnixNano(), x, nil, len(x), at)
 		if s == nil || s.exactInteger == fractional {
 			t.Fatal("incorrect SIMD admission")
 		}
@@ -169,8 +169,56 @@ func TestCoreStatisticsMySQL(t *testing.T) {
 	if !strings.Contains(metrics.Body.String(), "yihe_health_core_incremental_hits_total 3\n") {
 		t.Fatalf("correction, deletion and move did not all use incremental projection")
 	}
+	// A local commit advances a matching immutable projection without querying
+	// the change table; a foreign commit creates a gap that must be read from SQL.
+	key := coreKey{1, "watch", "WATCH001"}
+	samples[3].Version, samples[3].Value = 2, health.Number(98)
+	batch["samples"] = []health.Sample{samples[3]}
+	api(t, h.healthBatch, batch)
+	revision, err := health.StatisticsRevision(t.Context(), pool, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := h.healthCache.core.get(key, revision, query.From.UnixNano(), query.To.UnixNano(), time.Now()); !ok {
+		t.Fatal("committed local correction did not advance the projection")
+	}
+	check()
+	samples[4].Version, samples[4].Value = 2, health.Number(103)
+	batch["samples"] = []health.Sample{samples[4]}
+	api(t, plain.healthBatch, batch)
+	samples[5].Version, samples[5].Value = 2, health.Number(106)
+	batch["samples"] = []health.Sample{samples[5]}
+	api(t, h.healthBatch, batch)
+	revision, err = health.StatisticsRevision(t.Context(), pool, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := h.healthCache.core.get(key, revision, query.From.UnixNano(), query.To.UnixNano(), time.Now()); ok {
+		t.Fatal("local commit skipped a foreign committed correction")
+	}
+	check()
 	pool.Close()
 	if got := callAPI(admin, query); got.Code != http.StatusInternalServerError {
 		t.Fatalf("database outage returned %d", got.Code)
+	}
+}
+
+func TestCoreRebuildAfterHistoricalCorrection(t *testing.T) {
+	at := time.Date(2026, 10, 22, 9, 0, 0, 0, time.UTC)
+	samples := coreSamples(at, 3)
+	samples[0], samples[2] = samples[2], samples[0]
+	ids := []string{"third", "second", "first"}
+	to := at.Add(3 * time.Minute)
+	series := makeCoreSeries(coreKey{1, "watch", "WATCH001"}, 7, at.UnixNano(), to.UnixNano(), samples, ids, len(samples), at)
+	if series == nil || !reflect.DeepEqual(series.ids, []string{"first", "second", "third"}) {
+		t.Fatalf("unordered integer projection not admitted or IDs misplaced: %+v", series)
+	}
+	got, ok := coreQuery(series, at.UnixNano(), at.Add(time.Minute).UnixNano())
+	if !ok || got.Count != 1 || *got.Mean != 60 {
+		t.Fatalf("reordered projection mismatch: %+v", got)
+	}
+	samples[0].Value = health.Number(71.125)
+	if series := makeCoreSeries(coreKey{1, "watch", "WATCH001"}, 8, at.UnixNano(), to.UnixNano(), samples, nil, len(samples), at); series != nil {
+		t.Fatal("unordered fractional projection must preserve scalar order via fallback")
 	}
 }
