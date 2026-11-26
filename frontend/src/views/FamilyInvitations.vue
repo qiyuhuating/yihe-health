@@ -6,7 +6,7 @@
     <section class="collection-panel">
       <div class="collection-toolbar"><div class="collection-filters"><div><label for="invite-state">邀请状态</label><el-select id="invite-state" v-model="state" @change="searchInviteCodes()"><el-option label="全部状态" value="all"></el-option><el-option label="可使用" value="unused"></el-option><el-option label="已使用" value="used"></el-option><el-option label="已过期" value="expired"></el-option></el-select></div></div><div class="collection-tools"><span class="collection-caption">共 {{ total }} 条邀请记录</span><el-button plain :loading="listLoading" @click="searchInviteCodes">刷新</el-button></div></div>
     
-    <el-dialog title="生成邀请码" v-model="createDialogVisible" :close-on-click-modal="!creating" :close-on-press-escape="!creating" :show-close="!creating" width="420px" @close="closeCreateDialog">
+    <el-dialog title="生成邀请码" v-model="createDialogVisible" :close-on-click-modal="!creating" :close-on-press-escape="!creating" :show-close="!creating" width="min(460px, 94vw)" @close="closeCreateDialog">
       <div v-if="oldPeopleError" class="collection-feedback" role="alert">{{ oldPeopleError }}<el-button plain @click="loadOldPeople">重试加载长者</el-button></div>
       <el-form label-width="100px" :model="createForm" :rules="rules" ref="createFormRef">
         <el-form-item label="绑定老人" for="invite-old" prop="oldId">
@@ -33,7 +33,7 @@
       </span></template>
     </el-dialog>
 
-    <el-dialog title="邀请码生成成功" v-model="resultDialogVisible" width="420px">
+    <el-dialog title="邀请码生成成功" v-model="resultDialogVisible" width="min(460px, 94vw)">
       <div class="tip-small">请把下面的邀请码发给家属（每个邀请码只能使用一次）：</div>
       <div v-for="item in createdCodes" :key="item" class="code-line">
         <span class="code-text">{{ item }}</span>
@@ -209,14 +209,19 @@ onBeforeUnmount(() => { requestRevision++ })
 
 <style scoped>
 .invite .tip-small {
-  color: #909399;
-  font-size: 12px;
+  color: var(--care-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
 }
 .invite .code-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   padding: 8px 0;
   font-size: 18px;
   letter-spacing: 2px;
-  color: #52BAB5;
+  color: var(--care-primary);
 }
 .invite .code-text {
   display: inline-block;

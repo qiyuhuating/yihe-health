@@ -10,6 +10,8 @@
           <el-input id="search-position"
             placeholder="按长者姓名查找"
             v-model="searchText"
+            clearable
+            @clear="loadLocationRecords()"
             class="input-with-select">
             <template #append><el-button aria-label="查询长者姓名"
               
@@ -66,7 +68,7 @@
       		</el-button></template>
     </record-cards>
     
-    <div style="margin-top: 10px;text-align: center">
+    <div class="care-pagination-bar">
       <el-pagination layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
         @current-change="changePage"
@@ -151,7 +153,7 @@ function showRoleDialog(row: PositionRow) {
 </script>
 
 <style scoped>
-  .position-context { display: block; width: 100%; line-height: 1.6; font-size: 12px; }
-  .position-empty, .unknown-state { color: #71808c; }
+  .position-context { display: block; width: 100%; line-height: 1.6; font-size: 13px; color: var(--care-text-secondary); }
+  .position-empty, .unknown-state { color: var(--care-text-muted); }
 
 </style>

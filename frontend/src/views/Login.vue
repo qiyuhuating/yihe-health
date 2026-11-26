@@ -20,7 +20,7 @@
         <el-form label-position="top" ref="loginFormRef" :model="loginForm" :rules="rules" class="login-form" @submit.prevent="submitForm">
           <el-form-item label="手机号" prop="phone" for="login-phone">
             <el-input id="login-phone" aria-label="手机号" v-model="loginForm.phone" placeholder="请输入登录手机号" autocomplete="username" inputmode="tel" maxlength="11" clearable>
-              <template #prefix><el-icon class="el-input__icon "><Iphone aria-hidden="true" /></el-icon></template>
+              <template #prefix><el-icon class="el-input__icon" aria-hidden="true"><Iphone /></el-icon></template>
             </el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password" for="login-password">
@@ -38,7 +38,7 @@
           <el-button type="primary" native-type="submit" class="submit-button" :loading="submitting" :disabled="submitting">登录</el-button>
         </el-form>
         <div class="auth-register"><span>首次使用？</span><el-button link @click="goRegister">使用邀请码注册</el-button></div>
-        <p class="auth-footnote"><el-icon><Setting aria-hidden="true" /></el-icon> 账号信息仅用于本系统登录</p>
+        <p class="auth-footnote"><el-icon aria-hidden="true"><Setting /></el-icon> 账号信息仅用于本系统登录</p>
       </div>
       <footer class="auth-footer">颐和 · 让关怀始终在线</footer>
     </main>

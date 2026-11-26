@@ -38,7 +38,7 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 | Locations and alerts | Review device-reported positions, SOS events, and alerts without confusing historical locations with live tracking |
 | Care coordination | Claim and document alert-response tasks, escalate outstanding cases, and have an authorized second supervisor review interventions |
 | Notices | Publish announcements and moderate comments with administrator and family visibility controls |
-| Desktop accessibility | Adjust text size, use keyboard navigation and fullscreen, and configure display and map preferences |
+| Desktop accessibility | Adjust text size and contrast, use keyboard navigation and fullscreen, configure map preferences, and retry failed health-record requests without mistaking failures for empty data |
 
 **Typical workflow:** create a resident record → link family members → bind a watch → receive data → handle an alert task → obtain independent review. Families see only their linked residents; server-side permissions govern staff operations.
 

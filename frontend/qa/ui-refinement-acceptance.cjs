@@ -16,6 +16,7 @@ run(async ({ page, context, base, report, setRole, setSignedIn }) => {
   await context.route('**/api/v1/care/diagnostics', route => route.fulfill({ status: 403, json: {returnCode:'0000',code:'INVALID_REQUEST',message:'请求未完成',} }))
   const elder = { oldId: 1, name: '李奶奶', bothdate: '1948-03-01', sex: '女', phone: '13000000000', room: '301', beTime: '2026-10-01', customerName: '张女士', deviceId: 1, familyName: '小明', familySex: '男', familyRelation: '子女', familyPhone: '13900000000', familyAddress: '很长的家属联系地址'.repeat(12), illness: '病史资料'.repeat(30), warn: '青霉素', foodLike: '米饭', foodHate: '花生', drag: '常用药物资料' }
   const lists = [
+    ['/operations/vitals', 'vitals/latest', 'vitalRecords', { oldId: 1, name: '李奶奶', rateState: 0, preState: 0 }],
     ['/operations/residents', 'residents/details', 'oldPersonDetails', elder],
     ['/operations/guardians', 'guardians/list', 'customers', { customerId: 1, customerName: '张女士' }],
     ['/operations/families', 'family/select', 'familyDtos', { familyId: 1, familyName: '小明' }],

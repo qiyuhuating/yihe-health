@@ -16,18 +16,18 @@
       <div v-loading="isLoading" class="announcement-content">
         <ul v-if="notices.length" class="announcement-list">
           <li v-for="(item, index) in notices" :key="item.textId || index">
-            <span class="announcement-icon" aria-hidden="true"><el-icon><Document /></el-icon></span><div class="announcement-copy"><h3>{{ item.title || '未命名公告' }}</h3><p>{{ item.time || '发布时间未提供' }}</p></div><el-button link :aria-label="'阅读公告：' + (item.title || '未命名公告')" @click="getDetail(item)">阅读公告 <el-icon aria-hidden="true"><ArrowRight /></el-icon></el-button>
+            <span class="announcement-icon" aria-hidden="true"><el-icon aria-hidden="true"><Document /></el-icon></span><div class="announcement-copy"><h3>{{ item.title || '未命名公告' }}</h3><p>{{ item.time || '发布时间未提供' }}</p></div><el-button link :aria-label="'阅读公告：' + (item.title || '未命名公告')" @click="getDetail(item)">阅读公告 <el-icon aria-hidden="true"><ArrowRight /></el-icon></el-button>
           </li>
         </ul>
-        <div v-else class="table-empty" role="status"><img v-if="!isLoading && !loadError" src="/static/img/care-announcement-empty.webp" alt="" width="160" height="160"><strong>{{ isLoading ? '正在加载公告' : loadError ? '公告暂时无法加载' : '暂时没有公告' }}</strong><span>{{ loadError || '平台发布的服务信息会显示在这里。' }}</span><el-button v-if="loadError" link @click="loadNotices">重新加载</el-button></div>
+        <div v-else class="table-empty" role="status"><img v-if="!isLoading && !loadError" src="/static/img/care-announcement-empty.webp" alt="" width="160" height="160" loading="lazy" decoding="async"><strong>{{ isLoading ? '正在加载公告' : loadError ? '公告暂时无法加载' : '暂时没有公告' }}</strong><span>{{ loadError || '平台发布的服务信息会显示在这里。' }}</span><el-button v-if="loadError" link @click="loadNotices">重新加载</el-button></div>
       </div>
       <div class="pagination-wrap" v-if="total > pageSize"><el-pagination @current-change="changePage" v-model:current-page="currentPage" :page-size="pageSize" :pager-count="5" layout="total, prev, pager, next" :total="total"></el-pagination></div>
     </section>
     <section class="family-info-row" aria-labelledby="care-record-heading">
       <h2 id="care-record-heading" class="records-heading">常用记录</h2>
-      <router-link to="/family-portal/vitals" class="info-tile health-tile"><span class="tile-icon" aria-hidden="true"><el-icon><Document /></el-icon></span><div class="tile-copy"><h3>心率与血压</h3><p>查看家人的健康记录与设备上报状态。</p></div><span class="tile-action" aria-hidden="true"><el-icon><ArrowRight /></el-icon></span></router-link>
-      <router-link to="/family-portal/activity" class="info-tile activity-tile"><span class="tile-icon" aria-hidden="true"><el-icon><Clock /></el-icon></span><div class="tile-copy"><h3>睡眠与步数</h3><p>了解日常活动与最近上传的睡眠记录。</p></div><span class="tile-action" aria-hidden="true"><el-icon><ArrowRight /></el-icon></span></router-link>
-      <router-link to="/family-portal/location" class="info-tile location-tile"><span class="tile-icon" aria-hidden="true"><el-icon><Location /></el-icon></span><div class="tile-copy"><h3>位置与安全</h3><p>查看最近一次位置与设备安全提醒。</p></div><span class="tile-action" aria-hidden="true"><el-icon><ArrowRight /></el-icon></span></router-link>
+      <router-link to="/family-portal/vitals" class="info-tile health-tile"><span class="tile-icon" aria-hidden="true"><el-icon aria-hidden="true"><Document /></el-icon></span><div class="tile-copy"><h3>心率与血压</h3><p>查看家人的健康记录与设备上报状态。</p></div><span class="tile-action" aria-hidden="true"><el-icon aria-hidden="true"><ArrowRight /></el-icon></span></router-link>
+      <router-link to="/family-portal/activity" class="info-tile activity-tile"><span class="tile-icon" aria-hidden="true"><el-icon aria-hidden="true"><Clock /></el-icon></span><div class="tile-copy"><h3>睡眠与步数</h3><p>了解日常活动与最近上传的睡眠记录。</p></div><span class="tile-action" aria-hidden="true"><el-icon aria-hidden="true"><ArrowRight /></el-icon></span></router-link>
+      <router-link to="/family-portal/location" class="info-tile location-tile"><span class="tile-icon" aria-hidden="true"><el-icon aria-hidden="true"><Location /></el-icon></span><div class="tile-copy"><h3>位置与安全</h3><p>查看最近一次位置与设备安全提醒。</p></div><span class="tile-action" aria-hidden="true"><el-icon aria-hidden="true"><ArrowRight /></el-icon></span></router-link>
     </section>
     </div>
     <p class="data-caption"><el-icon aria-hidden="true"><InfoFilled /></el-icon> 数据以手表最近一次成功上报为准；没有新记录，不代表状态正常。</p>

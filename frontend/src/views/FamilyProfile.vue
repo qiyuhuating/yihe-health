@@ -5,7 +5,7 @@
     <SecurityPanel />
     <section v-loading="isProfileLoading" class="profile-card" aria-label="个人资料">
       <div class="profile-summary">
-        <div class="profile-avatar"><img v-if="imageUrl" :src="imageUrl" alt="当前账号头像" @error="imageUrl = ''"><span v-else>{{ (familyProfile.familyName || personName || '家').slice(0, 1) }}</span></div>
+        <div class="profile-avatar"><img v-if="imageUrl" :src="imageUrl" alt="当前账号头像" decoding="async" @error="imageUrl = ''"><span v-else>{{ (familyProfile.familyName || personName || '家').slice(0, 1) }}</span></div>
         <div class="profile-identity"><p>家属账号</p><h2>{{ familyProfile.familyName || personName || '个人资料' }}</h2><span>在这里管理您的联系资料与账号。</span></div>
       </div>
       <div class="profile-actions"><el-button type="primary" @click="openProfileEditor">修改资料</el-button><el-button plain @click="openPasswordEditor">修改密码</el-button><el-upload class="avatar-uploader" action="/api/v1/image/saveImage" :headers="uploadHeaders" :show-file-list="false" :with-credentials="true" :on-success="handleAvatarSuccess" :on-error="handleAvatarError" :before-upload="beforeAvatarUpload"><el-button plain>更换头像</el-button></el-upload></div>

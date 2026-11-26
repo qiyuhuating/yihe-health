@@ -95,9 +95,9 @@ defineExpose({ open })
 <style scoped>
 .settings-group { display: grid; gap: 12px; padding: 8px 0 22px; }
 .settings-group + .settings-group { border-top: 1px solid var(--care-border); padding-top: 20px; }
-.settings-group h3 { margin: 0; font-size: 18px; }
-.setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 42px; }
-.hint { margin: 0; color: var(--care-text-muted); font-size: 13px; line-height: 1.7; }
+.settings-group h3 { margin: 0; color: var(--care-heading); font-size: 18px; }
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: var(--care-target-min); }
+.hint { margin: 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.7; }
 </style>
 
 <style>

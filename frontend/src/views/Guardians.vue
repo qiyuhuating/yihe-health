@@ -9,6 +9,7 @@
           <el-input id="search-customer"
             placeholder="按监护人姓名查找"
             v-model="searchText"
+            clearable
             class="input-with-select">
             <template #append><el-button aria-label="查询监护人姓名"
               

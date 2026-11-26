@@ -4,9 +4,9 @@
   border-radius: 12px;
 }
 #app .care-app .el-table th {
-  padding: 16px 0;
+  padding: 15px 0;
   font-size: 14px;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
   background: var(--care-surface-muted);
   border-bottom-color: var(--care-border);
 }
@@ -15,7 +15,7 @@
   border-bottom-color: var(--care-border-subtle);
 }
 #app .care-app .el-table .cell {
-  line-height: 1.8;
+  line-height: 1.75;
   overflow-wrap: anywhere;
 }
 #app .care-app .el-table__body tr:hover > td {
@@ -37,9 +37,13 @@
   border-radius: var(--care-control-radius);
   min-height: var(--care-target-primary);
 }
+#app .care-app .el-button--small {
+  min-height: var(--care-target-min);
+}
 #app .care-app .el-button.is-text,
 #app .care-app .el-button.is-link {
-  min-width: var(--care-target-primary);
+  min-width: var(--care-target-min);
+  min-height: var(--care-target-min);
 }
 #app .care-app .el-input__inner {
   min-height: var(--care-target-primary);
@@ -65,18 +69,18 @@
   flex-direction: column;
   width: 92% !important;
   max-width: 800px;
-  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   margin: 24px auto !important;
   border-radius: var(--care-panel-radius);
 }
 #app .care-app .el-dialog__header {
   flex-shrink: 0;
-  padding: 24px 76px 20px 28px;
+  padding: 22px 76px 18px 28px;
 }
 #app .care-app .el-dialog__title {
   color: var(--care-heading);
   font-size: 21px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 #app .care-app .el-dialog__headerbtn {
   display: grid;
@@ -90,6 +94,7 @@
 #app .care-app .el-dialog__body {
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 24px 28px;
   color: var(--care-text-secondary);
 }
@@ -97,7 +102,7 @@
   flex-shrink: 0;
   border-top: 1px solid var(--care-border-soft);
   padding: 18px 28px;
-  background: #fbfcf9;
+  background: var(--care-surface-subtle);
 }
 /* Dialog forms stack labels above their controls at all breakpoints. */
 #app .care-app .el-dialog .el-form-item {
@@ -139,8 +144,8 @@
 #app .care-app .el-pagination .btn-prev,
 #app .care-app .el-pagination .btn-next,
 #app .care-app .el-pager li {
-  min-width: 40px;
-  height: 40px;
-  line-height: 40px;
+  min-width: var(--care-target-min);
+  height: var(--care-target-min);
+  line-height: var(--care-target-min);
   border-radius: 6px;
 }

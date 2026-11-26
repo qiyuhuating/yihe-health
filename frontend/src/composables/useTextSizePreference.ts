@@ -21,6 +21,9 @@ function applyDisplayPreferences(): void {
   document.documentElement.classList.toggle('high-contrast', highContrast.value)
 }
 
+// Apply persisted preferences before first mount to avoid font-size or contrast flash.
+applyDisplayPreferences()
+
 function ensureStorageSync(): void {
   if (storageListenerInstalled || typeof window === 'undefined') return
   storageListenerInstalled = true

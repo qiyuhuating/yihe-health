@@ -195,14 +195,15 @@ onBeforeUnmount(() => {
 })
 </script>
 <style scoped>
-.care-worker-critical{padding:12px;background:#fff5ec;border-left:3px solid #b94d29;color:#8e3619;font-weight:600}
-.care-operations{margin:16px 0;padding:18px;border:1px solid var(--care-border,#dce4da);border-radius:12px;background:#fff}
-.care-operations-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.care-operations-head h3,.care-operations-head h4{margin:0;color:var(--care-heading,var(--care-primary))}
-.care-operations-head p,.care-staff-settings p{margin:4px 0;color:var(--care-text-muted,#65756e)}
-.care-operation-metrics{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
-.care-operation-metrics span{padding:12px;border-radius:8px;background:#f6f8f5}
-.care-staff-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #e4e9e2;gap:12px}
-.care-staff-row .el-select{max-width:150px}
-.care-access-list{max-height:200px;overflow:auto;font-size:13px;color:#47584f}
+.care-worker-critical { padding: 12px 14px; background: var(--care-danger-bg); border-left: 3px solid var(--care-danger); border-radius: 6px; color: var(--care-danger); font-weight: 600; }
+.care-operations { margin: 16px 0; padding: 18px 20px; border: 1px solid var(--care-border); border-radius: 12px; background: var(--care-surface); }
+.care-operations-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.care-operations-head h3, .care-operations-head h4 { margin: 0; color: var(--care-heading); }
+.care-operations-head p, .care-staff-settings p { margin: 4px 0; color: var(--care-text-muted); }
+.care-operation-metrics { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.care-operation-metrics span { padding: 10px 14px; border: 1px solid var(--care-border-soft); border-radius: var(--care-control-radius); background: var(--care-surface-muted); color: var(--care-text-secondary); }
+.care-operation-metrics strong { color: var(--care-heading); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.care-staff-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--care-border-subtle); gap: 12px; flex-wrap: wrap; }
+.care-staff-row .el-select { max-width: 160px; }
+.care-access-list { max-height: 200px; overflow: auto; font-size: 13px; color: var(--care-text-secondary); }
 </style>

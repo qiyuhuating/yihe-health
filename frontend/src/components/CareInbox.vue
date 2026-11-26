@@ -31,8 +31,8 @@
     </div>
     <el-pagination v-if="!error && total > pageSize" :current-page="page" :page-size="pageSize" :total="total" :disabled="saving" layout="total, prev, pager, next" @current-change="changePage" />
     <el-dialog v-model="history.visible" title="照护事件履历" width="min(600px, 94vw)" append-to-body @close="historyReads.cancel">
-      <p v-if="history.loading">正在读取记录…</p>
-      <p v-if="history.error" role="alert">{{ history.error }}</p>
+      <p v-if="history.loading" role="status">正在读取记录…</p>
+      <p v-if="history.error" role="alert" class="care-error">{{ history.error }}</p>
       <ol v-if="!history.loading && !history.error" class="care-history">
         <li v-for="(event, index) in history.events" :key="index">
           <strong>{{ event.action }}</strong> · {{ localTime(event.createdAt) }}
@@ -114,8 +114,6 @@ const reads = createLatestRead(
     if (!Array.isArray(data.items) || !Number.isInteger(data.total) || data.total < 0 || !['supervisor','caregiver','auditor'].includes(data.duty) || !Number.isInteger(data.actorId)) throw new Error('invalid care response')
     const lastPage = Math.max(1, Math.ceil(data.total / pageSize))
     if (query.page > lastPage) { page.value = lastPage; void load(); return }
-    // Polling often returns identical task data. Keep the old array identity
-    // so the task cards do not re-render every time an idle dashboard polls.
     const snapshot = JSON.stringify(data.items)
     if (snapshot !== lastTaskSnapshot) {
       tasks.value = data.items
@@ -179,7 +177,6 @@ async function submit () {
     if (data.returnCode !== '1111') throw new Error('transition rejected')
     dialog.value.visible = false
     error.value = ''
-    // Never reuse a list snapshot that started before the committed write.
     reads.cancel()
     store.notifyAlertsChanged()
     await load()
@@ -189,7 +186,6 @@ async function submit () {
     const status = (cause as { response?: { status?: number } } | null)?.response?.status
     const outcome = transportOutcome(cause)
     if (status === 409 || status === 403 || outcome === 'timeout' || outcome === 'network') {
-      // Reconcile from the server without replaying the mutation or losing the note.
       await reconcile()
     }
   } finally {saving.value = false}
@@ -211,32 +207,32 @@ onBeforeUnmount(() => {
 })
 </script>
 <style scoped>
-.care-inbox{margin-bottom:24px;padding:24px;border:1px solid var(--care-border);border-radius:16px;background:#fff;box-shadow:var(--care-shadow-sm)}
-.care-inbox-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}
-.care-inbox-heading h2{font-size:20px;font-weight:600;margin:0;color:var(--care-primary)}
-.care-inbox-heading p{margin:6px 0 0;color:var(--care-text-muted);font-size:14px}
-.care-inbox-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.care-inbox-tools .el-select{width:160px}
-.care-inbox :deep(.el-pagination){margin-top:18px;max-width:100%;overflow-x:auto}
-.care-task-list{display:grid;gap:12px}
-.care-task{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#f8faf6;border:1px solid var(--care-border);border-radius:12px;transition:border-color var(--care-motion-fast) var(--care-ease),background-color var(--care-motion-fast) var(--care-ease)}
-.care-task:hover{border-color:var(--care-neutral-border);background:#f4f8f1}
-.care-task.overdue,.care-task.urgent{border-left:4px solid var(--care-danger);background:#fff7f5;border-color:var(--care-danger-border)}
-.care-priority{display:inline-block;padding:1px 8px;border-radius:999px;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
-.care-priority.priority-p0{background:var(--care-danger-bg);color:var(--care-danger)}
-.care-priority.priority-p1{background:var(--care-warning-bg);color:#91651c}
-.care-priority.priority-normal{background:var(--care-neutral-bg);color:var(--care-text-muted)}
-.care-task-main{display:grid;gap:4px;min-width:0}
-.care-task-main strong{color:var(--care-text)}
-.care-next-step{font-weight:600;color:var(--care-primary)!important}
-.care-task-main span,.care-task-main small{color:var(--care-text-muted)}
-.care-task-actions{display:flex;gap:8px;flex-wrap:wrap}
-.care-loading{margin:10px 0;color:var(--care-text-muted);font-size:14px}
-.care-error{color:var(--care-danger)}
-.care-history{list-style:decimal;padding-left:24px}
-.care-history li{padding:10px 0;border-bottom:1px solid #e5ebe7}
-.care-history small{display:block;color:#64756c}
-.care-history p{margin:4px 0;color:var(--care-text)}
-.care-empty{color:var(--care-text-muted)}
-@media(max-width:700px){.care-inbox-heading,.care-task{align-items:stretch;flex-direction:column}}
+.care-inbox { margin-bottom: 24px; padding: 24px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
+.care-inbox-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+.care-inbox-heading h2 { font-size: 20px; font-weight: 600; margin: 0; color: var(--care-primary); }
+.care-inbox-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 14px; }
+.care-inbox-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.care-inbox-tools .el-select { width: 160px; }
+.care-inbox :deep(.el-pagination) { margin-top: 18px; max-width: 100%; overflow-x: auto; }
+.care-task-list { display: grid; gap: 12px; }
+.care-task { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--care-surface-subtle); border: 1px solid var(--care-border); border-radius: 12px; transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease); }
+.care-task:hover { border-color: var(--care-neutral-border); background: var(--care-surface-hover); }
+.care-task.overdue, .care-task.urgent { border-left: 4px solid var(--care-danger); background: var(--care-danger-bg); border-color: var(--care-danger-border); }
+.care-priority { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.care-priority.priority-p0 { background: var(--care-danger-bg); color: var(--care-danger); }
+.care-priority.priority-p1 { background: var(--care-warning-bg); color: var(--care-warning-strong); }
+.care-priority.priority-normal { background: var(--care-neutral-bg); color: var(--care-text-muted); }
+.care-task-main { display: grid; gap: 4px; min-width: 0; }
+.care-task-main strong { color: var(--care-heading); }
+.care-next-step { font-weight: 600; color: var(--care-primary) !important; }
+.care-task-main span, .care-task-main small { color: var(--care-text-muted); }
+.care-task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.care-loading { margin: 10px 0; color: var(--care-text-muted); font-size: 14px; }
+.care-error { color: var(--care-danger); }
+.care-history { list-style: decimal; padding-left: 24px; }
+.care-history li { padding: 10px 0; border-bottom: 1px solid var(--care-border-subtle); }
+.care-history small { display: block; color: var(--care-text-muted); }
+.care-history p { margin: 4px 0; color: var(--care-text); }
+.care-empty { color: var(--care-text-muted); }
+@media (max-width: 700px) { .care-inbox-heading, .care-task { align-items: stretch; flex-direction: column; } }
 </style>

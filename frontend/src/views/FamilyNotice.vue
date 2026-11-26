@@ -3,7 +3,7 @@
     <el-button class="notice-back" link :icon="Back" @click="router.push('/family-portal/overview')">返回照护总览</el-button>
     <article v-loading="isLoading" class="notice-article" :aria-busy="isLoading">
       <div v-if="loadError" class="notice-empty" role="alert"><h1>公告暂时无法加载</h1><p>{{ loadError }}</p><el-button type="primary" @click="searchDetail">重新加载</el-button></div>
-      <template v-else><p class="notice-kicker">平台公告</p><h1>{{ title || (isLoading ? '正在加载公告…' : '公告内容') }}</h1><p class="notice-time">{{ time || '发布时间未提供' }}</p><div class="notice-body">{{ textMain || (isLoading ? '' : '暂时没有正文内容。') }}</div><figure v-for="(img, index) in imgList" :key="img.picName" class="notice-attachment"><img v-if="!failedImages[img.picName]" :src="noticeImageUrl(img.picName)" :alt="'公告附件 ' + (index + 1)" loading="lazy" @error="failedImages[img.picName] = true"><p v-else>附件图片暂时无法显示。</p></figure></template>
+      <template v-else><p class="notice-kicker">平台公告</p><h1>{{ title || (isLoading ? '正在加载公告…' : '公告内容') }}</h1><p class="notice-time">{{ time || '发布时间未提供' }}</p><div class="notice-body">{{ textMain || (isLoading ? '' : '暂时没有正文内容。') }}</div><figure v-for="(img, index) in imgList" :key="img.picName" class="notice-attachment"><img v-if="!failedImages[img.picName]" :src="noticeImageUrl(img.picName)" :alt="'公告附件 ' + (index + 1)" loading="lazy" decoding="async" @error="failedImages[img.picName] = true"><p v-else>附件图片暂时无法显示。</p></figure></template>
     </article>
     <section v-if="!isLoading && !loadError" class="notice-comments" aria-labelledby="notice-comment-title">
       <h2 id="notice-comment-title">留言交流</h2>
