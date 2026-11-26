@@ -1,0 +1,20 @@
+global:
+  resolve_timeout: 5m
+route:
+  receiver: independent-oncall
+  group_by: [alertname, job, instance, reason]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 5m
+receivers:
+  - name: independent-oncall
+    webhook_configs:
+      - url_file: /run/secrets/oncall_webhook_url
+        send_resolved: true
+        http_config:
+          follow_redirects: false
+          authorization:
+            type: Bearer
+            credentials_file: /run/secrets/oncall_token
+# Opt-in `paging` profile. Provision a real HTTPS receiver and credentials;
+# validate an actual alert before production. Receiver HTTP 2xx is not a human ACK.

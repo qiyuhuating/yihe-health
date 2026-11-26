@@ -1,0 +1,148 @@
+rule_files:
+  - /etc/prometheus/alerts.yml
+evaluation_interval: 15s
+tests:
+  - interval: 15s
+    input_series:
+      - series: 'up{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+      - series: 'yihe_care_notification_configured{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+      - series: 'yihe_care_receipt_configured{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheCareReceiptVerificationDisabled
+        exp_alerts:
+          - exp_labels:
+              job: yihe
+              instance: app:8080
+              severity: critical
+            exp_annotations:
+              summary: "SOS gateway dispatch enabled but trusted delivery receipts cannot be validated"
+              description: "The gateway may accept messages but the system cannot confirm delivery. Repair the receipt secret and use human fallback."
+  - interval: 15s
+    input_series:
+      - series: 'up{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+      - series: 'yihe_care_notification_configured{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+      - series: 'yihe_care_receipt_configured{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheCareReceiptVerificationDisabled
+        exp_alerts: []
+  - interval: 15s
+    input_series:
+      - series: 'up{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+      - series: 'yihe_care_worker_last_heartbeat_unixtime{job="yihe",instance="app:8080"}'
+        values: '10+0x25'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheCareWorkerStale
+        exp_alerts:
+          - exp_labels:
+              job: yihe
+              instance: app:8080
+              severity: critical
+            exp_annotations:
+              summary: "SOS dispatcher heartbeat is stale"
+              description: "This checks durable worker progress, not a guarantee of message delivery or responder arrival."
+  - interval: 15s
+    input_series:
+      - series: 'up{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+      - series: 'yihe_database_ready{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YiheBusinessDatabaseUnavailable
+        exp_alerts:
+          - exp_labels:
+              job: yihe
+              instance: app:8080
+              severity: critical
+            exp_annotations:
+              summary: "Yihe MySQL business service unavailable"
+              description: "The business API is not ready; activate the offline care response procedure."
+  - interval: 15s
+    input_series:
+      - series: 'yihe_care_outbox_oldest_age_seconds{job="yihe",instance="app:8080"}'
+        values: '180+0x25'
+      - series: 'yihe_care_queue_sample_valid{job="yihe",instance="app:8080"}'
+        values: '1+0x25'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YiheCareQueueStalled
+        exp_alerts:
+          - exp_labels: {job: yihe, instance: 'app:8080', severity: critical}
+            exp_annotations:
+              summary: "SOS notification jobs remain unfinished"
+              description: "Inspect gateway failures and durable outbox. Delivery and human acknowledgement are independent states. Use the manual fallback."
+  - interval: 15s
+    input_series:
+      - series: 'yihe_care_outbox_oldest_age_seconds{job="yihe",instance="app:8080"}'
+        values: '180+0x25'
+      - series: 'yihe_care_queue_sample_valid{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YiheCareQueueStalled
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: YiheCareQueueObservationFailed
+        exp_alerts:
+          - exp_labels: {job: yihe, instance: 'app:8080', severity: critical}
+            exp_annotations:
+              summary: "SOS queue progress cannot be observed"
+              description: "An unavailable queue sample must never be interpreted as an empty healthy queue."
+  - interval: 15s
+    input_series:
+      - series: 'yihe_care_gateway_tls_configured{job="yihe",instance="app:8080"}'
+        values: '0+0x25'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: YiheCareGatewayTLSInvalid
+        exp_alerts:
+          - exp_labels: {job: yihe, instance: 'app:8080', severity: critical}
+            exp_annotations:
+              summary: "SOS gateway TLS trust configuration is invalid"
+              description: "Core MySQL ingestion remains available; dispatch is disabled and jobs remain durable. Repair certificate trust."
+  - interval: 15s
+    input_series:
+      - series: 'yihe_care_gateway_failures_total{job="yihe",instance="app:8080",reason="http_5xx"}'
+        values: '0+1x25'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheCareGatewayRepeatedFailures
+        exp_alerts:
+          - exp_labels: {job: yihe, instance: 'app:8080', reason: http_5xx, severity: critical}
+            exp_annotations:
+              summary: "SOS notification gateway repeatedly fails"
+              description: "The reason label distinguishes DNS, timeout, network, HTTP and decryption failures. Check pending jobs and human fallback."
+
+  - interval: 15s
+    input_series:
+      - series: 'yihe_heartbeat_flush_errors_total{job="yihe",instance="app:8080"}'
+        values: '0+1x24'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheHeartbeatFlushRepeatedFailures
+        exp_alerts:
+          - exp_labels:
+              job: yihe
+              instance: app:8080
+              severity: warning
+            exp_annotations:
+              summary: "Buffered device heartbeats repeatedly fail to persist"
+              description: "Check MySQL and heartbeat_flush_failed logs. Liveness writes are replaceable; durable SOS and telemetry follow separate paths."
+  - interval: 15s
+    input_series:
+      - series: 'yihe_heartbeat_flush_errors_total{job="yihe",instance="app:8080"}'
+        values: '0+0x24'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: YiheHeartbeatFlushRepeatedFailures
+        exp_alerts: []

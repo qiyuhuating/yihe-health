@@ -1,0 +1,46 @@
+name: Desktop Contract
+
+on:
+  pull_request:
+    branches: [preview, main]
+    paths:
+      - "desktop/**"
+      - "frontend/package.json"
+      - "backend/VERSION"
+      - ".github/workflows/desktop-contract.yml"
+      - ".github/workflows/reusable-windows-package.yml"
+  push:
+    branches: [preview, main]
+    paths:
+      - "desktop/**"
+      - "frontend/package.json"
+      - "backend/VERSION"
+      - ".github/workflows/desktop-contract.yml"
+      - ".github/workflows/reusable-windows-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    uses: ./.github/workflows/reusable-windows-package.yml
+
+  rust-native-check:
+    name: Check Tauri native Windows code
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare compile-only backend hash and sidecar placeholder
+        shell: pwsh
+        run: |
+          Set-Content desktop/backend-sha256.txt ('0' * 64) -NoNewline
+          New-Item -ItemType Directory -Force desktop/binaries | Out-Null
+          [IO.File]::WriteAllBytes((Join-Path $PWD 'desktop/binaries/yihe-server-x86_64-pc-windows-msvc.exe'), [byte[]]@(0))
+      - name: Check native Tauri code against locked dependencies
+        shell: pwsh
+        run: cargo check --manifest-path desktop/Cargo.toml --locked

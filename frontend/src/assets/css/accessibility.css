@@ -1,0 +1,53 @@
+/* Cross-page accessibility primitives. Keep behavioral rules separate from page styling. */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+#app :is(.care-app, .auth-page, .register-page) :where(
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="link"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: var(--care-focus-width) solid var(--care-focus-color);
+  outline-offset: var(--care-focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body *,
+  body *::before,
+  body *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Element Plus input groups expose their own outer focus ring. Avoid a
+   second ring inside the compound search control while preserving keyboard
+   focus visibility on the group. Standalone fields remain unaffected. */
+#app :is(.care-app, .auth-page, .register-page) .el-input-group .el-input__inner:focus-visible {
+  outline: none;
+}
+
+html.reduce-motion body *,
+html.reduce-motion body *::before,
+html.reduce-motion body *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

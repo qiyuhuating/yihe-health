@@ -1,0 +1,22 @@
+
+> yihe-ui@2.1.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m/home/runner/work/smart-elderly-watch-management/smart-elderly-watch-management/智慧养老手表管理系统/oldIot[39m
+
+ [32m✓[39m src/composables/latestRead.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/composables/useCustomers.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/components/CareInbox.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 71[2mms[22m[39m
+ [32m✓[39m src/components/SecurityPanel.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/auth.security.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/components/DatabaseNotice.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+[2m   Start at [22m 10:58:39
+[2m   Duration [22m 1.34s[2m (environment 61%, transform 17%, import 16%, tests 5%, worker 1%)[22m
+
+[2m    Isolate [22m [33m6 workers spawned[39m[2m · ~423ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~423ms faster with [22m[33misolate: false[39m[2m — reuses workers across files instead of one per file[22m
+

@@ -1,0 +1,3 @@
+Checking deploy/alerts.yml
+  SUCCESS: 13 rules found
+

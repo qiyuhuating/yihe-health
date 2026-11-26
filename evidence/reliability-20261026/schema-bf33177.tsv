@@ -1,0 +1,385 @@
+alarm_precess	id	bigint	idx_alarm_old_time,PRIMARY	auto_increment
+alarm_precess	status	varchar(20)		
+alarm_precess	old_id	bigint	idx_alarm_old_time	
+alarm_precess	device_id	bigint		
+alarm_precess	be_time	datetime(6)	idx_alarm_old_time	
+alarm_precess	lng	varchar(128)		
+alarm_precess	lat	varchar(128)		
+alarm_process	id	bigint	PRIMARY	auto_increment
+alarm_process	status	varchar(20)		
+alarm_process	old_id	bigint		
+alarm_process	device_id	bigint		
+alarm_process	be_time	datetime(6)		
+alarm_process	lng	varchar(128)		
+alarm_process	lat	varchar(128)		
+alert_review	id	bigint	idx_review_target,PRIMARY	auto_increment
+alert_review	entity	varchar(16)	idx_review_target	
+alert_review	record_id	bigint	idx_review_target	
+alert_review	kind	varchar(32)	idx_review_target	
+alert_review	verdict	varchar(16)		
+alert_review	reason	text		
+alert_review	actor_id	bigint		
+alert_review	created_at	datetime(6)		DEFAULT_GENERATED
+analytics_outbox	id	bigint	PRIMARY	auto_increment
+analytics_outbox	entity	varchar(32)		
+analytics_outbox	entity_id	bigint		
+analytics_outbox	payload	json		
+analytics_outbox	deleted	tinyint(1)		
+analytics_outbox	created_at	datetime(6)		DEFAULT_GENERATED
+analytics_source	singleton	tinyint	PRIMARY	
+analytics_source	source_id	char(36)	source_id	
+app_metadata	id	bigint	PRIMARY	
+app_metadata	schema_version	bigint		
+auth_factor	role	varchar(16)	PRIMARY	
+auth_factor	actor_id	bigint	PRIMARY	
+auth_factor	secret	text		
+auth_factor	generation	char(36)		
+auth_factor	enabled	tinyint(1)		
+auth_factor	pending_until	datetime(6)		
+auth_factor	last_counter	bigint		
+auth_factor	recovery_hashes	json		
+bind_code	id	bigint	PRIMARY	auto_increment
+bind_code	code	varchar(20)	uk_bind_code	
+bind_code	old_id	bigint	idx_bind_code_old	
+bind_code	family_id	bigint		
+bind_code	create_user	varchar(20)		
+bind_code	create_time	datetime(6)		
+bind_code	expire_time	datetime(6)		
+bind_code	used	smallint		
+bind_code	used_time	datetime(6)		
+bind_code	used_device_id	bigint		
+care_access_audit	id	bigint	PRIMARY	auto_increment
+care_access_audit	admin_id	bigint	idx_care_access_audit_actor_time	
+care_access_audit	action	varchar(64)		
+care_access_audit	incident_id	bigint		
+care_access_audit	subject_admin_id	bigint		
+care_access_audit	created_at	datetime(6)	idx_care_access_audit_actor_time,idx_care_access_audit_created	DEFAULT_GENERATED
+care_incident	id	bigint	PRIMARY	auto_increment
+care_incident	source_alarm_id	bigint	source_alarm_id	
+care_incident	request_id	varchar(64)	idx_care_incident_device_request	
+care_incident	old_id	bigint		
+care_incident	device_id	bigint	idx_care_incident_device_request	
+care_incident	kind	varchar(32)		
+care_incident	state	varchar(32)		
+care_incident	severity	varchar(16)		
+care_incident	created_at	datetime(6)	idx_care_incident_open_due	DEFAULT_GENERATED
+care_incident	updated_at	datetime(6)		DEFAULT_GENERATED
+care_incident	acknowledged_by	varchar(128)		
+care_incident	acknowledged_at	datetime(6)		
+care_incident	resolved_by	varchar(128)		
+care_incident	resolved_at	datetime(6)		
+care_incident	resolution_note	text		
+care_incident	verified_by	varchar(128)		
+care_incident	verified_at	datetime(6)		
+care_incident	due_at	datetime(6)	idx_care_incident_open_due	DEFAULT_GENERATED
+care_incident_event	id	bigint	PRIMARY	auto_increment
+care_incident_event	incident_id	bigint	idx_care_incident_event_incident	
+care_incident_event	actor	varchar(128)		
+care_incident_event	action	varchar(40)		
+care_incident_event	note	text		
+care_incident_event	created_at	datetime(6)	idx_care_incident_event_incident	DEFAULT_GENERATED
+care_notification_outbox	id	bigint	idx_care_notification_retry,PRIMARY	auto_increment
+care_notification_outbox	incident_id	bigint	uk_care_notification_recipient	
+care_notification_outbox	channel	varchar(20)	uk_care_notification_recipient	
+care_notification_outbox	recipient	varchar(128)		
+care_notification_outbox	recipient_key	char(64)	uk_care_notification_recipient	
+care_notification_outbox	status	varchar(20)	idx_care_outbox_age	
+care_notification_outbox	attempts	bigint		
+care_notification_outbox	last_attempt_at	datetime(6)		
+care_notification_outbox	retry_at	datetime(6)	idx_care_notification_retry	DEFAULT_GENERATED
+care_notification_outbox	sent_at	datetime(6)		
+care_notification_outbox	delivered_at	datetime(6)		
+care_notification_outbox	last_error	text		
+care_notification_outbox	created_at	datetime(6)	idx_care_outbox_age	DEFAULT_GENERATED
+care_notification_outbox	exhausted	tinyint(1)		
+care_sensitive_access_audit	id	bigint	PRIMARY	auto_increment
+care_sensitive_access_audit	actor_id	bigint	idx_care_sensitive_access_actor	
+care_sensitive_access_audit	actor_role	varchar(16)		
+care_sensitive_access_audit	resource	varchar(128)		
+care_sensitive_access_audit	method	varchar(8)		
+care_sensitive_access_audit	created_at	datetime(6)	idx_care_sensitive_access_actor,idx_care_sensitive_access_time	DEFAULT_GENERATED
+care_staff_permission	admin_id	bigint	PRIMARY	
+care_staff_permission	duty	varchar(24)		
+care_staff_permission	assigned_by	bigint		
+care_staff_permission	assigned_at	datetime(6)		DEFAULT_GENERATED
+care_worker_heartbeat	singleton	tinyint(1)	PRIMARY	
+care_worker_heartbeat	last_seen_at	datetime(6)		
+care_worker_heartbeat	started_at	datetime(6)		
+customer	customer_id	bigint	PRIMARY	auto_increment
+customer	customer_name	varchar(20)		
+customer	customer_age	bigint		
+customer	customer_sex	char(1)		
+customer	customer_phone	varchar(12)		
+customer	customer_address	varchar(20)		
+device	device_id	bigint	PRIMARY	auto_increment
+device	device_no	varchar(32)	uk_device_no	
+device	secret	varchar(64)		
+device	alias	varchar(32)		
+device	model	varchar(32)		
+device	app_version	varchar(20)		
+device	battery	bigint		
+device	old_id	bigint	idx_device_old	
+device	family_id	bigint		
+device	status	smallint		
+device	bind_time	datetime(6)		
+device	last_time	datetime(6)		
+device	last_lng	varchar(128)		
+device	last_lat	varchar(128)		
+device	create_time	datetime(6)		
+device	person_handled	bigint		
+device	rate_handled	bigint		
+device	pre_handled	bigint		
+device	person_handled_at	datetime(6)		
+device	boot_seq	bigint		
+device	handled_seq	bigint		
+device	last_online_at	datetime(6)		
+device	health_epoch	bigint		
+device_command	id	bigint	idx_command_device,PRIMARY	auto_increment
+device_command	device_id	bigint	device_id,idx_command_device	
+device_command	old_id	bigint		
+device_command	epoch	bigint	device_id	
+device_command	request_key	varchar(64)	device_id	
+device_command	action	varchar(32)		
+device_command	ttl_seconds	int		
+device_command	wire_type	varchar(64)		
+device_command	channel	varchar(16)		
+device_command	wire_action	varchar(64)		
+device_command	status	varchar(16)	idx_command_ready	
+device_command	attempts	int		
+device_command	max_attempts	int		
+device_command	delivery_token	varchar(64)		
+device_command	retry_at	datetime(6)	idx_command_ready	
+device_command	expires_at	datetime(6)		
+device_command	sent_at	datetime(6)		
+device_command	acked_at	datetime(6)		
+device_command	created_by	bigint		
+device_command	created_at	datetime(6)		DEFAULT_GENERATED
+device_command_profile	device_id	bigint	PRIMARY	
+device_command_profile	wire_type	varchar(64)		
+device_command_profile	protocol	varchar(32)		
+device_command_profile	enabled	tinyint(1)		
+device_command_profile	updated_by	bigint		
+device_command_profile	updated_at	datetime(6)		DEFAULT_GENERATED
+device_fence	id	bigint	PRIMARY	auto_increment
+device_fence	device_id	bigint	idx_fence_device	
+device_fence	old_id	bigint		
+device_fence	epoch	bigint	idx_fence_device	
+device_fence	name	varchar(64)		
+device_fence	enabled	tinyint(1)	idx_fence_device	
+device_fence	revision	bigint		
+device_fence	coordinates	json		
+device_fence	coordinate_system	varchar(16)		
+device_fence	timezone	varchar(64)		
+device_fence	time_begin	int		
+device_fence	time_end	int		
+device_fence	min_points	int		
+device_fence	dwell_seconds	int		
+device_fence	max_accuracy	double		
+device_fence	updated_by	bigint		
+device_fence	updated_at	datetime(6)		DEFAULT_GENERATED
+device_location	id	bigint	idx_loc_device_time,idx_loc_old_time,PRIMARY	auto_increment
+device_location	device_id	bigint	idx_loc_device_time	
+device_location	old_id	bigint	idx_loc_old_time	
+device_location	lng	varchar(128)		
+device_location	lat	varchar(128)		
+device_location	source	varchar(20)		
+device_location	be_time	datetime(6)		
+device_location	create_time	datetime(6)		
+family	family_tou_pic	varchar(50)		
+family	family_id	bigint	PRIMARY	auto_increment
+family	family_name	varchar(10)		
+family	family_relation	varchar(10)		
+family	family_phone	varchar(12)	uk_family_phone	
+family	family_sex	char(1)		
+family	family_address	varchar(20)		
+family	family_password	varchar(60)		
+fence_event	id	bigint	idx_fence_event_owner,PRIMARY	auto_increment
+fence_event	fence_id	bigint	fence_id	
+fence_event	fence_revision	bigint	fence_id	
+fence_event	old_id	bigint	idx_fence_event_owner	
+fence_event	device_id	bigint		
+fence_event	epoch	bigint		
+fence_event	direction	varchar(8)		
+fence_event	lng	double		
+fence_event	lat	double		
+fence_event	accuracy	double		
+fence_event	occurred_at	datetime(6)	fence_id	
+fence_event	created_at	datetime(6)		DEFAULT_GENERATED
+fence_event	incident_id	bigint		
+fence_state	fence_id	bigint	PRIMARY	
+fence_state	revision	bigint		
+fence_state	payload	json		
+health_change	revision	bigint	idx_health_change_owner,PRIMARY	
+health_change	old_id	int	idx_health_change_owner	
+health_change	sample_id	char(64)		
+health_change	payload	json		
+health_clock	id	int	PRIMARY	
+health_clock	revision	bigint		
+health_owner_clock	old_id	bigint	PRIMARY	
+health_owner_clock	revision	bigint		
+health_owner_clock	range_end	bigint		
+health_sample	sample_id	char(64)	PRIMARY	
+health_sample	old_id	int	idx_health_owner,idx_health_rule_cover,idx_health_rule_source,idx_health_rule_window,idx_health_time	
+health_sample	device_id	int	idx_health_rule_cover,idx_health_rule_source,idx_health_rule_window	
+health_sample	epoch	bigint		
+health_sample	version	bigint		
+health_sample	revision	bigint	idx_health_owner,idx_health_rule_window,revision	
+health_sample	payload	json		
+health_sample	source	varchar(256)	idx_health_rule_cover,idx_health_rule_source	
+health_sample	source_device	varchar(4096)	idx_health_rule_source	
+health_sample	metric	varchar(64)	idx_health_rule_cover,idx_health_rule_source,idx_health_rule_window	
+health_sample	semantics	varchar(32)		
+health_sample	sample_start	bigint	idx_health_rule_cover,idx_health_rule_source,idx_health_rule_window,idx_health_time	
+health_sample	sample_end	bigint		
+health_sample	deleted	tinyint(1)	idx_health_rule_cover,idx_health_rule_source,idx_health_rule_window	
+health_sample	rule_source_device	varchar(64)	idx_health_rule_cover	VIRTUAL GENERATED
+health_sample	rule_value	double	idx_health_rule_cover	VIRTUAL GENERATED
+health_sample	rule_legacy_unzoned	tinyint(1)	idx_health_rule_cover	VIRTUAL GENERATED
+image_blob	name	varchar(255)	PRIMARY	
+image_blob	content_sha256	char(64)		
+image_blob	size_bytes	bigint		
+image_blob	state	varchar(16)	idx_image_blob_gc	
+image_blob	created_at	datetime(6)	idx_image_blob_gc	DEFAULT_GENERATED
+image_gc_guard	id	int	PRIMARY	
+image_gc_guard	backup_owner	varchar(64)		
+image_gc_guard	backup_until	datetime(6)		
+invite_code	id	bigint	PRIMARY	auto_increment
+invite_code	code	varchar(20)	uk_invite_code_code	
+invite_code	old_id	bigint	idx_invite_code_old	
+invite_code	create_user	varchar(20)		
+invite_code	create_time	datetime(6)		
+invite_code	expire_time	datetime(6)		
+invite_code	used	smallint		
+invite_code	used_time	datetime(6)		
+invite_code	used_family_id	bigint		
+login_audit	id	bigint	idx_login_history,PRIMARY	auto_increment
+login_audit	account_hash	char(64)	idx_login_account_time,idx_login_attempt,idx_login_pair_time	
+login_audit	ip_hash	char(64)	idx_login_attempt,idx_login_pair_time	
+login_audit	role	varchar(16)		
+login_audit	actor_id	bigint		
+login_audit	outcome	varchar(32)	idx_login_account_time,idx_login_pair_time	
+login_audit	request_id	varchar(64)		
+login_audit	created_at	datetime(6)	idx_login_account_time,idx_login_attempt,idx_login_pair_time	DEFAULT_GENERATED
+message_outbox	id	bigint	PRIMARY	auto_increment
+message_outbox	topic	varchar(32)	topic	
+message_outbox	source_key	varchar(96)	topic	
+message_outbox	family_id	bigint	topic	
+message_outbox	channel	varchar(16)	idx_message_channel_ready,topic	
+message_outbox	recipient	text		
+message_outbox	status	varchar(16)	idx_message_channel_ready,idx_message_claim,idx_message_lease	
+message_outbox	attempts	int		
+message_outbox	retry_at	datetime(6)	idx_message_channel_ready,idx_message_claim	DEFAULT_GENERATED
+message_outbox	lease_token	varchar(64)		
+message_outbox	last_attempt_at	datetime(6)	idx_message_lease	
+message_outbox	last_error	varchar(256)		
+message_outbox	created_at	datetime(6)		DEFAULT_GENERATED
+message_outbox	delivered_at	datetime(6)		
+metric_daily	cache_key	char(64)	PRIMARY	
+metric_daily	old_id	bigint	idx_daily_owner	
+metric_daily	source	varchar(256)		
+metric_daily	source_device	varchar(4096)		
+metric_daily	metric	varchar(64)		
+metric_daily	semantics	varchar(32)		
+metric_daily	record_day	date	idx_daily_owner	
+metric_daily	offset_minutes	int		
+metric_daily	dirty	tinyint(1)	idx_daily_dirty	
+metric_daily	computed_revision	bigint		
+metric_daily	result	json		
+metric_daily	error_text	varchar(512)		
+metric_daily	updated_at	datetime(6)	idx_daily_dirty	DEFAULT_GENERATED
+nice_count	phone	varchar(30)	idx_nice_count_said_phone	
+nice_count	said_id	bigint	idx_nice_count_said_phone	
+nice_count	add_id	bigint	PRIMARY	auto_increment
+oldperson	old_id	bigint	PRIMARY	auto_increment
+oldperson	name	varchar(10)		
+oldperson	age	bigint		
+oldperson	sex	char(1)		
+oldperson	phone	varchar(12)		
+oldperson	room	varchar(5)		
+oldperson	illness	varchar(20)		
+oldperson	warn	varchar(5)		
+oldperson	food_like	varchar(20)		
+oldperson	food_hate	varchar(20)		
+oldperson	drag	varchar(20)		
+oldperson	family_id	bigint	idx_old_family	
+oldperson	customer_id	bigint		
+oldperson	be_time	date		
+oldperson	bothdate	date		
+oldperson	device_id	bigint		
+pic	pic_id	bigint	idx_pic_group	
+pic	pic_name	varchar(50)		
+pic_show	id	bigint	PRIMARY	auto_increment
+pic_show	pic_name	varchar(50)		
+picture_group	id	bigint	PRIMARY	auto_increment
+ratepre	id	bigint	idx_ratepre_device_time,idx_ratepre_old_time,PRIMARY	auto_increment
+ratepre	device_id	bigint	idx_ratepre_device_time	
+ratepre	old_id	bigint	idx_ratepre_old_time	
+ratepre	rate_state	varchar(5)		
+ratepre	pre_state	varchar(5)		
+ratepre	create_time	datetime(6)	idx_ratepre_device_time,idx_ratepre_old_time	
+ratepre	hr	bigint		
+ratepre	bp	bigint		
+ratepre	rate_handled	bigint		
+ratepre	pre_handled	bigint		
+ratepre	rate_handled_at	datetime(6)		
+ratepre	pre_handled_at	datetime(6)		
+rule_policy	device_id	bigint	PRIMARY	
+rule_policy	revision	bigint		
+rule_policy	payload	json		
+rule_policy	updated_by	bigint		
+rule_policy	updated_at	datetime(6)		DEFAULT_GENERATED
+rule_state	device_id	bigint	PRIMARY	
+rule_state	epoch	bigint	PRIMARY	
+rule_state	kind	varchar(32)	PRIMARY	
+rule_state	observation_key	varchar(96)		
+rule_state	streak	int		
+rule_state	active	tinyint(1)		
+rule_state	incident_id	bigint		
+rule_state	evidence	json		
+rule_state	updated_at	datetime(6)		
+said	said_id	bigint	PRIMARY	auto_increment
+said	said	varchar(2000)		
+said	text_id	bigint	idx_said_text	
+said	back	varchar(2000)		
+said	said_time	datetime(6)	idx_said_text	
+said	back_time	datetime(6)		
+said	person_name	varchar(10)		
+said	said_phone	varchar(30)		
+said	tou_pic	varchar(50)		
+said	nice_count	bigint		
+schema_migrations	name	varchar(191)	PRIMARY	
+schema_migrations	checksum	char(64)		
+schema_migrations	applied_at	datetime(6)		DEFAULT_GENERATED
+text	text_id	bigint	PRIMARY	auto_increment
+text	title	varchar(200)		
+text	text_main	varchar(10000)		
+text	time	datetime(6)		
+text	pic_id	bigint		
+users	user_id	bigint	PRIMARY	auto_increment
+users	user_name	varchar(10)		
+users	password	varchar(60)		
+users	role	varchar(10)		
+users	user_phone	varchar(20)	uk_users_phone	
+watch_day_info	id	bigint	PRIMARY	auto_increment
+watch_day_info	device_id	bigint	uk_day_device_date	
+watch_day_info	sleep	bigint		
+watch_day_info	step	bigint		
+watch_day_info	sleep_sate	char(1)		
+watch_day_info	create_time	date	uk_day_device_date	
+watch_day_info_archive	id	bigint	PRIMARY	auto_increment
+watch_day_info_archive	device_id	bigint		
+watch_day_info_archive	sleep	bigint		
+watch_day_info_archive	step	bigint		
+watch_day_info_archive	sleep_sate	char(1)		
+watch_day_info_archive	create_time	date		
+watch_info	device_id	bigint	PRIMARY	auto_increment
+watch_info	op_time	date		
+watch_info	bpf	bigint		
+watch_info	bpl	bigint		
+watch_info	hrf	bigint		
+watch_info	hrl	bigint		
+web_session	id_hash	char(64)	PRIMARY	
+web_session	role	varchar(16)	idx_session_actor	
+web_session	actor_id	bigint	idx_session_actor	
+web_session	payload	mediumtext		
+web_session	expires_at	datetime(6)	idx_session_expiry	

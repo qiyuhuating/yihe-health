@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/dist
+**/outputs
+**/data
+**/target
+**/*.log
+deploy/platform.env
+deploy/secrets
+YiheWatch/.hvigor
+YiheWatch/entry/build
+YiheWatch/artifacts
+YiheWatch/.idea

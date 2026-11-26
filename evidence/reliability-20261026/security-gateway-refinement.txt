@@ -1,0 +1,21 @@
+=== RUN   TestGatewayRetryAfterAndFailureClasses
+=== RUN   TestGatewayRetryAfterAndFailureClasses/429
+=== RUN   TestGatewayRetryAfterAndFailureClasses/5xx
+=== RUN   TestGatewayRetryAfterAndFailureClasses/dns
+--- PASS: TestGatewayRetryAfterAndFailureClasses (15.16s)
+    --- PASS: TestGatewayRetryAfterAndFailureClasses/429 (5.72s)
+    --- PASS: TestGatewayRetryAfterAndFailureClasses/5xx (4.94s)
+    --- PASS: TestGatewayRetryAfterAndFailureClasses/dns (4.50s)
+=== RUN   TestProviderRetryAfterBounds
+--- PASS: TestProviderRetryAfterBounds (0.00s)
+PASS
+ok  	careold-go/internal/care	17.302s
+=== RUN   TestCareFullHTTPChainAfterRealGatewayTimeout
+    care_full_chain_test.go:180: LOCAL REAL DB + TLS HTTP TRACE incident=1 notification=1 actions=[received delivered acknowledge start resolve verify]; synthetic device/provider/actors, no real person contacted
+--- PASS: TestCareFullHTTPChainAfterRealGatewayTimeout (18.24s)
+=== RUN   TestLoginAuditBoundarySharedAcrossReplicasAndIPs
+--- PASS: TestLoginAuditBoundarySharedAcrossReplicasAndIPs (4.80s)
+=== RUN   TestWrongCoordinateKeyFailsClosed
+--- PASS: TestWrongCoordinateKeyFailsClosed (4.81s)
+PASS
+ok  	careold-go/internal/handlers	30.335s

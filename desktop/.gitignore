@@ -1,0 +1,5 @@
+/target/
+/binaries/*.exe
+/backend-sha256.txt
+/node_modules/
+/gen/

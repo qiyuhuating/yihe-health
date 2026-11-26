@@ -1,0 +1,3980 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "颐和后端 API",
+    "version": "2.1.0",
+    "description": "Native Go API v1 route inventory. No Java or legacy HTTP entry points."
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "YIHE_SESSION"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "required": [
+          "returnCode",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "returnCode": {
+            "const": "0000",
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "responses": {
+      "ApiError": {
+        "description": "API failure; HTTP status identifies the error category",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "Success": {
+        "description": "Go JSON response; payload varies by operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "returnCode"
+              ],
+              "properties": {
+                "returnCode": {
+                  "type": "string",
+                  "const": "1111"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ItemsSuccess": {
+        "description": "Go JSON response; payload varies by operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "returnCode"
+              ],
+              "properties": {
+                "returnCode": {
+                  "type": "string",
+                  "const": "1111"
+                },
+                "items": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "CsrfToken": {
+        "name": "X-CSRF-TOKEN",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "requestBodies": {
+      "JsonObject": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "ResidentId": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "oldId": {}
+              }
+            }
+          }
+        }
+      },
+      "DeviceId": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "deviceId": {}
+              }
+            }
+          }
+        }
+      },
+      "NoticeId": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "textId": {}
+              }
+            }
+          }
+        }
+      },
+      "NamePage": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "name": {},
+                "page": {},
+                "pageSize": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/activity/alerts/device-counts": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "sleep": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "returnCode",
+                    "sleep"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/activity/chart": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "createTime": {},
+                    "sleep": {},
+                    "activityRecords": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/activity/history": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "activityRecords": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/activity/latest": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "activityRecords": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {},
+                  "timeFirst": {},
+                  "timeLast": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/alert-reviews": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "alarmStateChanged": {},
+                    "reviewId": {},
+                    "verdict": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "recordId": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "verdict": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "expectedReviewId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/alert-reviews/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "entity": {
+                    "type": "string"
+                  },
+                  "recordId": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "after": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "authenticated": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "recoveryCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_auth.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_auth.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "account": {},
+                    "authenticated": {},
+                    "csrfHeader": {},
+                    "csrfToken": {},
+                    "setupRequired": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "description": "Implementation: backend/internal/handlers/handler_auth.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/accessAudit": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "accesses": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/accounts/status": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "adminId": {},
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "adminId": {},
+                  "status": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/assignDuty": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "adminId": {},
+                    "duty": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "adminId": {},
+                  "duty": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/diagnostics": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "analytics": {},
+                    "failedNotifications": {},
+                    "note": {},
+                    "notificationConfigured": {},
+                    "oldestOutstandingAt": {},
+                    "overdueIncidents": {},
+                    "pendingNotifications": {},
+                    "primaryEngine": {},
+                    "receiptConfigured": {},
+                    "staleSending": {},
+                    "workerHealthy": {},
+                    "workerLastSeenAt": {},
+                    "workerStartedAt": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/events": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "events": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/handover/accept": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "handoverId": {},
+                    "status": {},
+                    "transferred": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "handoverId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/handover/cancel": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "handoverId": {},
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "handoverId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/handover/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "handoverId": {},
+                    "incidentIds": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "toAdminId": {
+                    "type": "integer"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/incidents": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "actorId": {},
+                    "duty": {},
+                    "items": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "state": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/receipt": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "notificationId": {},
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "notificationId": {},
+                  "status": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/care/staff": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "staff": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/care/transition": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {},
+                    "state": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "action": {},
+                  "id": {},
+                  "note": {},
+                  "verdict": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_care_incident.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/desktop/exit": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "closing": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_auth.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device-command-profiles": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "deviceId": {},
+                    "enabled": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "deviceId": {
+                    "type": "integer"
+                  },
+                  "wireType": {
+                    "type": "string"
+                  },
+                  "protocol": {
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device-commands": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "commandId": {},
+                    "duplicate": {},
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "deviceId": {
+                    "type": "integer"
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "requestKey": {
+                    "type": "string"
+                  },
+                  "ttlSeconds": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device-commands/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "deviceId": {
+                    "type": "integer"
+                  },
+                  "after": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/alertCounts": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {},
+                    "personTotal": {},
+                    "preTotal": {},
+                    "rateTotal": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/alertDetail": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "alias": {},
+                    "deviceId": {},
+                    "deviceNo": {},
+                    "oldPersonName": {},
+                    "personHandled": {},
+                    "preHandled": {},
+                    "rateHandled": {},
+                    "hasAlert": {},
+                    "message": {},
+                    "kind": {},
+                    "kindText": {},
+                    "reason": {},
+                    "detail": {},
+                    "value": {},
+                    "threshold": {},
+                    "occurTime": {},
+                    "recordId": {},
+                    "advice": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceId": {},
+                  "kind": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/bind": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "residentId": {},
+                    "residentName": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "code": {},
+                  "deviceNo": {},
+                  "secret": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/bindCodeList": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "bindCodes": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/commandAck": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "commandId": {},
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceNo": {},
+                  "secret": {},
+                  "bindingVersion": {},
+                  "commandId": {},
+                  "deliveryToken": {},
+                  "result": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/commandPull": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "command": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "bindingVersion": {},
+                  "deviceNo": {},
+                  "secret": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "deviceId": {},
+                    "deviceNo": {},
+                    "secret": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "alias": {},
+                  "model": {},
+                  "oldId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/createBindCode": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {},
+                    "expireTime": {},
+                    "oldId": {},
+                    "oldPersonName": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "createUser": {},
+                  "expireDays": {},
+                  "oldId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/DeviceId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/deleteBindCode": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/fencePoint": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "events": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceNo": {},
+                  "secret": {},
+                  "bindingVersion": {},
+                  "coordinateSystem": {},
+                  "point": {},
+                  "accuracy": {},
+                  "occurredAt": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/healthBatch": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "accepted": {},
+                    "duplicates": {},
+                    "writeRevision": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "bindingVersion": {},
+                  "deviceNo": {},
+                  "samples": {},
+                  "secret": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_health.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/heartbeat": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "bindingVersion": {},
+                    "bound": {},
+                    "residentId": {},
+                    "pendingAlarm": {},
+                    "reportInterval": {},
+                    "serverTime": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "appVersion": {},
+                  "battery": {},
+                  "deviceNo": {},
+                  "secret": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "devices": {},
+                    "onlineCount": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "query": {},
+                  "state": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/login": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "alias": {},
+                    "bindingVersion": {},
+                    "bound": {},
+                    "deviceId": {},
+                    "deviceNo": {},
+                    "residentId": {},
+                    "residentName": {},
+                    "protocolVersion": {},
+                    "maxBatchSize": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceNo": {
+                    "type": "string"
+                  },
+                  "secret": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "platform": {
+                    "type": "string"
+                  },
+                  "protocolVersion": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "deviceNo",
+                  "secret"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Device body authentication or signed gateway receipt; not anonymous access. HarmonyOS clients send optional platform=harmonyos with protocolVersion=1; both are required together when platform is supplied. Authenticated success returns protocolVersion=1 and maxBatchSize=200 plus the existing bindingVersion/owner. Unsupported platform/version returns 400. Omit platform when platform-specific capability negotiation is not needed. Invalid credentials return 401 with code=DEVICE_AUTH_FAILED; disabled devices return 403."
+      }
+    },
+    "/api/v1/device/report": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {},
+                    "preState": {},
+                    "queued": {},
+                    "rateState": {},
+                    "serverTime": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "positionSource": {
+                    "type": "string",
+                    "enum": [
+                      "gps",
+                      "network",
+                      "fused",
+                      "manual",
+                      "simulated",
+                      "unknown"
+                    ]
+                  },
+                  "positionSampledAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "positionAccuracy": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "deviceNo": {},
+                  "secret": {},
+                  "hr": {},
+                  "bp": {},
+                  "step": {},
+                  "sleep": {},
+                  "sleepState": {},
+                  "lng": {},
+                  "lat": {},
+                  "alarm": {},
+                  "battery": {},
+                  "beTime": {},
+                  "appVersion": {},
+                  "requestId": {},
+                  "source": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/resetSecret": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "secret": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/DeviceId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/resolveAlert": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "handledReason": {},
+                    "message": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceId": {},
+                  "kind": {},
+                  "recordId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/device/sos": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "duplicate": {},
+                    "incidentId": {},
+                    "incidentState": {},
+                    "message": {},
+                    "notificationState": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "positionSource": {
+                    "type": "string",
+                    "enum": [
+                      "gps",
+                      "network",
+                      "fused",
+                      "manual",
+                      "simulated",
+                      "unknown"
+                    ]
+                  },
+                  "positionSampledAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "positionAccuracy": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "alarm": {},
+                  "bindingVersion": {},
+                  "deviceNo": {},
+                  "lat": {},
+                  "lng": {},
+                  "requestId": {},
+                  "secret": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Device body authentication or signed gateway receipt; not anonymous access."
+      }
+    },
+    "/api/v1/device/unbind": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/DeviceId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/add": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyAddress": {},
+                  "familyName": {},
+                  "familyPhone": {},
+                  "familyRelation": {},
+                  "familySex": {},
+                  "oldPhone": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/deleteFamily": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/select": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "familyDtos": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyName": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/selectTwo": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "familyDto2": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyPhone": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/updateFamily": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyAddress": {},
+                  "familyId": {},
+                  "familyName": {},
+                  "familyPhone": {},
+                  "familyRelation": {},
+                  "familySex": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/updatePassword": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyPassword": {},
+                  "familyPhone": {},
+                  "oldPassword": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/updateTouPic": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyPhone": {},
+                  "familyTouPic": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/family/updateTwo": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "familyAddress": {},
+                  "familyId": {},
+                  "familyName": {},
+                  "familyPhone": {},
+                  "familySex": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/fence-events/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "after": {},
+                  "oldId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/fences": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "deviceApplied": {},
+                    "id": {},
+                    "revision": {},
+                    "state": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "coordinateSystem": {},
+                  "coordinates": {},
+                  "deviceId": {},
+                  "dwellSeconds": {},
+                  "enabled": {},
+                  "id": {},
+                  "maxAccuracy": {},
+                  "minPoints": {},
+                  "name": {},
+                  "revision": {},
+                  "timeBegin": {},
+                  "timeEnd": {},
+                  "timezone": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/fences/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/DeviceId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/gallery/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "galleryImages": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {},
+                  "picName": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/gallery/replace": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fileListName": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/guardians/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "customerAddress": {},
+                  "customerAge": {},
+                  "customerName": {},
+                  "customerPhone": {},
+                  "customerSex": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_user.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/guardians/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "customerId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_user.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/guardians/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "customers": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "customerName": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_user.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/guardians/update": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "customerAddress": {},
+                  "customerAge": {},
+                  "customerId": {},
+                  "customerName": {},
+                  "customerPhone": {},
+                  "customerSex": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_user.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/health/alerts/device-counts": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "bloodPressure": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "heartRate": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "sleep": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "bloodPressure",
+                    "heartRate",
+                    "returnCode",
+                    "sleep"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/health/baseline": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "oldId": {},
+                    "metric": {},
+                    "ready": {},
+                    "sampleDays": {},
+                    "trustedDays": {},
+                    "rejectedDays": {},
+                    "confidence": {},
+                    "reason": {},
+                    "observedAt": {},
+                    "value": {},
+                    "baseline": {},
+                    "scale": {},
+                    "score": {},
+                    "direction": {},
+                    "anomalous": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_health.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/health/changes": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "changes": {},
+                    "hasMore": {},
+                    "nextCursor": {},
+                    "oldId": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "after": {},
+                  "limit": {},
+                  "oldId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_health.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/health/daily-query": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "algorithmVersion": {},
+                    "items": {},
+                    "metric": {},
+                    "offsetMinutes": {},
+                    "semantics": {},
+                    "source": {},
+                    "sourceDevice": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "oldId": {
+                    "type": "integer"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "sourceDevice": {
+                    "type": "string"
+                  },
+                  "metric": {
+                    "type": "string"
+                  },
+                  "semantics": {
+                    "type": "string"
+                  },
+                  "day": {
+                    "type": "string"
+                  },
+                  "offsetMinutes": {
+                    "type": "integer"
+                  },
+                  "days": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_capability_routes.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/health/latest": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "items",
+                    "oldId",
+                    "returnCode"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "oldId": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "oldId",
+                          "bindingVersion",
+                          "revision",
+                          "sampleId",
+                          "deviceId",
+                          "sample"
+                        ],
+                        "properties": {
+                          "oldId": {
+                            "type": "integer"
+                          },
+                          "bindingVersion": {
+                            "type": "integer"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          },
+                          "sampleId": {
+                            "type": "string"
+                          },
+                          "deviceId": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ]
+                          },
+                          "sample": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "properties": {
+                              "recordId": {
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string"
+                              },
+                              "sourceDevice": {
+                                "type": "string"
+                              },
+                              "sourceVersion": {
+                                "type": "string"
+                              },
+                              "metric": {
+                                "type": "string"
+                              },
+                              "semantics": {
+                                "type": "string"
+                              },
+                              "unit": {
+                                "type": "string"
+                              },
+                              "stage": {
+                                "type": "string"
+                              },
+                              "timeBasis": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
+                              },
+                              "start": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "end": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "oldId": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Latest nondeleted stored sample per exact source/sourceDevice/metric/semantics. Order by exact sample.start descending, then revision descending. Intervals retain both endpoints; daily totals are snapshots, not today's aggregate. FAMILY may omit oldId and is checked against current ownership; ADMIN supplies oldId. Historical binding/version and sampling time are preserved; no freshness guarantee or cross-source merging."
+      }
+    },
+    "/api/v1/health/statistics": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "metric": {},
+                    "semantics": {},
+                    "source": {},
+                    "sourceDevice": {},
+                    "statistics": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "from": {},
+                  "metric": {},
+                  "oldId": {},
+                  "semantics": {},
+                  "source": {},
+                  "sourceDevice": {},
+                  "to": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_health.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/image/download": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Image bytes",
+            "content": {
+              "application/json": null,
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/image/saveImage": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "filename": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": null,
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/checkCode": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "expireTime": {},
+                    "oldPersonName": {},
+                    "remainDays": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "code": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "codes": {},
+                    "expireTime": {},
+                    "oldId": {},
+                    "oldPersonName": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "count": {},
+                  "createUser": {},
+                  "expireDays": {},
+                  "oldId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/join": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "familyId": {},
+                    "familyName": {},
+                    "oldPersonName": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "code": {},
+                  "familyAddress": {},
+                  "familyName": {},
+                  "familyPassword": {},
+                  "familyPhone": {},
+                  "familyRelation": {},
+                  "familySex": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "inviteCodes": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "page": {},
+                  "pageSize": {},
+                  "state": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/inviteCode/oldPersonList": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "oldPeople": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_family.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/locations/alerts/resolve-latest": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/locations/alerts/summary": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "activeAlerts": {},
+                    "totalResidents": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/monitoring-profiles/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceId": {},
+                  "hrf": {},
+                  "hrl": {},
+                  "bpf": {},
+                  "bpl": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/monitoring-profiles/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/DeviceId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/monitoring-profiles/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "total": {},
+                    "watchDtos": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "oldName": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/monitoring-profiles/update": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "deviceId": {},
+                  "hrf": {},
+                  "hrl": {},
+                  "bpf": {},
+                  "bpl": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "said": {},
+                  "textId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "saidId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "comments": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NoticeId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/reply": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "back": {},
+                  "saidId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "moderatedComments": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notice-comments/toggle-like": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "saidId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notices/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "fileListName": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "textMain": {},
+                  "title": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notices/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NoticeId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notices/detail": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "pics": {},
+                    "text": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NoticeId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notices/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "texts": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "title": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notices/update": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "textId": {},
+                  "title": {},
+                  "textMain": {},
+                  "fileListName": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_social.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/notifications/search": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "after": {
+                    "type": "integer"
+                  },
+                  "familyId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handlers.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/operations/snapshot": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "snapshot": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_operations.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/position/select": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "positionDtos": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NamePage"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/position/selectFamily": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "positionDtos": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/residents/create": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {},
+                  "bothdate": {},
+                  "sex": {},
+                  "phone": {},
+                  "room": {},
+                  "illness": {},
+                  "warn": {},
+                  "foodLike": {},
+                  "foodHate": {},
+                  "drag": {},
+                  "customerId": {},
+                  "deviceId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/residents/delete": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/residents/details": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "oldPersonDetails": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NamePage"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/residents/list": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "oldPeople": {},
+                    "page": {},
+                    "pageSize": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/NamePage"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/residents/update": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "oldId": {},
+                  "name": {},
+                  "bothdate": {},
+                  "sex": {},
+                  "phone": {},
+                  "room": {},
+                  "illness": {},
+                  "warn": {},
+                  "foodLike": {},
+                  "foodHate": {},
+                  "drag": {},
+                  "customerId": {},
+                  "customerName": {},
+                  "deviceId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_resident_devices.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/risk/events": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "events": {},
+                    "rules": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_risk.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/risk/rules": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "rule": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "action": {},
+                  "durationHours": {},
+                  "ip": {},
+                  "reason": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_risk.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/risk/rules/{id}": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "deleted": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_risk.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/rule-policies": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "policy": {},
+                    "revision": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "deviceId": {
+                    "type": "integer"
+                  },
+                  "revision": {
+                    "type": "integer"
+                  },
+                  "policy": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handlers.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/security/factor": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "secret": {},
+                    "uri": {},
+                    "recoveryCodes": {},
+                    "reloginRequired": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handlers.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/security/login-audit": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/ItemsSuccess"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "after": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handlers.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/service/status": {
+      "get": {
+        "deprecated": null,
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service database status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "databaseReady": {},
+                    "primaryEngine": {},
+                    "configError": {},
+                    "analytics": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/setup": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": null,
+            "content": null,
+            "$ref": "#/components/responses/Success"
+          }
+        },
+        "security": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {},
+                  "password": {},
+                  "phone": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_auth.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/user/select": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "usersByPhone2": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "userPhone": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_user.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/alerts/count": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "preTotal": {},
+                    "rateTotal": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/alerts/detail": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "hasAlert": {},
+                    "message": {},
+                    "recordId": {},
+                    "deviceId": {},
+                    "oldId": {},
+                    "oldPersonName": {},
+                    "hr": {},
+                    "bp": {},
+                    "rateBad": {},
+                    "preBad": {},
+                    "occurTime": {},
+                    "reason": {},
+                    "detail": {},
+                    "advice": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "kind": {},
+                  "oldId": {},
+                  "recordId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/alerts/device-counts": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "bloodPressure": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "heartRate": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "bloodPressure",
+                    "heartRate",
+                    "returnCode"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/JsonObject"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/alerts/resolve": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "kind": {},
+                  "recordId": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/chart": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "bps": {},
+                    "createTimes": {},
+                    "hrs": {},
+                    "time": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/history": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "vitalRecords": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": null,
+          "content": null,
+          "$ref": "#/components/requestBodies/ResidentId"
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    },
+    "/api/v1/vitals/latest": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "page": {},
+                    "pageSize": {},
+                    "vitalRecords": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {},
+                  "timeFirst": {},
+                  "timeLast": {},
+                  "page": {},
+                  "pageSize": {}
+                }
+              }
+            }
+          }
+        },
+        "description": "Implementation: backend/internal/handlers/handler_vitals.go. Go API DTOs without explicit schemas remain open objects; consult implementation."
+      }
+    }
+  },
+  "operationDefaults": {
+    "deprecated": false,
+    "tags": [
+      "v1"
+    ],
+    "security": [
+      {
+        "sessionCookie": []
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Go JSON response; payload varies by operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "returnCode"
+              ],
+              "properties": {
+                "returnCode": {
+                  "type": "string",
+                  "const": "1111"
+                }
+              }
+            }
+          }
+        }
+      },
+      "400": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "401": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "403": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "404": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "405": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "409": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "413": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "415": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "429": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "500": {
+        "$ref": "#/components/responses/ApiError"
+      },
+      "503": {
+        "$ref": "#/components/responses/ApiError"
+      }
+    }
+  },
+  "writeDefaults": {
+    "parameters": [
+      {
+        "$ref": "#/components/parameters/CsrfToken"
+      }
+    ],
+    "requestBody": {
+      "required": true,
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

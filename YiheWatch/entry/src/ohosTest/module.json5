@@ -1,0 +1,9 @@
+{
+  "module": {
+    "name": "entry_test", "type": "feature", "deviceTypes": ["wearable"],
+    "deliveryWithInstall": true, "installationFree": false,
+    "requestPermissions": [{ "name": "ohos.permission.INTERNET" }],
+    "abilities": [{ "name": "NativeTestAbility", "srcEntry": "./ets/testability/NativeTestAbility.ets", "exported": false,
+      "startWindowIcon": "$media:app_icon", "startWindowBackground": "$color:start_window_background" }]
+  }
+}

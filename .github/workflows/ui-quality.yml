@@ -1,0 +1,152 @@
+name: UI Quality
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record exact UI source
+        working-directory: .
+        run: |
+          mkdir -p evidence/ci/ui-quality
+          git rev-parse HEAD > evidence/ci/ui-quality/source-sha.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked frontend dependencies
+        run: npm ci
+
+      - name: Build production frontend
+        run: npm run build
+
+      - name: Verify browser tooling
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then
+            echo "::error::No supported Chrome/Chromium executable found on the runner."
+            exit 1
+          fi
+          echo "Using browser: $CHROME"
+          "$CHROME" --version
+
+          echo "CHROME=$CHROME" >> "$GITHUB_ENV"
+
+      - name: Start preview server and Chrome
+        shell: bash
+        run: |
+          npm run preview -- --port 4173 --strictPort > /tmp/yihe-vite.log 2>&1 &
+          echo $! > /tmp/yihe-vite.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.25
+          done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+
+          # Chrome 136+ requires a non-default profile for remote debugging.
+          CHROME_PROFILE="$(mktemp -d /tmp/yihe-ui-chrome.XXXXXX)"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu \
+            --disable-dev-shm-usage --force-device-scale-factor=1 \
+            --user-data-dir="$CHROME_PROFILE" \
+            --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
+            --window-size=1440,1000 about:blank > /tmp/yihe-chrome.log 2>&1 &
+          echo $! > /tmp/yihe-chrome.pid
+
+          # Headless Chrome on a shared runner can take longer than 15s to
+          # expose CDP even after the process starts. Bound the wait to 60s,
+          # fail early on process exit, and retain useful diagnostics.
+          for i in {1..120}; do
+            if curl --max-time 2 -fsS http://127.0.0.1:9222/json/version >/dev/null 2>&1; then break; fi
+            if ! kill -0 "$(cat /tmp/yihe-chrome.pid)" 2>/dev/null; then
+              echo "Chrome exited before CDP was ready" >&2
+              tail -n 80 /tmp/yihe-chrome.log >&2
+              exit 1
+            fi
+            sleep 0.5
+          done
+          curl --max-time 3 -fsS http://127.0.0.1:9222/json/version >/dev/null || {
+            echo "Chrome CDP not ready within 60 seconds" >&2
+            tail -n 80 /tmp/yihe-chrome.log >&2
+            exit 1
+          }
+
+      - name: Desktop accessibility and visual capture
+        working-directory: .
+        run: >
+          node tests/ui/ui-smoke.mjs
+          http://127.0.0.1:4173/#/sign-in
+          1440 1000
+          tests/ui/artifacts/login-desktop.png
+          normal
+
+      - name: Mobile accessibility and visual capture
+        working-directory: .
+        run: >
+          node tests/ui/ui-smoke.mjs
+          http://127.0.0.1:4173/#/sign-in
+          390 844
+          tests/ui/artifacts/login-mobile.png
+          normal
+
+      - name: Large-text mobile accessibility and visual capture
+        working-directory: .
+        run: >
+          node tests/ui/ui-smoke.mjs
+          http://127.0.0.1:4173/#/sign-in
+          390 844
+          tests/ui/artifacts/login-mobile-large-text.png
+          large-text
+
+      - name: Compare desktop visual baseline
+        run: node scripts/visual-rmse.mjs ../docs/screenshots/login-desktop.png ../tests/ui/artifacts/login-desktop.png
+
+      - name: F02 Chromium cancellation and history regression
+        shell: bash
+        run: |
+          npm ci --prefix qa
+          CARE_CHROME_PATH="$CHROME" node qa/f02-acceptance.cjs
+
+      - name: Guardian and lifecycle cancellation regression
+        shell: bash
+        run: CARE_CHROME_PATH="$CHROME" node qa/lifecycle-acceptance.cjs
+
+      - name: Upload UI evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ui-quality-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            evidence/ci/ui-quality/
+            tests/ui/artifacts/
+            frontend/qa/artifacts/f02-acceptance.json
+            frontend/qa/artifacts/lifecycle-acceptance.json
+            /tmp/yihe-vite.log
+            /tmp/yihe-chrome.log
+          if-no-files-found: error
+          retention-days: 14

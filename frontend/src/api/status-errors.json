@@ -1,0 +1,46 @@
+{
+  "400": {
+    "code": "INVALID_REQUEST",
+    "message": "请求参数无效"
+  },
+  "401": {
+    "code": "AUTH_REQUIRED",
+    "message": "请登录后再操作"
+  },
+  "403": {
+    "code": "ACCESS_DENIED",
+    "message": "没有此操作权限"
+  },
+  "404": {
+    "code": "NOT_FOUND",
+    "message": "记录或接口不存在"
+  },
+  "405": {
+    "code": "METHOD_NOT_ALLOWED",
+    "message": "请求方法不受支持"
+  },
+  "409": {
+    "code": "CONFLICT",
+    "message": "数据状态已变化，请刷新后重试"
+  },
+  "413": {
+    "code": "PAYLOAD_TOO_LARGE",
+    "message": "请求数据超过允许大小"
+  },
+  "415": {
+    "code": "UNSUPPORTED_MEDIA_TYPE",
+    "message": "请求内容类型不受支持"
+  },
+  "429": {
+    "code": "RATE_LIMITED",
+    "message": "请求过于频繁，请稍后重试"
+  },
+  "500": {
+    "code": "INTERNAL_ERROR",
+    "message": "服务处理失败"
+  },
+  "503": {
+    "code": "SERVICE_UNAVAILABLE",
+    "message": "服务暂不可用"
+  }
+}

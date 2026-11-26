@@ -1,0 +1,24 @@
+颐和 2.1.0 · Windows x64
+
+安装版：运行 Yihe-Setup-2.1.0-win-x64.exe。安装程序使用 Windows WebView2 运行环境，缺失时按提示处理。
+免安装版：完整解压 ZIP 后运行 yihe.exe，保留同目录 yihe-server.exe；不可只提取单个 EXE。
+
+数据库：当前版本仅使用独立部署的 MySQL 8.4，保存业务数据、会话、审计和加密图片。安装包不包含数据库服务，不再连接 PostgreSQL 分析库或 S3 作为在线存储。
+
+启动配置：准备 YIHE_MYSQL_DSN（Go MySQL 驱动格式）、SESSION_BACKEND=database 和 DATA_ENCRYPTION_KEY（随机 32 字节的 Base64）。数据密钥必须与数据库备份配套保存，升级时继续使用原有密钥。
+
+PowerShell 7 启动示例：
+$env:YIHE_MYSQL_DSN = Read-Host 'MySQL DSN' -MaskInput
+$env:DATA_ENCRYPTION_KEY = Read-Host 'Saved Base64 encryption key' -MaskInput
+$env:SESSION_BACKEND = 'database'
+& '.\yihe.exe'
+
+初次使用：数据库迁移完成后，依照界面创建首位管理员，没有默认密码。随后建立长者档案、登记和绑定手表。数据库不就绪时应用可以显示诊断界面，但相关业务操作不可用。
+
+旧版升级：停止旧服务写入，备份数据库、原始图片与解密密钥。历史 PostgreSQL/S3 数据须按源码包 docs/MYSQL_ONLY_MIGRATION.md 单独迁移；安装程序不会自动转换旧数据库。
+
+照护与告警：未上报不表示健康状态正常；历史位置不应作为实时定位。处置与复核需要相应岗位授权。网关接受通知不代表人员已到场。桌面窗口退出后会关闭本机服务，长期接收 SOS 需要独立常驻 Go 服务及人工值守。
+
+用户资料：%APPDATA%\颐和 存放客户端配置与运行信息，不能替代 MySQL 及加密密钥备份。卸载不会自动删除这些资料。
+
+发行包默认未使用受信任的代码签名证书。从官方 GitHub Release 获取文件并核对 SHA256SUMS.txt。真实手表、通知网关、生产数据迁移与跨主机长期值守须另外验收。

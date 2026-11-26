@@ -1,0 +1,5 @@
+{
+  "modelVersion": "26.0.0", "name": "yihe-watch", "version": "0.2.0",
+  "description": "颐和 WATCH 5 原生健康与设备通信端", "dependencies": {},
+  "devDependencies": { "@ohos/hypium": "1.0.25" }
+}

@@ -1,0 +1,15 @@
+DROP TRIGGER IF EXISTS yihe_analytics_ratepre_insert;
+DROP TRIGGER IF EXISTS yihe_analytics_ratepre_update;
+DROP TRIGGER IF EXISTS yihe_analytics_ratepre_delete;
+DROP TRIGGER IF EXISTS yihe_analytics_watch_day_info_insert;
+DROP TRIGGER IF EXISTS yihe_analytics_watch_day_info_update;
+DROP TRIGGER IF EXISTS yihe_analytics_watch_day_info_delete;
+DROP TRIGGER IF EXISTS yihe_analytics_device_location_insert;
+DROP TRIGGER IF EXISTS yihe_analytics_device_location_update;
+DROP TRIGGER IF EXISTS yihe_analytics_device_location_delete;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_insert;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_update;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_delete;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_event_insert;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_event_update;
+DROP TRIGGER IF EXISTS yihe_analytics_care_incident_event_delete;

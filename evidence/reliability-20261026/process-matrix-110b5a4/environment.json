@@ -1,0 +1,14 @@
+{
+  "source_sha": "110b5a43b400f6018c496855b1458d47181785aa",
+  "working_tree_dirty": false,
+  "binary_sha256": "806c4f920014254812efa1d695ec266ada99286d0e6e8f184249bf0ef40ac244",
+  "scope": "local real processes/MySQL/PostgreSQL/TLS gateway/Prometheus/Alertmanager/receiver; synthetic device and actors; no external host or human paging verified",
+  "mysql_port": 33372,
+  "pg_port": 55471,
+  "mysql_durability": {
+    "datadir": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\yihe-reliability-20261026\\process-drill\\6f5be6807fa6\\mysql\\",
+    "version": "8.0.43",
+    "innodb_flush_log_at_trx_commit": 1
+  },
+  "postgres_version": "postgres (PostgreSQL) 16.15"
+}

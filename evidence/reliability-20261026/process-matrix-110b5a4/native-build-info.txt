@@ -1,0 +1,33 @@
+E:\DevEco Test\.reliability-lab\server.exe: go1.26.10
+	path	careold-go/cmd/server
+	mod	careold-go	(devel)	
+	dep	filippo.io/edwards25519	v1.1.1	h1:YpjwWWlNmGIDyXOn8zLzqiD+9TyIlPhGFG96P39uBpw=
+	dep	github.com/aws/aws-sdk-go-v2	v1.47.4	h1:bTvk6UdSSSvaQsfLVj1JRDEEqj/PDRwGf1KanaRzau0=
+	dep	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream	v1.7.24	h1:t7FxqJ5KHDeKceyD4HtGaG6z7hMSeVGjs5/4c+L5ArM=
+	dep	github.com/aws/aws-sdk-go-v2/credentials	v1.20.10	h1:ItSjcLk+2M15RnRxO105uVIqLiVQn8y3gaeHC7W0iqs=
+	dep	github.com/aws/aws-sdk-go-v2/internal/configsources	v1.5.7	h1:fSNAt6hs4qLjb9tMZc6vj3PHlOCYGXK2JjJZ7AW2tf4=
+	dep	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2	v2.8.7	h1:7NS6kqBjkWIN8P/AEdmtyq6eQGAhN1oHTZdzXclpH6Y=
+	dep	github.com/aws/aws-sdk-go-v2/internal/v4a	v1.5.7	h1:wYu55QUHARwu9YzeuY5yEJUTsIu8ahkmp1l3QmbzHn8=
+	dep	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding	v1.13.22	h1:qHfXn1Tm2Rh8kic/DvdKaiSVlHQRSr5C+rMuBR29D44=
+	dep	github.com/aws/aws-sdk-go-v2/service/internal/checksum	v1.11.8	h1:Foai7RHOgCNikTS6shP7OxVi4XdgR1z5uiy9NN6tBZs=
+	dep	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url	v1.14.7	h1:6MSlRo7aiUVBftQ8XmW7XIh3EZqCbkN9zI0YlGW8nl0=
+	dep	github.com/aws/aws-sdk-go-v2/service/internal/s3shared	v1.20.7	h1:6lQFbSJxvtqn19hbh+2+g5pRV8U4Etrq5x6sL6mD35U=
+	dep	github.com/aws/aws-sdk-go-v2/service/s3	v1.114.5	h1:97+lZymtcztX5RPNyW+B9pV6e60GQ7RBULVVRKhUTfk=
+	dep	github.com/aws/smithy-go	v1.28.6	h1:Pj+/sUviNYjow8ELRtNwKHZ9ECeF+7pATX3+shjLIrw=
+	dep	github.com/go-sql-driver/mysql	v1.9.3	h1:U/N249h2WzJ3Ukj8SowVFjdtZKfu9vlLZxjPXV1aweo=
+	dep	github.com/goccy/go-json	v0.11.2	h1:jdZv93Tt4ioR8yW1CoNsvSxrcZlCXAUU1aZXN7gpXUA=
+	dep	github.com/google/uuid	v1.6.0	h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+	dep	github.com/jackc/pgpassfile	v1.0.0	h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
+	dep	github.com/jackc/pgservicefile	v0.0.0-20240606120523-5a60cdf6a761	h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
+	dep	github.com/jackc/pgx/v5	v5.9.2	h1:3ZhOzMWnR4yJ+RW1XImIPsD1aNSz4T4fyP7zlQb56hw=
+	dep	github.com/jackc/puddle/v2	v2.2.2	h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
+	dep	golang.org/x/crypto	v0.56.0	h1:GUh5Ii4J5jtcseSMiRqr1jXCNHoxjeV9Fmekc2oLy6Y=
+	dep	golang.org/x/sync	v0.22.0	h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
+	dep	golang.org/x/text	v0.41.0	h1:vz/seA0lnX87Othu2f/0L24RcgrXD9/YFTSuGjj3rH8=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=1
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1

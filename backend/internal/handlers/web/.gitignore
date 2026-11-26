@@ -1,0 +1,4 @@
+# 构建产物：由脚本从 oldIot/dist 复制而来，不入库
+*
+!.gitkeep
+!.gitignore

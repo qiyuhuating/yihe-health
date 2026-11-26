@@ -1,0 +1,4 @@
+go version go1.26.10 linux/amd64
+linux
+amd64
+1

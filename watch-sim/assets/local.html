@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
+<title>颐和 · 本地手表模拟</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f4;color:#16302b;font:15px/1.6 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1100px;margin:40px auto;padding:0 24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}h1{font-size:28px;margin:0}h2{font-size:17px;margin:0 0 20px}.muted{color:#667d76;font-size:13px}.status{white-space:nowrap;border:1px solid #bbd7c9;background:#e1f0e7;border-radius:30px;padding:7px 15px;color:#256342}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}.card,.panel{background:#fff;border:1px solid #dae5df;border-radius:16px;padding:22px}.label{color:#61766f;font-size:13px}.value{font-size:34px;line-height:1.5;font-weight:650}.unit{font-size:13px;color:#61766f;margin-left:6px}.plots{display:grid;grid-template-columns:2fr 1fr;gap:20px}.panel{margin-bottom:20px}svg{display:block;width:100%;height:auto;min-height:140px}.legend{display:flex;gap:20px;font-size:13px;color:#61766f}.hr{color:#268567}.bp{color:#c98043}.event{padding:11px 0;border-bottom:1px solid #edf1ee}.event:last-child{border:0}footer{font-size:12px;color:#7b8c85;margin-top:20px}.meta{overflow-wrap:anywhere}button{background:#fff;color:#345b4d;border:1px solid #cbdcd2;border-radius:8px;padding:7px 13px;font:inherit;cursor:pointer}@media(max-width:720px){main{margin:24px auto;padding:0 16px}.cards{grid-template-columns:repeat(2,1fr)}.plots{grid-template-columns:1fr}header{align-items:flex-start;flex-wrap:wrap}.value{font-size:29px}}
+</style>
+<main>
+<header><div><div class="muted">颐和 · 手表模拟</div><h1>此刻的身体与活动</h1><div class="muted meta" id="meta"></div></div><div><span class="status">● 本地运行</span></div></header>
+<section class="cards" aria-label="当前采样">
+<div class="card"><div class="label">心率</div><span class="value" id="hr"></span><span class="unit">次 / 分</span></div>
+<div class="card"><div class="label">血压 · 收缩压</div><span class="value" id="bp"></span><span class="unit">mmHg</span></div>
+<div class="card"><div class="label">今日步数</div><span class="value" id="step"></span><span class="unit">步</span></div>
+<div class="card"><div class="label">睡眠时长</div><span class="value" id="sleep"></span><span class="unit">小时</span></div>
+<div class="card"><div class="label">手表电量</div><span class="value" id="battery"></span><span class="unit">%</span></div>
+<div class="card"><div class="label">当前场景</div><div class="value" id="scene" style="font-size:23px;margin-top:8px"></div><div class="muted" id="count"></div></div>
+</section>
+<div class="plots"><section class="panel"><h2>最近的身体变化</h2><svg id="vitals" viewBox="0 0 620 200" role="img" aria-label="心率和血压趋势"></svg><div class="legend"><span class="hr">● 心率</span><span class="bp">● 收缩压</span><span>最近 120 次采样</span></div></section><section class="panel"><h2>活动轨迹</h2><svg id="position" viewBox="0 0 260 200" role="img" aria-label="本地模拟活动轨迹"></svg><div class="muted" id="coordinates"></div></section></div>
+<section class="panel"><h2>场景事件 <span class="muted" id="event-count"></span></h2><div id="events"></div></section>
+<footer>数据由本地模型生成。页面自动读取最新显示内容；关闭模拟器后保留最后一次采样。<button id="refresh" type="button">刷新</button></footer>
+</main>
+<script>
+'use strict';
+const view=__LOCAL_DATA__;
+const latest=view.latest,data=latest.data;
+const text=(id,value)=>document.getElementById(id).textContent=value;
+for(const key of ['hr','bp','step','sleep','battery'])text(key,data[key]??'—');
+text('meta',`${data.deviceNo} · ${data.beTime}`);text('scene',latest.scenarioLabel);text('count',`已生成 ${latest.sampleCount} 次采样`);
+text('coordinates',`${data.lng}° E · ${data.lat}° N`);text('event-count',`共 ${latest.eventCount} 次`);
+const namespace='http://www.w3.org/2000/svg';
+function line(svg,points,color){const element=document.createElementNS(namespace,'polyline');element.setAttribute('points',points);element.setAttribute('fill','none');element.setAttribute('stroke',color);element.setAttribute('stroke-width','2.5');element.setAttribute('stroke-linecap','round');element.setAttribute('stroke-linejoin','round');svg.appendChild(element);if(!points.includes(' ')){const [x,y]=points.split(',');const dot=document.createElementNS(namespace,'circle');dot.setAttribute('cx',x);dot.setAttribute('cy',y);dot.setAttribute('r','3');dot.setAttribute('fill',color);svg.appendChild(dot);}}
+const chart=document.getElementById('vitals'),history=view.history;
+for(const [field,color] of [['hr','#268567'],['bp','#c98043']]){const values=history.map(point=>Number(point[field]));const points=values.map((value,i)=>`${20+i*580/Math.max(1,values.length-1)},${180-(value-20)*150/220}`).join(' ');line(chart,points,color);}
+const xs=history.map(p=>Number(p.lng)),ys=history.map(p=>Number(p.lat)),minX=Math.min(...xs),minY=Math.min(...ys),spanX=Math.max(...xs)-minX,spanY=Math.max(...ys)-minY;
+const track=history.map((p,i)=>`${25+(spanX?(xs[i]-minX)*210/spanX:105)},${175-(spanY?(ys[i]-minY)*150/spanY:75)}`).join(' ');line(document.getElementById('position'),track,'#268567');
+const events=document.getElementById('events');if(!view.events.length)events.textContent='当前没有场景事件。';
+for(const event of [...view.events].reverse()){const element=document.createElement('div');element.className='event';element.textContent=`${event.kind==='sos'?'模拟求救':'模拟摔倒'} · ${event.at}`;events.appendChild(element);}
+document.getElementById('refresh').onclick=()=>location.reload();setTimeout(()=>location.reload(),3000);
+</script>
+</html>

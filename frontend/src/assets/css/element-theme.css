@@ -1,0 +1,146 @@
+/* Element Plus adaptations shared by the administrative care workspace. */
+#app .care-app .el-table {
+  font-variant-numeric: tabular-nums;
+  border-radius: 12px;
+}
+#app .care-app .el-table th {
+  padding: 16px 0;
+  font-size: 14px;
+  letter-spacing: .02em;
+  background: var(--care-surface-muted);
+  border-bottom-color: var(--care-border);
+}
+#app .care-app .el-table td {
+  padding: 14px 0;
+  border-bottom-color: var(--care-border-subtle);
+}
+#app .care-app .el-table .cell {
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+#app .care-app .el-table__body tr:hover > td {
+  background: var(--care-surface-hover);
+}
+#app .care-app .el-input-group__append {
+  background: var(--care-surface-muted);
+  border-color: var(--care-control-border);
+  color: var(--care-primary);
+}
+#app .care-app .el-input-group__append .el-button {
+  margin-top: -1px;
+  margin-bottom: -1px;
+}
+#app .care-app .el-input__suffix .el-input__icon {
+  color: var(--care-text-muted);
+}
+#app .care-app .el-button {
+  border-radius: var(--care-control-radius);
+  min-height: var(--care-target-primary);
+}
+#app .care-app .el-button.is-text,
+#app .care-app .el-button.is-link {
+  min-width: var(--care-target-primary);
+}
+#app .care-app .el-input__inner {
+  min-height: var(--care-target-primary);
+  height: var(--care-target-primary);
+}
+#app .care-app .el-textarea__inner {
+  font: inherit;
+  line-height: 1.9;
+  padding: 14px 16px;
+}
+#app .care-app .el-form-item__label {
+  color: var(--care-text-secondary);
+}
+#app .care-app .el-form-item__error {
+  position: static;
+  padding-top: 8px;
+  color: var(--care-danger);
+  line-height: 1.6;
+  font-size: 14px;
+}
+#app .care-app .el-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 92% !important;
+  max-width: 800px;
+  max-height: calc(100vh - 48px);
+  margin: 24px auto !important;
+  border-radius: var(--care-panel-radius);
+}
+#app .care-app .el-dialog__header {
+  flex-shrink: 0;
+  padding: 24px 76px 20px 28px;
+}
+#app .care-app .el-dialog__title {
+  color: var(--care-heading);
+  font-size: 21px;
+  line-height: 1.6;
+}
+#app .care-app .el-dialog__headerbtn {
+  display: grid;
+  place-items: center;
+  top: 14px;
+  right: 14px;
+  width: var(--care-target-primary);
+  height: var(--care-target-primary);
+  font-size: 20px;
+}
+#app .care-app .el-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 28px;
+  color: var(--care-text-secondary);
+}
+#app .care-app .el-dialog__footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--care-border-soft);
+  padding: 18px 28px;
+  background: #fbfcf9;
+}
+/* Dialog forms stack labels above their controls at all breakpoints. */
+#app .care-app .el-dialog .el-form-item {
+  display: block;
+}
+#app .care-app .el-dialog .el-form-item__label {
+  float: none;
+  display: block;
+  width: auto !important;
+  text-align: left;
+  padding: 0 0 8px;
+  line-height: 1.8;
+}
+#app .care-app .el-dialog .el-form-item__content {
+  margin-left: 0 !important;
+  line-height: 1.8;
+}
+#app .care-app .el-dialog .el-input,
+#app .care-app .el-dialog .el-select,
+#app .care-app .el-dialog .el-input-number {
+  width: 100% !important;
+  max-width: 100%;
+}
+#app .care-app .el-dialog .trend-chart {
+  width: 100% !important;
+  max-width: 100%;
+  height: 320px !important;
+}
+#app .care-app .el-date-editor {
+  max-width: 100%;
+}
+#app .care-app .el-range-input {
+  min-width: 0;
+}
+#app .care-app .el-pagination {
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+#app .care-app .el-pagination .btn-prev,
+#app .care-app .el-pagination .btn-next,
+#app .care-app .el-pager li {
+  min-width: 40px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 6px;
+}

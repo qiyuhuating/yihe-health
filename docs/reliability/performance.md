@@ -1,0 +1,106 @@
+# 性能测量
+
+历史本机 HTTP 延迟与 limiter 内存实验的原始记录已从当前分支清理，可从 Git 历史查阅。
+本文不再引用已删除的逐请求数据或复述其性能数字。
+
+当前性能基线应绑定源码 SHA、Go 与数据库版本、硬件和负载参数，并保留延迟分位数、
+错误率及内存记录。现存 CI 功能记录不代表当前版本的性能或容量测量。
+
+## JSON 字符串扫描：amd64 SSE2
+
+`backend/internal/jsonscan` 为健康样本序列化、样本身份哈希及规则证据生成提供共享扫描器。
+16 字节及以上在 amd64 使用手写 SSE2（`PCMPGTB`、`PCMPEQB`、`POR`、`PMOVMSKB`）；
+短字符串使用 Go 查表。其他架构及 `-tags purego` 使用原逐字节判定。
+控制字符、非 ASCII、引号、反斜杠及 `<>&` 仍返回 false，由原 JSON 编码器处理。
+不改变编码字节、样本身份、密码学算法、数据库事务或业务判定。
+
+汇编使用 Go ABI0、`NOSPLIT` 和不逃逸声明，不使用 cgo；仅当剩余长度不少于 16 时执行
+向量加载，尾部逐字节读取，不依赖分配器填充或越界读取。amd64 使用基线 SSE2，无 AVX CPU 要求。
+
+本机 Go 1.26.10 / Linux amd64 / Intel Xeon Platinum 8573C，`GOMAXPROCS=2`，
+每项 150ms、三次结果中位数；环境存在调度波动。扫描基线为原 Go 字节条件，身份哈希基线为
+同一测试二进制内保存的原实现，保持 SHA-256 路径相同；不以全局 purego 标签比较性能。
+
+| 输入 | 原实现 ns/op | 新实现 ns/op | 说明 |
+|---|---:|---:|---|
+| 16 字节 ASCII 扫描 | 58.83 | 9.419 | 仅扫描器 |
+| 64 字节 ASCII 扫描 | 144.8 | 17.09 | 仅扫描器 |
+| 256 字节 ASCII 扫描 | 470.6 | 38.73 | 仅扫描器 |
+| 1024 字节 ASCII 扫描 | 1852 | 164.7 | 仅扫描器 |
+| 身份哈希：设备号及记录 ID 各 64 字节 | 1040 | 674.8 | 分配不变：128 B、2 次 |
+| 身份哈希：设备号及记录 ID 各 256 字节 | 2658 | 1824 | 分配不变：1024 B、3 次 |
+
+短字段未证明稳定的完整业务收益。32 字节身份字段第一次测量出现明显噪声，追加
+`GOMAXPROCS=1`、500ms、三次对照的中位数为 613.7 → 634.6 ns/op，未显示加速。
+以上结果不代表 HTTP 延迟、数据库吞吐或生产容量提升。
+
+复现（在 backend 目录）：
+
+```sh
+go test ./internal/jsonscan ./internal/health ./internal/rules
+go test -tags purego ./internal/jsonscan
+go vet ./internal/jsonscan
+GOMAXPROCS=2 go test ./internal/jsonscan -run '^$' -bench 'BenchmarkSafe/ascii' -benchtime=150ms -count=3
+GOMAXPROCS=2 go test ./internal/health -run '^$' -bench BenchmarkIdentityScan -benchtime=150ms -count=3
+```
+
+已执行字节等价、向量/尾部边界、Linux guard page 测试及相关 health/rules 包测试；
+Windows amd64 与 Linux arm64 仅完成交叉编译，未执行目标平台测试。未运行数据库压测。
+
+## Linux amd64 原生内核
+
+Linux amd64 在启用 CGO 的构建中使用 C/C++ 工具链。可在 backend 目录执行
+`CGO_ENABLED=1 go build -trimpath -o yihe ./cmd/server` 构建带原生内核的服务端。
+`CGO_ENABLED=0`、`-tags purego` 及其他平台使用 Go 实现。
+
+- 24/32 位无压缩及带颜色掩码的 BMP 通过 Go 的尺寸和长度校验后，达到 4096 像素时由 C 批量转换 RGBA。
+- 2048 条及以上的乱序睡眠记录在 C++ 中排序连续时间戳键，随后由 Go 原地重排样本。
+  已按时间排序的数据直接进入原有聚合流程，带单调时钟的输入由 Go 排序。
+
+Go 1.26.10、Linux amd64、Xeon Platinum 8573C 本机三次对照的中位数：
+
+| 测量 | Go | 原生实现 |
+|---|---:|---:|
+| 1024×1024 24 位 BMP 解码，Go 基线直接写 RGBA 缓冲区 | 3.37 ms | 1.81 ms |
+| 1024×1024 32 位 BMP 解码，Go 基线直接写 RGBA 缓冲区 | 4.77 ms | 3.17 ms |
+| 1024×1024 32 位 BI_BITFIELDS BMP 解码，RGB 5:6:5 掩码 | 14.80 ms | 8.59 ms |
+| 10,000 条乱序睡眠记录完整聚合，含打包和重排 | 4.87 ms | 3.10 ms |
+| 同一睡眠聚合的进程 CPU 时间 | 4.89 ms | 3.70 ms |
+
+BMP 对照包含输出缓冲区分配。睡眠聚合的分配从 310,840 增至 474,680 B/op。
+测量范围为解码和聚合函数，生产接口延迟仍需在真实负载下测量。
+
+### 紧凑睡眠排序键
+
+C++ 排序使用 64 位整数键，高位保存带偏置的纳秒时间差，低位保存样本索引。
+每条排序键从 16 字节减至 8 字节。时间差超出可表示范围时由 Go 排序。
+同一二进制对照中，10,000 条乱序睡眠样本的完整聚合分配由 474,680 降至
+392,760 B/op（每次少 80 KiB）。耗时对照存在波动，本次以分配减少为验收结果。
+
+
+## Windows 长时间运行与页面反复打开的资源验收
+
+执行场景必须固定构建提交 SHA、Windows/WebView2/Go 版本、设备数、数据库类型、网络条件与测试数据，比较同一环境的前后两次运行。**不能把工作集增长直接当作泄漏**：浏览器渲染内存、Go 堆缓存、GC 尚未回收的页及操作系统文件缓存都会影响 RSS。
+
+1. 先启动颐和和 Go 服务，空闲 10 分钟，记录稳定基线。用独立 PowerShell 窗口运行以下采样器（默认 60 分钟、每 15 秒采样，输出 CSV）：
+
+   ```powershell
+   pwsh -File ./scripts/reliability/measure-windows-memory.ps1 -Minutes 60 -IntervalSeconds 15 -Output ./yihe-memory-60m.csv
+   ```
+
+2. 在无业务操作的基线后，连续进行至少 100 次“打开地图 → 加载在线瓦片 → 关闭页面”和 100 次“打开告警工作台 → 加载详情 → 关闭”，每轮记录开始与结束时间。通过浏览器/WebView2 DevTools 的 Performance/Memory 工具记录 JS heap snapshot、detached DOM 节点和事件监听数量；不要把本机其他应用的 `msedgewebview2.exe` 工作集归算到颐和。
+3. 用现有 `watch-sim` 连续上报测试数据至少 60 分钟，检查 Go 进程 Private Bytes、句柄、线程和 CPU 趋势，记录每分钟上报量、出错率、队列积压、p50/p95/p99 服务端延迟。若需要验证真实数据库行为，使用单独的测试库与可恢复的测试数据。
+4. 停止上报并关闭地图和告警弹窗，空闲 10 分钟，再次采样；与同样空闲条件下的基线比较。需要验证 Go 堆对象存活时，在隔离测试环境采集前后两次 heap profile，并在两次采样前触发 GC；GC 之后持续保留且引用链不断扩大的对象才需要按泄漏调查。
+5. 为网络交互增加固定的 100 ms、500 ms 与 2000 ms RTT 档位，并分别测试正常、超时、断开、重新连接。统计首个可用结果时间、误触发写入次数、重复请求数和用户操作能否取消；**写入超时不能自动重放**。使用浏览器 DevTools Network throttling 或测试代理，不要修改生产 API 的超时策略来制造延迟。
+
+### 记录模板和判定
+
+| 场景 | 必须保留的证据 | 不通过的条件 |
+| --- | --- | --- |
+| 空闲 60 分钟 | CSV、WebView2 heap、版本 SHA | 私有内存、句柄或线程持续单向增长且稳定期不回落 |
+| 地图反复进入/退出 | 堆快照、detached DOM、ResizeObserver/RAF 数量 | 关闭页面后地图实例或相关 DOM 的可达数量随循环次数累积 |
+| 告警工作台反复打开/关闭 | 请求日志、JS heap、并发请求数量 | 关闭后仍持续启动旧的告警查询，或后台旧结果覆盖新弹窗 |
+| 持续设备上报 | Go heap/profile、CPU、请求延迟与错误率、队列积压 | 没有工作负载增长时仍出现无限队列/可达对象增长、吞吐衰退 |
+| 慢网/网络中断 | 网络瀑布图、用户提示、操作记录 | 旧读覆盖新读、取消无效、失败写入被静默重放 |
+
+采样脚本监控 `yihe.exe` 和 `yihe-server.exe`，不把 `msedgewebview2.exe` 混入总和。CPU 数据按单核百分比统计；多核情况下可以超过 100%。工作集、Private Bytes 和 JS heap 是不同维度，不得直接相加比较。验收报告应注明每个场景的**起点、终点、运行条件和原始证据**，无证据时保持“未验收”。

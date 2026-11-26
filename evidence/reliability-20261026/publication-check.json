@@ -1,0 +1,7 @@
+{
+  "checked_at": "2026-10-26T11:14:25.011844+00:00",
+  "fixture_secret_scan": "no matches for private lab DB/S3/gateway/receiver/session keys; no PEM private keys",
+  "document_links": "all new report relative links resolve",
+  "classification_csv": "all rows seven columns",
+  "ruleset_json": "valid JSON; not applied"
+}

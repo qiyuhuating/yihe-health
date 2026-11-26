@@ -1,94 +1,180 @@
-# 颐和健康 v0.3.2
+> **正式版 2.1.0**：业务数据使用 MySQL 8.4 单库；[下载最新版](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest)。开发分支为 `preview`，稳定版为 `main`。
 
-社区照护与风险事件原型：居民资料、设备信号、风险事件、用药任务、工作人员处置、审计与页面提醒。系统不提供医疗诊断；短信通道仍明确为 `disabled`。v0.3.2 的重点是**维护与可靠性**，不扩张业务功能。
+<p align="center">
+  <img src="frontend/public/static/brand/yihe-logo-192.webp" width="88" height="88" alt="颐和·智慧养老">
+</p>
 
-## v0.3.2 关键变化
+<h1 align="center">颐和 · 智慧养老管理</h1>
 
-- `GET /api/v1/care/snapshot` 与 `GET /api/v1/audit` 使用 SQLite 强制只读事务（`PRAGMA query_only=ON` + `BEGIN`），不再取得写锁。
-- `snapshot()` 不再调用 `tick()`；时间驱动状态只由后台 worker 处理，worker 启动后立即扫描并每 5 秒继续扫描。
-- 写事务仍使用 `BEGIN IMMEDIATE`；登录失败限流不再由业务函数手工 `commit()`。
-- 后端按职责拆成 `common.py`、`care.py`、`incidents.py`、`notifications.py`、`auth.py`、`serializers.py` 与薄 WSGI `service.py`。
-- CSS 的可编辑源移动到 `docs/样式源/`，四个页面单 CSS 包由脚本生成；发布运行时仍保持每页一个 CSS 请求。
-- 新增 GitHub Actions：基础发布核验 + Chromium 真实后端 E2E。
-- 新增 v0.3.2 事务/纯读契约测试；严格测试当前为 54 项。
+<p align="center">岁月有伴，日常安宁。<br>面向养老照护场景的设备管理、健康监测和协作工作台。</p>
 
-## Development
+<p align="center">
+  <a href="README.md">简体中文</a> · <a href="README.en.md">English</a>
+</p>
 
-需要 Python 3.12+；发布核验还需要 Node.js 18+。在项目根目录：
+[![Preview CI](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml?query=branch%3Apreview)
+[![CodeQL](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml?query=branch%3Apreview)
+[![Release](https://img.shields.io/github/v/release/WatchTestCs/smart-elderly-watch-management?label=Release)](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest)
+[![License](https://img.shields.io/github/license/WatchTestCs/smart-elderly-watch-management)](LICENSE)
+[![Open issues](https://img.shields.io/github/issues/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues)
+[![Open PRs](https://img.shields.io/github/issues-pr/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/pulls)
+[![Accessibility](https://img.shields.io/badge/Accessibility-report%20a%20barrier-blue)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new?template=accessibility_barrier.yml)
 
-```sh
-python docs/工具/build_styles.py
-python docs/工具/build_frontend.py
-python backend/service.py --db care.sqlite3 init
-python backend/service.py --db care.sqlite3 add-user staff-account staff staff-1 工作人员
-python backend/service.py --db care.sqlite3 add-resident examples/resident.json
-python backend/service.py --db care.sqlite3 add-user resident-account resident 1 居民账户
-python backend/service.py --db care.sqlite3 serve --port 8000 --origin http://127.0.0.1:8000 --insecure-local --static docs/dist
+社区入口：[反馈缺陷或建议](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) · [参与贡献](docs/CONTRIBUTING.md) · [无障碍反馈](docs/ACCESSIBILITY.md) · [私密安全报告](.github/SECURITY.md) · [行为准则](docs/CODE_OF_CONDUCT.md)
+
+
+[功能与使用场景](#功能与使用场景) · [下载安装](#下载安装) · [首次启动](#首次启动) · [系统架构](#系统架构) · [开发与构建](#开发与构建) · [常见问题](#常见问题) · [文档与反馈](#文档与反馈)
+
+颐和将长者档案、手表数据、位置告警和照护任务集中在同一工作台，供照护机构及已关联的家属使用。仓库同时包含 Windows 桌面端、可独立部署的 Go 服务、浏览器界面、HarmonyOS 手表端及 Rust 协议模拟器。
+
+![使用测试数据的颐和管理工作台](docs/screenshots/overview-desktop.png)
+
+*界面示例使用测试数据；具体功能取决于所部署版本、设备和服务配置。*
+
+## 功能与使用场景
+
+| 使用场景 | 可以完成的工作 |
+| --- | --- |
+| 长者与家属档案 | 维护基础资料、监护和家属关联，通过邀请码为家属开通受限访问 |
+| 设备与健康数据 | 登记和绑定手表，查看心率、血压、睡眠、步数及采样时间；区分缺失、历史和实时上报 |
+| 位置与异常处理 | 查看设备报告的位置、SOS 和告警，识别最后上报时间，避免将历史位置误认为实时定位 |
+| 照护协作 | 对告警工单接单、记录处置与升级，并由具备权限的其他主管复核 |
+| 机构公告 | 发布通知、管理评论，按管理端和家属端权限展示 |
+| 桌面使用体验 | 支持字号调节、键盘操作、全屏和窄屏布局；可在设置中调整显示与地图偏好 |
+
+**典型流程：** 建立长者档案 → 关联家属 → 登记并绑定手表 → 接收上报 → 处理告警工单 → 独立复核。家属仅能查看获授权的长者信息，岗位权限由服务端执行。
+
+**使用边界：** 未上报不代表健康状态正常；网关接受通知也不代表家属已收到或照护人员已到场。真实 SOS 值守必须配置独立常驻服务、可靠通知渠道和人工响应机制，不能只依赖桌面窗口。
+
+## 下载安装
+
+最新正式版：**2.1.0 · Windows x64**。从 [GitHub Releases](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest) 获取发行包。
+
+| 下载 | 适合谁 | 使用方式 |
+| --- | --- | --- |
+| [Windows Setup 安装包](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Setup-2.1.0-win-x64.exe) | 日常使用者 | 运行安装程序，完成安装后启动颐和 |
+| [Portable 免安装 ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Portable-2.1.0-win-x64.zip) | 不希望安装客户端的用户 | 完整解压后运行 `yihe.exe`，不要单独复制 EXE |
+| [完整源码 ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Source-2.1.0.zip) | 开发及审计人员 | 对应正式发布提交，包含部署和迁移脚本 |
+| [独立 Go 服务端 EXE](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Native-NoFonts-2.1.0-win-x64.exe) | 服务端部署人员 | 无桌面界面，需自行配置数据库和网络 |
+
+[正式版更新说明](docs/releases/2.1.0.md) · [SHA-256 校验清单](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/SHA256SUMS.txt) · [实际构建与验收清单](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/release-manifest.json)
+
+安装包**不附带 MySQL**。Windows 客户端需要 WebView2；安装版会按构建配置处理所需运行组件，Portable 需系统已经安装 WebView2。当前 Windows 发行文件未使用公开受信任的代码签名证书。
+
+## 首次启动
+
+### Windows 桌面端
+
+1. 准备 **MySQL 8.4** 数据库及专用账号，授予应用所需权限。生产部署还需设置备份、TLS 和访问限制。数据库连接信息采用 Go MySQL DSN 格式，例如 `yihe:密码@tcp(127.0.0.1:3306)/yihe?parseTime=true`；实际端口按部署环境调整。
+2. 首次部署时生成并**安全保存**随机 32 字节数据加密密钥。可以在 PowerShell 7 中生成 Base64 值，保存到受控密钥存储；升级时必须使用原有密钥，不能每次重新生成。
+
+   ```powershell
+   [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+   ```
+
+3. 将数据库连接和保存的密钥配置到桌面启动环境，再运行程序。以下命令会交互式读取配置，不需要将真实密码写入仓库。
+
+   ```powershell
+   $env:YIHE_MYSQL_DSN = Read-Host 'MySQL DSN' -MaskInput
+   $env:DATA_ENCRYPTION_KEY = Read-Host 'Saved Base64 encryption key' -MaskInput
+   $env:SESSION_BACKEND = 'database'
+   .\yihe.exe
+   ```
+
+4. 确认数据库迁移完成后，按初始化界面创建管理员，再建立长者档案与设备绑定。**没有预置管理员账号或通用密码。**
+
+数据库连接失败时仍可能打开界面，但登录和业务写入不可用。图片及健康相关数据存储在 MySQL 中，备份必须包含 BLOB 和用于解密的密钥。旧 PostgreSQL/S3 部署的迁移必须停写、备份并按 [MySQL 单库迁移手册](docs/MYSQL_ONLY_MIGRATION.md) 操作，安装程序不会自动迁移旧数据。
+
+可选设置 `MYSQL_STATISTICS_MAX_CONNS`（0–64，默认 0）为健康统计启用同一 MySQL 主库的独立连接池，避免统计事务耗尽原有业务连接。部署时须按每个实例的 20 个业务连接、1 个探活连接及配置的统计连接预算核算 MySQL 总连接数。
+
+### 常驻服务与本地 Compose
+
+桌面端使用本机 Go 子进程，关闭窗口会终止本地服务。需要持续接收远程手表数据和 SOS，请按 [照护服务部署说明](docs/CARE_SERVICE_DEPLOYMENT.md) 部署独立常驻服务，并为对外接口配置 HTTPS、访问控制和实际值班流程。
+
+如需在本地启动完整服务栈，安装 Docker Compose 与 Python 3，在仓库根目录运行：
+
+```powershell
+python scripts/start-platform.py
+python scripts/bootstrap-admin.py
 ```
 
-两次 `add-user` 会交互要求至少 12 字符密码。数据库和真实密钥不要加入源码或发布 ZIP。
+脚本启动 MySQL 8.4、Go API、Nginx 和监控，默认工作台地址为 `http://127.0.0.1:8080`，Prometheus 为 `http://127.0.0.1:9090`，均仅绑定本地回环地址。`deploy/secrets/`、`deploy/platform.env` 与 MySQL 数据卷需要妥善备份。不要将本地默认配置直接暴露到公网。
 
-## Validation
+## 系统架构
 
-快速且完整的本地发布门禁：
+健康记录以 MySQL 中已提交的数据为准。启用健康统计内存缓存后，每次读取都先检查访问权限和 MySQL 中该老人的数据版本。版本变化时重新计算，没有版本记录时直接查询 MySQL。服务重启后，统计结果可从数据库重新生成。
 
-```sh
-python tools/check_release.py
+```mermaid
+flowchart LR
+    subgraph Desktop["Windows 桌面端"]
+        T["Tauri 2 / Rust"] -->|"校验哈希、管理进程"| L["本机 Go 服务"]
+        V["Vue 3 / WebView2"] -->|"同源 HTTP"| L
+        V -->|"受限 IPC"| T
+    end
+    W["HarmonyOS 手表 / Rust 模拟器"] -->|"设备认证、遥测与 SOS"| S["独立常驻 Go API"]
+    B["浏览器工作台"] -->|"HTTPS /api/v1/"| S
+    L -->|"业务读写"| M[("MySQL 8.4")]
+    S -->|"授权事务"| M
 ```
 
-它会验证源码 SHA-256 manifest、54 项严格后端测试、SQLite 连接归还、CSS 源/生成包一致性、CSP、HTTP-only 构建、JavaScript 语法、敏感文件扫描和前端数据契约。
+MySQL 8.4 是**唯一生产业务数据库**，保存档案、会话、告警、健康数据、审计和图片。桌面程序在启动前校验 Go 程序 SHA-256；控制令牌只通过进程环境变量传递，不暴露给网页。桌面本地服务仅监听回环地址，不能直接供外部手表访问。
 
-浏览器联调：
+服务的 `/healthz` 仅检查进程存活；`/api/v1/service/status` 才用于判断数据库就绪。具体信任边界、岗位授权和迁移设计见 [架构文档](docs/ARCHITECTURE.md)。
 
-```sh
-python -m pip install -r requirements-test.txt
-python -m playwright install chromium
-python tools/check_release.py --e2e
+## 开发与构建
 
-# 若受限环境已有系统 Chromium，也可：
-# YIHE_CHROMIUM_EXECUTABLE=/usr/bin/chromium python tools/check_release.py --e2e
+日常开发以 `preview` 为目标分支，`main` 对应稳定发布。完整构建要求：**PowerShell 7、Node.js 24.x、Go 1.27.4、Rust（至少 1.99.1）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
+
+```powershell
+git clone --branch preview https://github.com/WatchTestCs/smart-elderly-watch-management.git
+Set-Location smart-elderly-watch-management
+./desktop/validate-version.ps1
+./desktop/build.ps1
 ```
 
-后端覆盖率示例：
+主要目录：`frontend/`（Vue 前端）、`backend/`（Go API 与 MySQL 迁移）、`desktop/`（Tauri 桌面及打包）、`YiheWatch/`（HarmonyOS 手表端）、`watch-sim/`（Rust 模拟器）、`deploy/`（容器、网关与监控）。
 
-```sh
-python -m coverage run --branch --include="backend/*.py" tools/run_unit_tests.py
-python -m coverage report -m
+常用的变更相关验证：
+
+```powershell
+Push-Location backend
+go test -count=1 ./...
+go vet ./...
+Pop-Location
+
+Push-Location frontend
+npm ci
+npm run typecheck
+npm test
+npm run build
+Pop-Location
 ```
 
-## Architecture
+数据库集成和竞态测试使用**隔离测试库** `TEST_MYSQL_DSN`；未配置时部分测试会跳过。HarmonyOS 原生编译、实体手表、短信网关、生产迁移及长时间运行须独立验收，不应因基础 CI 通过就视为已覆盖。测试范围见 [测试指南](docs/TESTING.md)。
 
-```text
-HTTP / WSGI  backend/service.py
-        │
-        ├── Auth/session/rate-limit  backend/auth.py
-        ├── Care persistence         backend/care.py
-        ├── Incident state machine   backend/incidents.py
-        ├── Notification capability  backend/notifications.py
-        ├── Resident public DTO      backend/serializers.py
-        └── Shared validation/time   backend/common.py
-```
+## 常见问题
 
-读路径与写路径分离：
+| 现象 | 排查 |
+| --- | --- |
+| 窗口能打开，但无法登录或保存 | 检查 MySQL 服务、DSN、迁移状态以及 `DATA_ENCRYPTION_KEY`。`/healthz` 成功不代表数据库就绪 |
+| Portable 无法运行 | 完整解压 ZIP，确认 `yihe.exe` 与 `yihe-server.exe` 在同一目录，并检查 WebView2 |
+| 手表无法连接 | 桌面本地服务只监听回环地址；外部设备应连接独立部署的 Go API，而不是桌面随机端口 |
+| 旧版本升级后配置报错 | 不再支持 PostgreSQL 分析库和 S3 作为运行时依赖；按迁移手册清理旧配置，勿直接删除原数据 |
+| 担心数据丢失 | 单独备份 MySQL 数据、加密密钥与部署配置，并在隔离环境验证恢复 |
 
-```text
-snapshot / audit GET → read_transaction → query_only → no business mutation
-other API writes      → write_transaction → BEGIN IMMEDIATE → atomic commit
-background worker     → write_transaction → tick → time-driven state changes
-```
+`preview` 开发分支支持统一离线回填入口 `go run ./cmd/yihe-ctl protect <target> --limit 100`。转换照护备注请使用 `go run ./cmd/protect-notes --limit 100`，默认只盘点；执行 `--apply` 前必须停写并核验备份。详细命令见 [后端运维说明](backend/README.md)。
 
-`docs/` 保留可离线演示源码；`docs/dist/` 是 HTTP-only 发布产物。生产构建排除演示凭据和演示居民数据。
+## 文档与反馈
 
-## Security and privacy
+[完整项目文档索引](docs/INDEX.md) 按安装、开发、部署、运维和安全场景整理资料，找不到的内容可在 Issue 中提出。
 
-- Resident / Staff 在后端真正做授权检查，不依赖前端隐藏按钮。
-- 居民快照通过 `serializers.py` 嵌套 allow-list 生成，真实工作人员身份、内部备注、审计信息不会进入居民响应。
-- HttpOnly Session Cookie；写请求验证 Origin + CSRF；生产要求 Secure Cookie。
-- 设备事件使用独立 Bearer key，并支持幂等键。
-- SQLite 连接由严格测试追踪，当前 0 泄漏。
+| 需要做什么 | 参考资料 |
+| --- | --- |
+| 部署、迁移、备份 | [MySQL 迁移](docs/MYSQL_ONLY_MIGRATION.md) · [备份恢复](docs/runbooks/backup-restore.md) |
+| 理解架构和接口 | [实现架构](docs/ARCHITECTURE.md) · [API 契约](docs/API_CONTRACTS.md) |
+| 接入手表和模拟器 | [手表接入](docs/WATCH_INTEGRATION.md) · [Rust 模拟器](watch-sim/README.md) |
+| 遇到问题与参与开发 | [支持与排查](docs/SUPPORT.md) · [贡献指南](docs/CONTRIBUTING.md) · [Issue 模板](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) |
 
-## Current limits
+提交问题时请说明**版本或 commit SHA、复现步骤、操作系统、部署方式及脱敏日志**；不要公开健康记录、定位、密码和设备密钥。安全问题请使用 [私密报告方式](.github/SECURITY.md)。
 
-这是单社区可运行原型，不宣称生产医疗系统。当前仍使用 SQLite + stdlib WSGI，短信 provider 未接入；正式运营还需要生产 WSGI 容器、备份恢复、容量测试、监控告警和实际短信供应商。
-
-更多细节见 `backend/README.md`、`docs/文档/architecture.md`、`docs/文档/resident-privacy-contract.md` 和 `REFACTOR-NOTES.md`。
+项目代码采用 [MIT License](LICENSE)。所含字体、地图和第三方依赖适用各自许可证。历史预览发布现归档为 [`v2.0.7`](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/tag/v2.0.7)，其旧附件内部仍显示 2.1.0；请下载上方 **2.1.0 正式版**，不要混用历史包。

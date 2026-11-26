@@ -1,0 +1,93 @@
+name: yihe-platform
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run scripts/start-platform.py first}
+      MYSQL_DATABASE: yihe
+      MYSQL_USER: yihe
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_bin", "--log-bin-trust-function-creators=1"]
+    volumes: ["mysql:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+    restart: unless-stopped
+  app:
+    build: {context: "..", dockerfile: deploy/Dockerfile}
+    environment:
+      MYSQL_DSN: yihe:${MYSQL_PASSWORD}@tcp(mysql:3306)/yihe
+      BLOB_BACKEND: mysql
+      # The runtime filesystem is read-only; the audit retry journal is ephemeral.
+      # MySQL remains the only durable application datastore.
+      YIHE_RISK_AUDIT_SPOOL_PATH: /tmp/yihe-risk-audit.jsonl
+      SESSION_BACKEND: database
+      HEALTH_HOT_CACHE_MIB: ${HEALTH_HOT_CACHE_MIB:-16}
+      RATE_LIMIT_MAX_KEYS: ${RATE_LIMIT_MAX_KEYS:-8192}
+      RATE_LIMIT_MAX_SLOTS: ${RATE_LIMIT_MAX_SLOTS:-262144}
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-${GATEWAY_IPV4:-172.30.73.10}/32}
+      DATA_ENCRYPTION_KEY_FILE: /run/secrets/data_key
+      METRICS_TOKEN_FILE: /run/secrets/metrics_token
+      DESKTOP_TOKEN_FILE: /run/secrets/bootstrap_token
+      NOTIFY_WEBHOOK_URL: ${NOTIFY_WEBHOOK_URL:-}
+      NOTIFY_BULK_WEBHOOK_URL: ${NOTIFY_BULK_WEBHOOK_URL:-}
+      NOTIFY_WEBHOOK_TOKEN: ${NOTIFY_WEBHOOK_TOKEN:-}
+      NOTIFY_DRAIN_CONCURRENCY: ${NOTIFY_DRAIN_CONCURRENCY:-1}
+      YIHE_RUNTIME_AUTOTUNE: ${YIHE_RUNTIME_AUTOTUNE:-0}
+      CARE_NOTIFY_WEBHOOK_URL: ${CARE_NOTIFY_WEBHOOK_URL:-}
+      CARE_NOTIFY_WEBHOOK_TOKEN: ${CARE_NOTIFY_WEBHOOK_TOKEN:-}
+      CARE_NOTIFY_CONCURRENCY: ${CARE_NOTIFY_CONCURRENCY:-8}
+      RULE_DEVICE_WORKERS: ${RULE_DEVICE_WORKERS:-8}
+      CARE_RECEIPT_SECRET: ${CARE_RECEIPT_SECRET:?}
+    secrets: [data_key, metrics_token, bootstrap_token]
+    expose: ["8080"]
+    # MySQL owns all persistent application data and encrypted images.
+    depends_on:
+      mysql: {condition: service_healthy}
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  gateway:
+    image: nginx:stable-bookworm
+    volumes: ["./platform.nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    ports: ["127.0.0.1:${APP_PORT:-8080}:8080"]
+    depends_on:
+      app: {condition: service_healthy}
+    restart: unless-stopped
+    networks:
+      default:
+        ipv4_address: ${GATEWAY_IPV4:-172.30.73.10}
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    profiles: [paging]
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes: ["./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro", "alertmanager:/alertmanager"]
+    secrets: [oncall_webhook_url, oncall_token]
+    expose: ["9093"]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes: ["./prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./alerts.yml:/etc/prometheus/alerts.yml:ro", "prometheus:/prometheus"]
+    secrets: [metrics_token]
+    ports: ["127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"]
+    # Monitoring must start even when the application is unhealthy.
+    restart: unless-stopped
+secrets:
+  data_key: {file: ./secrets/data-key}
+  metrics_token: {file: ./secrets/metrics-token}
+  bootstrap_token: {file: ./secrets/bootstrap-token}
+  oncall_webhook_url: {file: ./secrets/oncall-webhook-url}
+  oncall_token: {file: ./secrets/oncall-token}
+volumes:
+  mysql:
+  prometheus:
+  alertmanager:
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${PLATFORM_SUBNET:-172.30.73.0/24}

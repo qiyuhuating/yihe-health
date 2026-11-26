@@ -1,0 +1,9 @@
+{
+  "device_no": "WATCH0001",
+  "secret": "",
+  "interval": 3,
+  "scenario": "demo",
+  "longitude": 113.0625,
+  "latitude": 28.1975,
+  "app_version": "2.0.0-sim"
+}

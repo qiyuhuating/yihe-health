@@ -1,0 +1,224 @@
+{
+  "source_sha": "110b5a43b400f6018c496855b1458d47181785aa",
+  "scope": "read-only inspection after full drill; restarted only the same owned disposable database without app/worker; no task state edits",
+  "events": [
+    {
+      "id": 1,
+      "actor": "device",
+      "action": "received",
+      "incident": 1,
+      "created_at": "2026-10-26T10:56:08.950212Z"
+    },
+    {
+      "id": 2,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 1,
+      "created_at": "2026-10-26T10:56:09.982487Z"
+    },
+    {
+      "id": 3,
+      "actor": "1",
+      "action": "acknowledge",
+      "incident": 1,
+      "created_at": "2026-10-26T10:56:10.062464Z"
+    },
+    {
+      "id": 4,
+      "actor": "device",
+      "action": "received",
+      "incident": 2,
+      "created_at": "2026-10-26T10:56:10.091146Z"
+    },
+    {
+      "id": 5,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 2,
+      "created_at": "2026-10-26T10:56:11.062299Z"
+    },
+    {
+      "id": 6,
+      "actor": "device",
+      "action": "received",
+      "incident": 3,
+      "created_at": "2026-10-26T10:56:11.333629Z"
+    },
+    {
+      "id": 7,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 2,
+      "created_at": "2026-10-26T11:01:12.866028Z"
+    },
+    {
+      "id": 8,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 3,
+      "created_at": "2026-10-26T11:01:12.866564Z"
+    },
+    {
+      "id": 9,
+      "actor": "device",
+      "action": "received",
+      "incident": 4,
+      "created_at": "2026-10-26T11:01:27.182425Z"
+    },
+    {
+      "id": 10,
+      "actor": "device",
+      "action": "received",
+      "incident": 5,
+      "created_at": "2026-10-26T11:01:57.840517Z"
+    },
+    {
+      "id": 11,
+      "actor": "device",
+      "action": "received",
+      "incident": 6,
+      "created_at": "2026-10-26T11:02:01.464343Z"
+    },
+    {
+      "id": 12,
+      "actor": "device",
+      "action": "received",
+      "incident": 7,
+      "created_at": "2026-10-26T11:02:03.058151Z"
+    },
+    {
+      "id": 13,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 5,
+      "created_at": "2026-10-26T11:02:29.069178Z"
+    },
+    {
+      "id": 14,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 6,
+      "created_at": "2026-10-26T11:02:33.151669Z"
+    },
+    {
+      "id": 15,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 2,
+      "created_at": "2026-10-26T11:02:43.347033Z"
+    },
+    {
+      "id": 16,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 3,
+      "created_at": "2026-10-26T11:02:43.381945Z"
+    },
+    {
+      "id": 17,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 4,
+      "created_at": "2026-10-26T11:02:57.496386Z"
+    },
+    {
+      "id": 18,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 3,
+      "created_at": "2026-10-26T11:03:42.603996Z"
+    },
+    {
+      "id": 19,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 7,
+      "created_at": "2026-10-26T11:04:04.690103Z"
+    },
+    {
+      "id": 20,
+      "actor": "device",
+      "action": "received",
+      "incident": 8,
+      "created_at": "2026-10-26T11:05:19.605121Z"
+    },
+    {
+      "id": 21,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 8,
+      "created_at": "2026-10-26T11:05:20.784347Z"
+    },
+    {
+      "id": 22,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 1,
+      "created_at": "2026-10-26T11:06:24.173152Z"
+    },
+    {
+      "id": 23,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 1,
+      "created_at": "2026-10-26T11:06:24.911137Z"
+    },
+    {
+      "id": 24,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 4,
+      "created_at": "2026-10-26T11:06:39.180676Z"
+    },
+    {
+      "id": 25,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 4,
+      "created_at": "2026-10-26T11:06:40.045648Z"
+    },
+    {
+      "id": 26,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 5,
+      "created_at": "2026-10-26T11:07:09.189636Z"
+    },
+    {
+      "id": 27,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 6,
+      "created_at": "2026-10-26T11:07:09.190463Z"
+    },
+    {
+      "id": 28,
+      "actor": "system",
+      "action": "escalate",
+      "incident": 7,
+      "created_at": "2026-10-26T11:07:09.191112Z"
+    },
+    {
+      "id": 29,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 5,
+      "created_at": "2026-10-26T11:07:10.137321Z"
+    },
+    {
+      "id": 30,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 6,
+      "created_at": "2026-10-26T11:07:10.176640Z"
+    },
+    {
+      "id": 31,
+      "actor": "gateway",
+      "action": "delivered",
+      "incident": 7,
+      "created_at": "2026-10-26T11:07:10.211204Z"
+    }
+  ],
+  "acknowledged_incident_escalation_delay_seconds": 614.110688
+}

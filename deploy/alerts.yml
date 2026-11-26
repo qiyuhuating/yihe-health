@@ -1,0 +1,100 @@
+groups:
+  - name: yihe-service
+    rules:
+      - alert: YiheScrapeMissing
+        expr: absent(up{job="yihe"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Yihe API target missing from Prometheus discovery"
+          description: "Verify container DNS, networking and the API process. Use the manual SOS fallback."
+      - alert: YiheServiceDown
+        expr: up{job="yihe"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Yihe API cannot be scraped"
+          description: "Check the independent Go service and database. No claim about emergency delivery can be made."
+      - alert: YiheBusinessDatabaseUnavailable
+        expr: yihe_database_ready == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Yihe MySQL business service unavailable"
+          description: "The business API is not ready; activate the offline care response procedure."
+      - alert: YiheCareWorkerNeverReported
+        expr: up{job="yihe"} == 1 unless on(job,instance) yihe_care_worker_last_heartbeat_unixtime
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS dispatcher has not reported a persisted heartbeat"
+          description: "Check dispatcher startup and the MySQL heartbeat table."
+      - alert: YiheCareWorkerStale
+        expr: time() - yihe_care_worker_last_heartbeat_unixtime > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS dispatcher heartbeat is stale"
+          description: "This checks durable worker progress, not a guarantee of message delivery or responder arrival."
+      - alert: YiheCareQueueStalled
+        expr: (yihe_care_outbox_oldest_age_seconds > 120) and on(job,instance) (yihe_care_queue_sample_valid == 1)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS notification jobs remain unfinished"
+          description: "Inspect gateway failures and durable outbox. Delivery and human acknowledgement are independent states. Use the manual fallback."
+      - alert: YiheCareQueueObservationFailed
+        expr: yihe_care_queue_sample_valid == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS queue progress cannot be observed"
+          description: "An unavailable queue sample must never be interpreted as an empty healthy queue."
+      - alert: YiheCareGatewayTLSInvalid
+        expr: yihe_care_gateway_tls_configured == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS gateway TLS trust configuration is invalid"
+          description: "Core MySQL ingestion remains available; dispatch is disabled and jobs remain durable. Repair certificate trust."
+      - alert: YiheCareGatewayRepeatedFailures
+        expr: sum by(job,instance,reason)(increase(yihe_care_gateway_failures_total[5m])) >= 3
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS notification gateway repeatedly fails"
+          description: "The reason label distinguishes DNS, timeout, network, HTTP and decryption failures. Check pending jobs and human fallback."
+      - alert: YiheHeartbeatFlushRepeatedFailures
+        expr: increase(yihe_heartbeat_flush_errors_total[5m]) >= 3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Buffered device heartbeats repeatedly fail to persist"
+          description: "Check MySQL and heartbeat_flush_failed logs. Liveness writes are replaceable; durable SOS and telemetry follow separate paths."
+
+      - alert: YiheCareGatewayNotConfigured
+        expr: yihe_care_notification_configured == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SOS notification gateway missing or misconfigured"
+          description: "Tasks may remain pending; arrange external gateway configuration and human on-call fallback."
+      - alert: YiheCareReceiptVerificationDisabled
+        expr: (yihe_care_notification_configured == 1) and on(job,instance) (yihe_care_receipt_configured == 0)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOS gateway dispatch enabled but trusted delivery receipts cannot be validated"
+          description: "The gateway may accept messages but the system cannot confirm delivery. Repair the receipt secret and use human fallback."

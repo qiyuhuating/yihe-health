@@ -1,0 +1,38 @@
+name: 功能建议 (Feature Request)
+description: 描述一个用户痛点和可以验证的改进方案
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 受益角色或模块
+      options:
+        - 家属端 (/family-portal)
+        - 运营端 (/operations)
+        - HarmonyOS 手表或 watch-sim
+        - Windows 桌面与安装体验
+        - 后端、数据存储或设备协议
+        - 测试、文档与开发效率
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: 当前问题与真实使用场景
+      description: 请描述使用者会遇到什么限制；不要附真实个人数据。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案与可验证的验收结果
+      description: 描述交互、接口或操作行为，以及如何确认改进确实有效。
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: 兼容性、数据与权限影响（如有）
+      description: 若涉及数据库结构、会话、权限或设备协议，请说明对现有数据和部署的影响。

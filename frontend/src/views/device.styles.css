@@ -1,0 +1,67 @@
+.device .tip {
+  color: #909399;
+  font-size: 12px;
+  line-height: 24px;
+  padding-top: 6px;
+}
+.device .created {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f5f7fa;
+  border-radius: 6px;
+}
+.device .created-title {
+  font-size: 13px;
+  color: #606266;
+  padding-bottom: 6px;
+}
+.device .created-line {
+  font-size: 14px;
+  line-height: 28px;
+}
+.device .secret {
+  color: #52BAB5;
+  word-break: break-all;
+}
+.device .new-code {
+  padding: 10px;
+  background: #f0f9f8;
+  border-radius: 6px;
+}
+.device .alert-table {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.device .alert-table th {
+  width: 90px;
+  text-align: left;
+  color: #909399;
+  font-weight: normal;
+  padding: 6px 8px;
+  vertical-align: top;
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+}
+.device .alert-table td {
+  padding: 6px 8px;
+  color: #303133;
+  border: 1px solid #ebeef5;
+  line-height: 20px;
+}
+.device .alert-actions {
+  margin-top: 14px;
+}
+.device .no-alert {
+  text-align: center;
+  padding: 20px;
+  color: #606266;
+}
+.device .code-text {
+  font-size: 26px;
+  letter-spacing: 4px;
+  color: #52BAB5;
+  font-weight: bold;
+  padding: 4px 0;
+}

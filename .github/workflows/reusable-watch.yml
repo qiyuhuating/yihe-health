@@ -1,0 +1,213 @@
+name: Reusable watch protocol verification
+on:
+  workflow_call:
+    secrets:
+      sdk_download_url:
+        required: false
+    inputs:
+      sdk_url:
+        type: string
+        default: ''
+      sdk_sha256:
+        type: string
+        default: ''
+      require_native:
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  preflight:
+    name: Native tool preflight only (no SDK)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify missing tools fail closed and caller environment is restored
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Remove-Item -LiteralPath Env:\JAVA_HOME -ErrorAction SilentlyContinue
+          $env:NODE_PATH = 'watch-preflight-sentinel'
+          $before = @{}
+          foreach ($name in @('NODE_PATH', 'NODE_HOME', 'DEVECO_NODE_HOME', 'JAVA_HOME', 'DEVECO_SDK_HOME', 'PATH')) {
+            $before[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+          }
+          $evidence = Join-Path $PWD 'evidence/ci/watch-preflight'
+          $reportPath = Join-Path $evidence 'native-build.json'
+          $failed = $false
+          try {
+            & YiheWatch/scripts/build.ps1 -DevEcoHome (Join-Path $env:RUNNER_TEMP 'missing-watch-sdk') -CommandLineHome '' -ReportPath $reportPath
+          } catch { $failed = $true }
+          $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+          if (!$failed -or $report.status -ne 'blocked' -or $null -ne $report.artifact) {
+            throw 'Missing tools must not report a successful native build or an old HAP'
+          }
+          foreach ($name in $before.Keys) {
+            if ([Environment]::GetEnvironmentVariable($name, 'Process') -cne $before[$name]) {
+              throw "Caller environment was not restored: $name"
+            }
+          }
+          'Preflight contract passed; native compilation has not run.' | Set-Content (Join-Path $evidence 'result.txt')
+      - name: Reject mismatched SDK, plugin and CLI metadata
+        shell: pwsh
+        run: ./YiheWatch/scripts/test-toolchain.ps1
+      - name: Reject production bundles and inconsistent UI artifacts before installation
+        shell: pwsh
+        run: ./YiheWatch/scripts/test-native-ui-preflight.ps1
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: watch-preflight-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/watch-preflight/
+          if-no-files-found: error
+
+  native:
+    name: HarmonyOS SDK compile (no hardware)
+    if: ${{ inputs.require_native }}
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Acquire versioned SDK and compile unsigned wearable HAP
+        shell: pwsh
+        env:
+          SDK_ARCHIVE_URL: ${{ inputs.sdk_url || secrets.sdk_download_url || vars.HARMONY_SDK_URL || '' }}
+          SDK_ARCHIVE_SHA256: ${{ inputs.sdk_sha256 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $PWD 'evidence/ci/watch-native'
+          New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+          git rev-parse HEAD | Set-Content (Join-Path $evidence 'source-sha.txt')
+          $url = $env:SDK_ARCHIVE_URL
+          $uri = [Uri]$url
+          if ($uri.Scheme -ne 'https' -or $uri.UserInfo) { throw 'SDK must use an HTTPS URL without embedded credentials' }
+          if ($env:SDK_ARCHIVE_SHA256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'An expected SDK SHA-256 is required before executing downloaded tools' }
+          $expected = Get-Content -LiteralPath YiheWatch/toolchain.json -Raw | ConvertFrom-Json
+          if ($env:SDK_ARCHIVE_SHA256 -ine $expected.archiveSha256) { throw "SDK configuration must point to Command Line Tools $($expected.commandLineVersion) with the pinned SHA-256" }
+          $uri.GetLeftPart([UriPartial]::Path) | Set-Content (Join-Path $evidence 'sdk-source.txt')
+          $archive = Join-Path $env:RUNNER_TEMP "watch-commandline-$($expected.commandLineVersion).zip"
+          curl.exe --fail --location --connect-timeout 20 --max-time 1500 --retry 1 --retry-max-time 1500 --output $archive $url
+          if ($LASTEXITCODE -ne 0) { throw 'SDK download failed; native compilation has not run' }
+          Get-FileHash -LiteralPath $archive -Algorithm SHA256 | ConvertTo-Json | Set-Content (Join-Path $evidence 'sdk-sha256.json')
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash -ine $env:SDK_ARCHIVE_SHA256) { throw 'SDK checksum mismatch; archive will not be extracted or executed' }
+          $toolDirectory = Join-Path $env:RUNNER_TEMP 'watch-sdk'
+          python YiheWatch/scripts/extract-toolchain.py $archive $toolDirectory
+          if ($LASTEXITCODE -ne 0) { throw 'SDK extraction or CRC verification failed; native compilation has not run' }
+          $toolRoot = Join-Path $toolDirectory 'command-line-tools'
+          & YiheWatch/scripts/build.ps1 -CommandLineHome $toolRoot -BuildMode release -ReportPath (Join-Path $evidence 'native-build.json')
+          # Preserve the completed product before the test target's clean task.
+          $product = Get-Content -LiteralPath (Join-Path $evidence 'native-build.json') -Raw | ConvertFrom-Json
+          if ($product.buildMode -ne 'release') { throw '原生产品必须使用 release 模式' }
+          Copy-Item -LiteralPath $product.artifact.path -Destination (Join-Path $evidence 'entry-default-unsigned.hap')
+          & YiheWatch/scripts/build.ps1 -CommandLineHome $toolRoot -BuildTarget ohosTest -ReportPath (Join-Path $evidence 'native-test-build.json')
+          $test = Get-Content -LiteralPath (Join-Path $evidence 'native-test-build.json') -Raw | ConvertFrom-Json
+          Copy-Item -LiteralPath $test.artifact.path -Destination (Join-Path $evidence 'entry-ohosTest-unsigned.hap')
+          # This runner compiles tests only; it has no wearable emulator image.
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: watch-native-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            evidence/ci/watch-native/
+            YiheWatch/entry/build/default/outputs/default/*.hap
+          if-no-files-found: error
+
+  verify:
+    name: Protocol and dependency audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: YiheWatch
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: YiheWatch/package-lock.json
+      - name: Run portable protocol checks (not an ArkTS SDK build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../evidence/ci/watch
+          git rev-parse HEAD > ../evidence/ci/watch/source-sha.txt
+          node --version > ../evidence/ci/watch/node-version.txt
+          npm ci
+          npm test 2>&1 | tee ../evidence/ci/watch/protocol-test.txt
+          npm audit --audit-level=high --json > ../evidence/ci/watch/npm-audit.json
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: watch-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/watch/
+          if-no-files-found: error
+
+  integration:
+    name: Real backend and lost-ack recovery
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_watch_only
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: yihe_watch_e2e
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root -pci_watch_only --silent"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: YiheWatch/package-lock.json
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: backend/go.sum
+      - name: Exercise production watch protocol against disposable Go/MySQL
+        shell: bash
+        env:
+          MYSQL_DSN: root:ci_watch_only@tcp(127.0.0.1:3306)/yihe_watch_e2e?parseTime=true
+          ADDR: 127.0.0.1:18796
+          YIHE_REQUIRE_SIGNED_DEVICE: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/ci/watch-integration
+          git rev-parse HEAD > evidence/ci/watch-integration/source-sha.txt
+          npm ci --prefix YiheWatch
+          (cd backend && go build -o "$RUNNER_TEMP/watch-e2e-server" ./cmd/server)
+          export DATA_ENCRYPTION_KEY="$(openssl rand -base64 32)"
+          export YIHE_DESKTOP_TOKEN="$(openssl rand -hex 32)"
+          "$RUNNER_TEMP/watch-e2e-server" > evidence/ci/watch-integration/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --max-time 2 "http://$ADDR/api/v1/service/status" | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{try{process.exit(JSON.parse(s).databaseReady===true?0:1)}catch{process.exit(1)}})'; then
+              break
+            fi
+            sleep 1
+          done
+          export WATCH_TEST_URL="http://$ADDR"
+          export WATCH_TEST_SETUP_TOKEN="$YIHE_DESKTOP_TOKEN"
+          npm run test:e2e --prefix YiheWatch 2>&1 | tee evidence/ci/watch-integration/result.txt
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: watch-integration-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/watch-integration/
+          if-no-files-found: error

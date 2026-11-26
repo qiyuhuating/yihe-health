@@ -1,0 +1,6 @@
+time=2026-10-26T10:56:08.418Z level=INFO source=main.go:191 msg="Starting Alertmanager" version="(version=0.28.1, branch=HEAD, revision=b2099eaa2c9ebc25edb26517cb9c732738e93910)"
+time=2026-10-26T10:56:08.418Z level=INFO source=main.go:192 msg="Build context" build_context="(go=go1.23.7, platform=windows/amd64, user=root@4650c1400805, date=20250307-15:04:23, tags=unknown)"
+time=2026-10-26T10:56:08.433Z level=INFO source=coordinator.go:112 msg="Loading configuration file" component=configuration file=C:\Users\Administrator\AppData\Local\Temp\yihe-reliability-20261026\process-drill\6f5be6807fa6\alertmanager.yml
+time=2026-10-26T10:56:08.439Z level=INFO source=coordinator.go:125 msg="Completed loading of configuration file" component=configuration file=C:\Users\Administrator\AppData\Local\Temp\yihe-reliability-20261026\process-drill\6f5be6807fa6\alertmanager.yml
+time=2026-10-26T10:56:08.442Z level=INFO source=tls_config.go:347 msg="Listening on" address=127.0.0.1:19093
+time=2026-10-26T10:56:08.442Z level=INFO source=tls_config.go:350 msg="TLS is disabled." http2=false address=127.0.0.1:19093

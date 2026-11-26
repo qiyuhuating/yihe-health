@@ -1,0 +1,26 @@
+字段或资产,敏感级别,当前存储,查询需求,当前索引,保护方案,迁移方案或边界
+PG record.source_id,S3 可关联机构标识,明文 UUID,隔离来源过滤,主键及 analytics_record_entity,保留关系结构和行访问隔离,不可将 UUID 当匿名化
+PG record.entity,S2 实体类型,明文,投影类型过滤,主键及 analytics_record_entity,保留结构,随生产者版本变更审计
+PG record.entity_id,S3 可关联业务 ID,明文 bigint,定位投影行,主键,保留关联 ID 和授权边界,源删除事件与投影同步
+PG record.last_event_id,S2 重放次序,明文 bigint,幂等与乱序比较,无单独索引,保留结构,禁止在轮换中重置事件次序
+PG record.payload,S4 健康及照护载荷,明文 JSONB 或源字段已有密文,分析视图 JSON 提取,无载荷索引,加密卷/备份及隔离授权投影,源 AEAD/分析需求先双跑设计后迁移
+PG record.deleted,S3 删除元数据,明文 boolean,软删除过滤,analytics_record_entity 部分索引,保留过滤结构,删除副本与归档/WAL/备份按保留期处理
+PG record.synced_at,S3 同步时间,明文 timestamptz,诊断同步延迟,无单独索引,审计与最小权限,按投影保留期处理
+PG daily_health.source_id,S3 机构关联,视图计算,按来源分组,依赖基表,与基表同级访问控制,随投影重建
+PG daily_health.day,S4 健康时间关联,视图计算,按日分组,依赖基表,与基表同级访问控制,禁止公开细粒度小样本
+PG daily_health.reports,S4 健康汇总,视图计算,分析汇总,依赖基表,授权展示和最小样本约束设计,不得宣称匿名
+PG daily_health.heart_rate_samples,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,随投影核对
+PG daily_health.blood_pressure_samples,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,随投影核对
+PG daily_health.mean_heart_rate,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,源 AEAD 迁移需重设计计算边界
+PG daily_health.mean_blood_pressure,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,源 AEAD 迁移需重设计计算边界
+PG daily_health.heart_rate_alerts,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,随投影核对
+PG daily_health.blood_pressure_alerts,S4 健康汇总,视图计算,分析汇总,依赖基表,与基表同级访问控制,随投影核对
+PG care_summary.source_id,S3 机构关联,视图计算,按来源分组,依赖基表,与基表同级访问控制,随投影重建
+PG care_summary.state,S3 照护处置状态,视图计算,按状态分组,依赖基表,最小权限且不替代主库真相,MySQL 为授权源
+PG care_summary.incidents,S4 敏感事件计数,视图计算,分析汇总,依赖基表,与基表同级访问控制,随投影核对
+图片对象/本地 IMAGE_DIR,S4 人像/内容,新对象 AEAD 旧本地可能明文,按不透明键读取,MySQL image_blob.name,私有 bucket 与 image:key AEAD/哈希/最小权限,受控停写复制及全引用核对
+SQL dump/快照/binlog/WAL,S4 全量副本,实验临时备份未声称生产加密,隔离恢复与时间点重放,备份清单,独立加密备份且 key 分开托管,最旧保留点恢复后才能退旧 key
+日志/故障证据/CI artifacts,S3 或潜在 S4,文本及归档,诊断检索,工具日志索引,输出脱敏与访问/保留控制,清点历史泄漏并轮换受影响凭据
+DATA_ENCRYPTION_KEY/lookupKey/S3/TLS/gateway secret,S4 密钥,外部 secret 文件或受限环境,仅进程初始化,无业务索引,外部受托 key custody 与最小权限,双读轮换及恢复演练不能自动新建
+session cookie/CSRF token,S4 会话凭据,客户端内存或受控 cookie,认证与请求防伪,服务端仅哈希 session ID,Secure/HttpOnly/SameSite 与受控生命周期,撤销需跨实例立即可见
+历史明文/旧迁移/归档导出,S4 待治理副本,可能明文,盘点及法定保留期内授权访问,按具体副本,加密介质与最小访问控制,字段迁移后继续追踪历史副本并受控销毁

@@ -1,0 +1,5 @@
+**/openapi-template.json text eol=lf
+**/generated-api.d.ts text eol=lf
+/frontend/src/api/status-errors.json text eol=lf
+# Preserve raw logs byte-for-byte, including original CRLF and tool whitespace.
+/evidence/reliability-20261026/** -text -whitespace

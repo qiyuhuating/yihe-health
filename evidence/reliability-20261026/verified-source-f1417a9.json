@@ -1,0 +1,53 @@
+{
+  "source_sha": "f1417a9121eed4036f5001250d9703d54520ca75",
+  "branch": "codex/reliability-validation-20261026",
+  "repository": "WatchTestCs/smart-elderly-watch-management",
+  "verified_at": "2026-10-26T11:06:07.515188+00:00",
+  "workflows": [
+    {
+      "id": 40311522133,
+      "head_sha": "f1417a9121eed4036f5001250d9703d54520ca75",
+      "html_url": "https://github.com/WatchTestCs/smart-elderly-watch-management/actions/runs/40311522133",
+      "conclusion": "success"
+    },
+    {
+      "id": 40311521971,
+      "head_sha": "f1417a9121eed4036f5001250d9703d54520ca75",
+      "html_url": "https://github.com/WatchTestCs/smart-elderly-watch-management/actions/runs/40311521971",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12643744843,
+      "name": "backend-1.26.10-f1417a9121eed4036f5001250d9703d54520ca75",
+      "digest": "sha256:88c0f8037ddf7da3b524ccfe152eae6edbd51ece275e6f19f840198101c36fdf",
+      "size_in_bytes": 126199
+    },
+    {
+      "id": 12643749866,
+      "name": "backend-1.27.2-f1417a9121eed4036f5001250d9703d54520ca75",
+      "digest": "sha256:7665973204e1638e448bd1d2ba10f125f1d993981f32daa1abe7f224b3af21b6",
+      "size_in_bytes": 126396
+    },
+    {
+      "id": 12644059596,
+      "name": "frontend-f1417a9121eed4036f5001250d9703d54520ca75",
+      "digest": "sha256:e4009af1fc7137b198894cd6d146f29358574177afafa45230dbff28f486e905",
+      "size_in_bytes": 3450
+    },
+    {
+      "id": 12643808924,
+      "name": "windows-sidecar-f1417a9121eed4036f5001250d9703d54520ca75",
+      "digest": "sha256:209cc725551a15d8709a2e1e7c1d69e3a96f93697b4d6c6c104c75029d0f1982",
+      "size_in_bytes": 11659936
+    },
+    {
+      "id": 12645221856,
+      "name": "security-f1417a9121eed4036f5001250d9703d54520ca75",
+      "digest": "sha256:dc176e92ece2f2024daef42460d7f19d9441c02281d58fa96958a7dfc3550363",
+      "size_in_bytes": 77036
+    }
+  ],
+  "scope": "Build/test evidence only. Human/provider/hardware/DR and repository protection remain independent production gates."
+}

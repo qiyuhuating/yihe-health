@@ -1,0 +1,97 @@
+name: Reusable frontend verification
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and dependency audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            frontend/tools/openapi/package-lock.json
+
+      - name: Enforce native Go API boundary
+        run: python3 ../scripts/check-api-boundary.py
+
+      - name: Install locked dependencies
+        run: |
+          npm ci
+          npm run api:tools:ci
+
+      - name: Set up Go for native API contract verification
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: "1.27.4"
+          cache: false
+
+      - name: Verify native Go API types and drift rejection
+        run: |
+          npm run api:check
+          npm run test:api-drift
+
+      - name: Enforce Vue 3.6 migration boundary
+        run: npm run check:vue36
+
+      - name: Enforce type-aware ESLint and Vue safety rules
+        run: npm run lint
+
+      - name: Unit tests and strict TypeScript checks
+        shell: bash
+        run: |
+          mkdir -p ../evidence/ci/frontend
+          git rev-parse HEAD > ../evidence/ci/frontend/source-sha.txt
+          node --version > ../evidence/ci/frontend/node-version.txt
+          set -o pipefail
+          status=0
+          npm test 2>&1 | tee ../evidence/ci/frontend/test.txt || status=1
+          npm run typecheck 2>&1 | tee ../evidence/ci/frontend/typecheck.txt || status=1
+          exit "$status"
+
+      - name: Build production frontend
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee ../evidence/ci/frontend/build.txt
+
+      - name: Audit frontend dependencies
+        env:
+          POWERSHELL_TELEMETRY_OPTOUT: '1'
+        shell: pwsh
+        run: |
+          $reportPath = '../evidence/ci/frontend/npm-audit.json'
+          npm audit --audit-level=high --json > $reportPath
+          $auditExit = $LASTEXITCODE
+          if ($auditExit -ne 0) {
+            $report = Get-Content -Raw $reportPath | ConvertFrom-Json -AsHashtable
+            $report.vulnerabilities.Values | ForEach-Object { $_.via } |
+              Where-Object { $_ -is [System.Collections.IDictionary] -and $_.severity -in 'high', 'critical' } |
+              Sort-Object -Property { $_.source } -Unique |
+              ForEach-Object { Write-Host "$($_.severity) $($_.dependency) $($_.url)" }
+          }
+          exit $auditExit
+
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: frontend-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/frontend/
+          if-no-files-found: error

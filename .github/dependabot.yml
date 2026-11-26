@@ -1,0 +1,78 @@
+version: 2
+
+# Dependency updates target preview; security updates follow the default branch.
+updates:
+  - package-ecosystem: npm
+    directory: "/frontend"
+    target-branch: preview
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: "04:00"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    # Node 24 and TypeScript 6 remain the current compiler/runtime line.
+    # Vue Router 5 passed local typecheck, unit tests and production build.
+    # Major upgrades still require explicit compatibility review.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      frontend-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: "/desktop"
+    target-branch: preview
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: "04:15"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 3
+    groups:
+      desktop-build-tools:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: gomod
+    directory: "/backend"
+    target-branch: preview
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: "04:30"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: preview
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: "04:45"
+      timezone: "Asia/Singapore"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: cargo
+    directory: "/desktop"
+    target-branch: preview
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

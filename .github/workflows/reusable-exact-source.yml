@@ -1,0 +1,56 @@
+name: Exact-source release evidence
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        required: true
+        type: string
+      source_branch:
+        required: false
+        type: string
+        default: preview
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    if: ${{ github.ref == format('refs/heads/{0}', inputs.source_branch) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.source_sha }}
+      - name: Wait for exact-source branch CI and Security
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          for workflow in ci.yml security.yml; do
+            run_id=''
+            for _ in {1..30}; do
+              run_id=$(gh run list --repo "$REPOSITORY" --workflow "$workflow" --branch "$SOURCE_BRANCH" --commit "$SOURCE_SHA" --limit 20 --json databaseId,event --jq '[.[] | select(.event == "push" or .event == "workflow_dispatch")][0].databaseId // empty')
+              if [ -n "$run_id" ]; then break; fi
+              sleep 2
+            done
+            test -n "$run_id"
+            gh run watch "$run_id" --repo "$REPOSITORY" --exit-status --interval 30
+          done
+      - name: Require current source branch and SHA-bound successful evidence
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_BRANCH: ${{ inputs.source_branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          python3 scripts/reliability/release-gate.py --repo "$REPOSITORY" --branch "$SOURCE_BRANCH" --sha "$SOURCE_SHA" --output release-provenance.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: release-provenance-${{ inputs.source_sha }}
+          path: release-provenance.json
+          if-no-files-found: error

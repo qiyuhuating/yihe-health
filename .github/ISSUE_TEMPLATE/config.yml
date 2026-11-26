@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞与隐私泄露
+    url: https://github.com/WatchTestCs/smart-elderly-watch-management/blob/main/.github/SECURITY.md
+    about: 请勿公开发布漏洞、凭据、真实个人信息或健康及位置数据，请阅读安全政策并使用私密渠道。
+  - name: 使用与部署支持
+    url: https://github.com/WatchTestCs/smart-elderly-watch-management/blob/main/docs/SUPPORT.md
+    about: 提交问题前可先核对 MySQL 配置、安装环境与常见故障。

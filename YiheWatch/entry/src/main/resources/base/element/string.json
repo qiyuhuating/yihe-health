@@ -1,0 +1,5 @@
+{ "string": [
+  { "name": "module_desc", "value": "颐和鸿蒙手表健康采样与照护连接" },
+  { "name": "health_permission_reason", "value": "用于读取手表心率，经您操作后上传至关联长者的照护记录" },
+  { "name": "motion_permission_reason", "value": "用于读取计步器并记录两次观测之间的活动步数" }
+] }

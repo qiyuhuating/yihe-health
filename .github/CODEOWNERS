@@ -1,0 +1,8 @@
+# Current preview handoff owner. Expand this file when maintainership is shared.
+* @qiyuhuating
+
+# High-risk boundaries are listed explicitly so future ownership can be split
+# without rediscovering them.
+/.github/ @qiyuhuating
+/desktop/ @qiyuhuating
+/backend/internal/auth/ @qiyuhuating

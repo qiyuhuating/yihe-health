@@ -1,0 +1,1044 @@
+{"time":"2026-10-26T18:56:07.856536+08:00","level":"INFO","msg":"careold-go listening on 127.0.0.1:18081"}
+{"time":"2026-10-26T18:56:07.8622407+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T18:56:08.3679297+08:00","level":"INFO","msg":"http_request","request_id":"9e75e0a9-9c73-42c3-98ed-297fb6ad1bc6","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:08.3830465+08:00","level":"INFO","msg":"http_request","request_id":"dbb61cb5-9465-48ea-b136-bb2c25aa9f23","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:08.956197+08:00","level":"INFO","msg":"http_request","request_id":"c420baab-b820-45db-bfb0-25a722da021b","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":11.246300000000002}
+{"time":"2026-10-26T18:56:08.9577022+08:00","level":"INFO","msg":"http_request","request_id":"9cc828b8-862c-43b6-bcb1-11925451780f","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":1.0028000000000001}
+{"time":"2026-10-26T18:56:09.9857298+08:00","level":"INFO","msg":"http_request","request_id":"e0367dfb-28a5-4fd5-a776-8b71b716f800","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":5.4223}
+{"time":"2026-10-26T18:56:10.0663717+08:00","level":"INFO","msg":"http_request","request_id":"8052f12a-5431-448a-af49-4ec6e2c952bb","route":"POST /restful/care/transition","method":"POST","status":200,"duration_ms":7.1082}
+{"time":"2026-10-26T18:56:10.0954716+08:00","level":"INFO","msg":"http_request","request_id":"d90b9df9-5f59-4e1f-ba1a-fb84a0aa4c0f","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":6.0611}
+{"time":"2026-10-26T18:56:11.0230965+08:00","level":"INFO","msg":"http_request","request_id":"3d9547d6-d1fb-45cb-8da3-93ea4f31873b","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.6327}
+{"time":"2026-10-26T18:56:11.0652122+08:00","level":"INFO","msg":"http_request","request_id":"9c46015f-63e1-404f-aeee-a64f257e06a3","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":4.2120999999999995}
+{"time":"2026-10-26T18:56:11.3377827+08:00","level":"INFO","msg":"http_request","request_id":"762d6c7c-5370-4c1b-8c90-a41b30fe1b30","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":6.434200000000001}
+{"time":"2026-10-26T18:56:12.1053759+08:00","level":"INFO","msg":"http_request","request_id":"90f0472c-2d09-4fd8-b6f0-78f7eea17660","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5023}
+{"time":"2026-10-26T18:56:12.384107+08:00","level":"INFO","msg":"http_request","request_id":"19899d5f-73ed-40eb-ab7b-71baa8865219","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:18.0244224+08:00","level":"INFO","msg":"http_request","request_id":"9ceeaa79-fd96-4f06-aa1e-d4cfda6ffaf5","route":"/metrics","method":"GET","status":200,"duration_ms":0.5021}
+{"time":"2026-10-26T18:56:23.0184544+08:00","level":"INFO","msg":"http_request","request_id":"7d8c8413-1d7a-4681-a774-3d569133588e","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:28.0181735+08:00","level":"INFO","msg":"http_request","request_id":"4d465c75-7db3-4e0f-8027-d9205099c211","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:33.0186183+08:00","level":"INFO","msg":"http_request","request_id":"50481619-00d1-47c8-97b1-277a5014bfa1","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:38.0187919+08:00","level":"INFO","msg":"http_request","request_id":"4166ed06-32b6-40c5-b92e-21ff670997a7","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:43.0186475+08:00","level":"INFO","msg":"http_request","request_id":"46e8d2a7-d09b-42f2-a462-0510578d5177","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:56:48.0188904+08:00","level":"INFO","msg":"http_request","request_id":"2ee4b4a9-c871-4962-95fa-b6fe95411130","route":"/metrics","method":"GET","status":200,"duration_ms":0.5038}
+{"time":"2026-10-26T18:56:53.0187723+08:00","level":"INFO","msg":"http_request","request_id":"8ce6b889-772b-45ae-8f23-7defe155501e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5025000000000001}
+{"time":"2026-10-26T18:56:58.0188408+08:00","level":"INFO","msg":"http_request","request_id":"7e253f8c-a1aa-4f42-85e6-7d498979e6a5","route":"/metrics","method":"GET","status":200,"duration_ms":0.5074}
+{"time":"2026-10-26T18:57:03.0191108+08:00","level":"INFO","msg":"http_request","request_id":"65d77cbc-25d9-411f-abc3-3c64784e5b96","route":"/metrics","method":"GET","status":200,"duration_ms":0.5034}
+{"time":"2026-10-26T18:57:08.0183736+08:00","level":"INFO","msg":"http_request","request_id":"0133cba2-7751-4f0d-ba98-b46b68a2a7d6","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:13.0185448+08:00","level":"INFO","msg":"http_request","request_id":"81b6d4ff-90a5-4c33-bbb9-83aae6c56295","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:18.0184071+08:00","level":"INFO","msg":"http_request","request_id":"8127b826-d068-493b-bddf-ddd9cc815469","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:23.0184804+08:00","level":"INFO","msg":"http_request","request_id":"4cb872f6-3b43-41d1-ba45-1e14dd4fbe96","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:28.0181932+08:00","level":"INFO","msg":"http_request","request_id":"46d75171-fbe2-4bb8-80d8-1900182dcdac","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:33.0184026+08:00","level":"INFO","msg":"http_request","request_id":"222f50b5-b4bd-4c9b-b090-4b72184b86d9","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:38.0182145+08:00","level":"INFO","msg":"http_request","request_id":"b3b3e369-1dd9-49cd-bd6e-38ceb8b94f62","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:43.018324+08:00","level":"INFO","msg":"http_request","request_id":"22c2eacc-6136-426a-ad3b-7ac97735930a","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:48.0182861+08:00","level":"INFO","msg":"http_request","request_id":"48357ede-84b7-4966-9fa0-4fa6c2183d8b","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:53.0184395+08:00","level":"INFO","msg":"http_request","request_id":"1aaecedd-9869-4787-aa31-992526a0c09e","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:57:58.0186853+08:00","level":"INFO","msg":"http_request","request_id":"030af154-bcb6-4065-abff-90ea2165ce38","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:03.0183919+08:00","level":"INFO","msg":"http_request","request_id":"1387ccc4-fbdf-4e76-a86d-4f0e73458613","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:08.0190866+08:00","level":"INFO","msg":"http_request","request_id":"cb7fb87a-801d-436d-9f7c-39a1535fdd73","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:13.0181915+08:00","level":"INFO","msg":"http_request","request_id":"74293a89-3aae-4de2-8b29-0d57dbee5c11","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:18.0185366+08:00","level":"INFO","msg":"http_request","request_id":"8eee3894-1938-4bb3-81ab-6b059d040fff","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:23.0185441+08:00","level":"INFO","msg":"http_request","request_id":"abd3e401-ae8e-48d8-9d05-68cdc653e397","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:28.0186263+08:00","level":"INFO","msg":"http_request","request_id":"bf6fe9a9-59ef-4eca-b36b-83e2440351b2","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:33.0185584+08:00","level":"INFO","msg":"http_request","request_id":"43b55305-40f6-4007-b28c-c70160cc77bb","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:38.0189154+08:00","level":"INFO","msg":"http_request","request_id":"4c19f5d4-e52c-4ded-af8e-78f3cf26990c","route":"/metrics","method":"GET","status":200,"duration_ms":0.5463}
+{"time":"2026-10-26T18:58:43.0186382+08:00","level":"INFO","msg":"http_request","request_id":"239028a5-13e4-4f7f-b5b1-bdfc6629421d","route":"/metrics","method":"GET","status":200,"duration_ms":0.5045}
+{"time":"2026-10-26T18:58:48.0190981+08:00","level":"INFO","msg":"http_request","request_id":"dc84688a-a6e1-45bd-a106-869073b6f118","route":"/metrics","method":"GET","status":200,"duration_ms":0.5022}
+{"time":"2026-10-26T18:58:53.0185394+08:00","level":"INFO","msg":"http_request","request_id":"b6737fa4-f4c8-4af3-9377-b252513f1243","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:58:58.0191055+08:00","level":"INFO","msg":"http_request","request_id":"32145878-2077-43ce-940a-3d029e244266","route":"/metrics","method":"GET","status":200,"duration_ms":0.5021}
+{"time":"2026-10-26T18:59:03.0191611+08:00","level":"INFO","msg":"http_request","request_id":"9f35912d-5f3e-481d-b2e7-c9ce99178f7b","route":"/metrics","method":"GET","status":200,"duration_ms":0.5021}
+{"time":"2026-10-26T18:59:08.019155+08:00","level":"INFO","msg":"http_request","request_id":"388d34ce-73d5-450a-8121-25dd93818614","route":"/metrics","method":"GET","status":200,"duration_ms":0.5022}
+{"time":"2026-10-26T18:59:13.0182374+08:00","level":"INFO","msg":"http_request","request_id":"e724ee13-1fa6-4e5c-b22e-f270ebdb596a","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:18.0187145+08:00","level":"INFO","msg":"http_request","request_id":"8c7f833c-a7e8-4a9e-a3dc-e6440d264dcf","route":"/metrics","method":"GET","status":200,"duration_ms":0.5162}
+{"time":"2026-10-26T18:59:23.0186504+08:00","level":"INFO","msg":"http_request","request_id":"1f382d28-539b-496c-9b56-ca18650514f9","route":"/metrics","method":"GET","status":200,"duration_ms":0.5032}
+{"time":"2026-10-26T18:59:28.0187296+08:00","level":"INFO","msg":"http_request","request_id":"c77c214b-9aaf-45e4-8da7-607831bca1cc","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:33.0183457+08:00","level":"INFO","msg":"http_request","request_id":"e6ba23c0-e64f-491c-9a98-7fe0a9fccc98","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:38.0185472+08:00","level":"INFO","msg":"http_request","request_id":"70d76ab2-32f8-44dc-a5b5-55b00acc3c07","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:43.0186001+08:00","level":"INFO","msg":"http_request","request_id":"54694822-6fbc-4505-ab19-ee1e529883c2","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:48.0185245+08:00","level":"INFO","msg":"http_request","request_id":"073cd031-545b-4496-a126-a2690a88179d","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T18:59:53.0185897+08:00","level":"INFO","msg":"http_request","request_id":"21725cbf-b876-4449-9389-b14dd3f92041","route":"/metrics","method":"GET","status":200,"duration_ms":0.5121}
+{"time":"2026-10-26T18:59:58.0184436+08:00","level":"INFO","msg":"http_request","request_id":"367d9b84-26dd-4215-847b-be51dccd44e8","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:00:03.018801+08:00","level":"INFO","msg":"http_request","request_id":"02cabc19-a395-472e-8e69-7565ef81b7f4","route":"/metrics","method":"GET","status":200,"duration_ms":0.507}
+{"time":"2026-10-26T19:00:08.0191285+08:00","level":"INFO","msg":"http_request","request_id":"92997d01-695c-4af4-8611-c5346c66d19d","route":"/metrics","method":"GET","status":200,"duration_ms":0.5029}
+{"time":"2026-10-26T19:00:13.0185635+08:00","level":"INFO","msg":"http_request","request_id":"6fca72d9-b612-4810-a693-e3cfd751db56","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:00:18.0186832+08:00","level":"INFO","msg":"http_request","request_id":"e8082135-035f-498e-b471-89ded296a178","route":"/metrics","method":"GET","status":200,"duration_ms":0.5078}
+{"time":"2026-10-26T19:00:23.0188332+08:00","level":"INFO","msg":"http_request","request_id":"bd2c2a29-12b7-4cf0-8ac2-fd9445a8bf38","route":"/metrics","method":"GET","status":200,"duration_ms":0.5042}
+{"time":"2026-10-26T19:00:28.0186369+08:00","level":"INFO","msg":"http_request","request_id":"27ce49d0-9dbb-4b7a-b78e-b43ebe3b7f1f","route":"/metrics","method":"GET","status":200,"duration_ms":0.5088999999999999}
+{"time":"2026-10-26T19:00:33.0191515+08:00","level":"INFO","msg":"http_request","request_id":"b43704d0-ce10-4344-94f8-f41f99e52f17","route":"/metrics","method":"GET","status":200,"duration_ms":0.5616}
+{"time":"2026-10-26T19:00:38.0191028+08:00","level":"INFO","msg":"http_request","request_id":"b4c13aff-79cb-49a9-903c-f32b493133fb","route":"/metrics","method":"GET","status":200,"duration_ms":0.5032}
+{"time":"2026-10-26T19:00:43.0188396+08:00","level":"INFO","msg":"http_request","request_id":"119e3058-b811-4db2-80f2-c3ad1db71ce6","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:00:48.01869+08:00","level":"INFO","msg":"http_request","request_id":"553d2c6f-d6f5-4be7-8094-e9f176994a5e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5143}
+{"time":"2026-10-26T19:00:53.018324+08:00","level":"INFO","msg":"http_request","request_id":"a6514709-92ce-4bed-b19e-f43a30c2914f","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:00:58.0186991+08:00","level":"INFO","msg":"http_request","request_id":"c41e9eda-fdb2-4567-9fd2-981feed74dc1","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:03.0193121+08:00","level":"INFO","msg":"http_request","request_id":"5d765088-a51a-4759-9470-28c873b27741","route":"/metrics","method":"GET","status":200,"duration_ms":0.5027}
+{"time":"2026-10-26T19:01:08.0188838+08:00","level":"INFO","msg":"http_request","request_id":"29f6a4ca-eb52-40ae-b3cb-b4a2b74adfe1","route":"/metrics","method":"GET","status":200,"duration_ms":0.5023}
+{"time":"2026-10-26T19:01:13.0189134+08:00","level":"INFO","msg":"http_request","request_id":"aeac9220-4bb9-4e68-91df-ceb954abd9df","route":"/metrics","method":"GET","status":200,"duration_ms":0.5021}
+{"time":"2026-10-26T19:01:18.0187399+08:00","level":"INFO","msg":"http_request","request_id":"2b19b9df-398b-414b-8375-2c281e5545e8","route":"/metrics","method":"GET","status":200,"duration_ms":0.5115999999999999}
+{"time":"2026-10-26T19:01:21.7193745+08:00","level":"INFO","msg":"http_request","request_id":"549f3cf7-2ebb-4053-80e9-9d034b016572","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:23.019187+08:00","level":"INFO","msg":"http_request","request_id":"22468633-f893-4048-a867-c266b6a7725c","route":"/metrics","method":"GET","status":200,"duration_ms":0.5046999999999999}
+{"time":"2026-10-26T19:01:25.1519001+08:00","level":"INFO","msg":"http_request","request_id":"c9078657-9ee8-47b9-b4ee-107c434c0fd5","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:26.1533693+08:00","level":"INFO","msg":"http_request","request_id":"e995acd4-dbcb-4feb-a3e0-0115cf2a0540","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:27.1550055+08:00","level":"INFO","msg":"http_request","request_id":"cc29fac8-1982-4b8a-b569-b5500a865565","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:27.18682+08:00","level":"INFO","msg":"http_request","request_id":"f0df5e8c-61ed-4f73-94d3-539a8be83049","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":6.907800000000001}
+{"time":"2026-10-26T19:01:28.0190422+08:00","level":"INFO","msg":"http_request","request_id":"e01ad6d2-7bb2-4fa0-bbc7-3c781729da9b","route":"/metrics","method":"GET","status":200,"duration_ms":0.5024}
+{"time":"2026-10-26T19:01:33.0189805+08:00","level":"INFO","msg":"http_request","request_id":"400ad8a7-d7e1-49d2-84aa-16ab852b0576","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:01:38.0186736+08:00","level":"INFO","msg":"http_request","request_id":"49d4b940-46a9-48e5-a39d-2f26b06292cb","route":"/metrics","method":"GET","status":200,"duration_ms":0.5037}
+{"time":"2026-10-26T19:01:43.0189032+08:00","level":"INFO","msg":"http_request","request_id":"b0be384f-6ac9-4c3d-85d9-28091921bf5f","route":"/metrics","method":"GET","status":200,"duration_ms":0.504}
+{"time":"2026-10-26T19:01:48.0196591+08:00","level":"INFO","msg":"http_request","request_id":"f143639e-b7a3-4e94-93cf-9cfaefce1139","route":"/metrics","method":"GET","status":200,"duration_ms":1.0228}
+{"time":"2026-10-26T19:01:53.0188841+08:00","level":"INFO","msg":"http_request","request_id":"cddbb692-5058-4f00-89e2-f1d148152161","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:01:57.8446769+08:00","level":"INFO","msg":"http_request","request_id":"4a9a7975-18f2-4c30-884d-6e77e9649b10","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":7.2597}
+{"time":"2026-10-26T19:01:58.0189184+08:00","level":"INFO","msg":"http_request","request_id":"95b62e64-4f47-4f13-bf71-f44578340a9e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5077}
+{"time":"2026-10-26T19:02:00.9463461+08:00","level":"INFO","msg":"careold-go listening on 127.0.0.1:18081"}
+{"time":"2026-10-26T19:02:00.9526422+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T19:02:01.4461851+08:00","level":"INFO","msg":"http_request","request_id":"434635a4-0114-4612-baa6-b2b88d5bb635","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:01.4694804+08:00","level":"INFO","msg":"http_request","request_id":"993fbc53-0e6c-45e6-b635-bdd1306e6003","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":8.4093}
+{"time":"2026-10-26T19:02:02.5565533+08:00","level":"INFO","msg":"careold-go listening on 127.0.0.1:18081"}
+{"time":"2026-10-26T19:02:02.5622648+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T19:02:03.0190336+08:00","level":"INFO","msg":"http_request","request_id":"57f10b3c-bf39-45e0-94c1-d55710e91377","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:03.0520742+08:00","level":"INFO","msg":"http_request","request_id":"bcc64a2b-9fce-4f41-8f73-acb58aed38a3","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:03.064739+08:00","level":"INFO","msg":"http_request","request_id":"6345e3c8-bdf2-40e3-a262-229976ed5cbb","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":11.3615}
+{"time":"2026-10-26T19:02:04.1577823+08:00","level":"INFO","msg":"careold-go listening on 127.0.0.1:18081"}
+{"time":"2026-10-26T19:02:04.1635245+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T19:02:04.6535814+08:00","level":"INFO","msg":"http_request","request_id":"115f93bb-ee8b-4021-ac7f-2b122715de90","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:08.0190547+08:00","level":"INFO","msg":"http_request","request_id":"e0bf8548-cbb4-46cd-a430-1d1b64a059d6","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:13.0189025+08:00","level":"INFO","msg":"http_request","request_id":"1b1f2189-ba21-474d-8b98-6065300698b6","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:02:18.0187819+08:00","level":"INFO","msg":"http_request","request_id":"330c2fcc-262d-4916-8b82-5fe35ce03fb5","route":"/metrics","method":"GET","status":200,"duration_ms":0.5024}
+{"time":"2026-10-26T19:02:23.0186882+08:00","level":"INFO","msg":"http_request","request_id":"48afe344-0c7f-48de-add8-9b2363fd6cbc","route":"/metrics","method":"GET","status":200,"duration_ms":0.5022}
+{"time":"2026-10-26T19:02:28.0185799+08:00","level":"INFO","msg":"http_request","request_id":"d920226c-fff4-49cf-bbbc-de84ebd6b05f","route":"/metrics","method":"GET","status":200,"duration_ms":0.5024}
+{"time":"2026-10-26T19:02:29.0728799+08:00","level":"INFO","msg":"http_request","request_id":"f291f754-9fa9-471c-99c5-8bfbcdf4d7ee","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":5.7253}
+{"time":"2026-10-26T19:02:30.0994266+08:00","level":"INFO","msg":"http_request","request_id":"e9745c00-b1d8-418b-bc4e-8debf0140de9","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5022}
+{"time":"2026-10-26T19:02:33.0186311+08:00","level":"INFO","msg":"http_request","request_id":"24240bd1-0466-484d-a9bc-90eef621dab8","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:33.2590193+08:00","level":"INFO","msg":"http_request","request_id":"af7b0c9f-2821-47de-afed-8dd375bb6378","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":108.6109}
+{"time":"2026-10-26T19:02:34.287165+08:00","level":"INFO","msg":"http_request","request_id":"882e6295-dd40-4338-a02f-3267fd6a8a86","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":1.0428}
+{"time":"2026-10-26T19:02:38.0190765+08:00","level":"INFO","msg":"http_request","request_id":"ba2421bc-4a57-4cc8-9128-c6dd4d96cd5e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5046}
+{"time":"2026-10-26T19:02:43.0184531+08:00","level":"INFO","msg":"http_request","request_id":"9a915162-4582-4133-a64a-a475cf99f06c","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:02:43.3498807+08:00","level":"INFO","msg":"http_request","request_id":"aa61b5fd-cc5f-4f7e-9bde-57c7c61519f1","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":4.7848}
+{"time":"2026-10-26T19:02:43.3848594+08:00","level":"INFO","msg":"http_request","request_id":"7cc0fc35-3259-471e-84d1-072b400f5ed0","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":3.9798000000000004}
+{"time":"2026-10-26T19:02:44.4107358+08:00","level":"INFO","msg":"http_request","request_id":"87f2f0e4-e80b-43aa-add1-290e918aaa58","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5029}
+{"time":"2026-10-26T19:02:44.4504472+08:00","level":"INFO","msg":"http_request","request_id":"4e3ee65c-1612-4538-90ff-c92d6d38a7e0","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5037}
+{"time":"2026-10-26T19:02:48.0192118+08:00","level":"INFO","msg":"http_request","request_id":"e2962c1f-a297-4ba9-897c-f726d2e39bbd","route":"/metrics","method":"GET","status":200,"duration_ms":0.5042}
+{"time":"2026-10-26T19:02:53.0187515+08:00","level":"INFO","msg":"http_request","request_id":"378d8768-1b0e-4840-a8a3-a5f0b316450e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5136000000000001}
+{"time":"2026-10-26T19:02:57.5000512+08:00","level":"INFO","msg":"http_request","request_id":"016a1f62-d415-4fab-93f2-7e3338438fcd","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":5.617999999999999}
+{"time":"2026-10-26T19:02:58.0188341+08:00","level":"INFO","msg":"http_request","request_id":"09bf2972-f843-474d-b44d-64956241773f","route":"/metrics","method":"GET","status":200,"duration_ms":0.5123000000000001}
+{"time":"2026-10-26T19:02:58.5308839+08:00","level":"INFO","msg":"http_request","request_id":"31e1fd28-4d6b-4aa4-8796-aa213be5114b","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.6474}
+{"time":"2026-10-26T19:03:03.0190689+08:00","level":"INFO","msg":"http_request","request_id":"637b7f90-d04d-46ef-a3e9-a3027b970a76","route":"/metrics","method":"GET","status":200,"duration_ms":0.5023}
+{"time":"2026-10-26T19:03:08.018723+08:00","level":"INFO","msg":"http_request","request_id":"f9476c41-8637-4be4-9fb3-350eb3215c3e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5046999999999999}
+{"time":"2026-10-26T19:03:13.0190224+08:00","level":"INFO","msg":"http_request","request_id":"1c0c0c3b-47bc-4b59-a203-36940e029e8c","route":"/metrics","method":"GET","status":200,"duration_ms":0.5027}
+{"time":"2026-10-26T19:03:18.0186268+08:00","level":"INFO","msg":"http_request","request_id":"fda868de-0a15-465d-81d3-320ddd4ebffa","route":"/metrics","method":"GET","status":200,"duration_ms":0.5114}
+{"time":"2026-10-26T19:03:23.0191012+08:00","level":"INFO","msg":"http_request","request_id":"cf2b81e9-2aad-4f81-b4d4-463ec57ffc82","route":"/metrics","method":"GET","status":200,"duration_ms":0.5032}
+{"time":"2026-10-26T19:03:28.0186904+08:00","level":"INFO","msg":"http_request","request_id":"fe7be03e-0866-4306-bd73-873096c5d757","route":"/metrics","method":"GET","status":200,"duration_ms":0.5239}
+{"time":"2026-10-26T19:03:33.0181578+08:00","level":"INFO","msg":"http_request","request_id":"c899cf13-571f-4212-ae3d-6aa275bdf7c6","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:03:38.0191405+08:00","level":"INFO","msg":"http_request","request_id":"f2a47ead-aeca-402e-9c57-1bc7e9d412cc","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:03:42.6074358+08:00","level":"INFO","msg":"http_request","request_id":"37b3f401-d2bc-4d6b-854c-40a41e0b9ce1","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":5.3643}
+{"time":"2026-10-26T19:03:43.0190725+08:00","level":"INFO","msg":"http_request","request_id":"e405f6a7-ef4c-4d94-9f78-c7fd8ccb560f","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:03:43.6392906+08:00","level":"INFO","msg":"http_request","request_id":"7db60519-701e-473b-bc2a-9381b7f603f1","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5033000000000001}
+{"time":"2026-10-26T19:03:48.0190825+08:00","level":"INFO","msg":"http_request","request_id":"b16d5476-1ddd-4d7a-9b54-1109206acef3","route":"/metrics","method":"GET","status":200,"duration_ms":0.5028}
+{"time":"2026-10-26T19:03:53.0187278+08:00","level":"INFO","msg":"http_request","request_id":"9a185bec-1d42-4917-8ab3-ac78fe8b6f0f","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:03:58.019056+08:00","level":"INFO","msg":"http_request","request_id":"d6191714-fa7c-4d8b-a9ed-5602ed6bb3ad","route":"/metrics","method":"GET","status":200,"duration_ms":0.5752}
+{"time":"2026-10-26T19:04:03.0184894+08:00","level":"INFO","msg":"http_request","request_id":"519fa1b3-7acd-4ff8-a570-fc0e84d39c34","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:04.6936664+08:00","level":"INFO","msg":"http_request","request_id":"4a798edd-ced2-421c-b978-5057b67cfdc5","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":5.9451}
+{"time":"2026-10-26T19:04:05.4202918+08:00","level":"INFO","msg":"http_request","request_id":"14b586e3-9560-458e-b334-b8a1d7d22bbf","route":"unknown","method":"GET","status":200,"duration_ms":0}
+[mysql] 2026/10/26 19:04:05 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:05.7218102+08:00","level":"INFO","msg":"http_request","request_id":"694cab2b-2752-4314-a8e4-89d9689b0df2","route":"POST /restful/care/receipt","method":"POST","status":500,"duration_ms":0.5025999999999999}
+{"time":"2026-10-26T19:04:06.1641005+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:06.1646031+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:06.2779473+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 read tcp 127.0.0.1:7147->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:06.2779473+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 read tcp 127.0.0.1:7154->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:06.2784513+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 read tcp 127.0.0.1:7149->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:06.2784513+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:06.3188996+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 read tcp 127.0.0.1:7148->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:06.325963+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:06.3779962+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+[mysql] 2026/10/26 19:04:06 packets.go:58 read tcp 127.0.0.1:7152->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:06.3960555+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:06.4216569+08:00","level":"INFO","msg":"http_request","request_id":"bff68339-1202-46b4-9950-defb30b5ea9e","route":"unknown","method":"GET","status":200,"duration_ms":0}
+[mysql] 2026/10/26 19:04:06 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:06.7474517+08:00","level":"INFO","msg":"http_request","request_id":"e7672956-c920-4b18-8aba-9952bd4f3903","route":"POST /restful/care/receipt","method":"POST","status":500,"duration_ms":0.5031}
+[mysql] 2026/10/26 19:04:07 packets.go:58 unexpected EOF
+{"time":"2026-10-26T19:04:07.1641961+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:07.2781376+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.2781376+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.278641+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.278641+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.3190183+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.3262909+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.3781608+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.3966964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:07.4228856+08:00","level":"INFO","msg":"http_request","request_id":"c5147efc-9540-4b8b-be3e-18ad733e6a20","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:07.7901306+08:00","level":"INFO","msg":"http_request","request_id":"c4d32a0c-4ce2-4d17-a772-afe71b70d9b0","route":"POST /restful/care/receipt","method":"POST","status":500,"duration_ms":0}
+{"time":"2026-10-26T19:04:08.0186573+08:00","level":"INFO","msg":"http_request","request_id":"3efb04b7-71e2-44b1-9818-314d5ac15180","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:04:08.1641317+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:08.1646338+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:08.278608+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.278608+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.2791099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.2791099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.3201599+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.3269756+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.3785056+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.3967772+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:08.4242819+08:00","level":"INFO","msg":"http_request","request_id":"d2df7653-e4d5-4ff2-a069-759bac870e4e","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:08.8291975+08:00","level":"INFO","msg":"http_request","request_id":"140d3d39-fa69-4d49-99f5-59ee476bddef","route":"POST /restful/care/receipt","method":"POST","status":500,"duration_ms":0}
+{"time":"2026-10-26T19:04:09.1636816+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:09.1641849+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:09.1641849+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:09.1646982+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:09.2791019+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.2791019+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.2796489+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.2796489+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.3208206+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.3275852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.3794622+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.3976465+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:09.4254787+08:00","level":"INFO","msg":"http_request","request_id":"7b2177d3-ea4d-483b-8fc6-76710b038e83","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:09.8497023+08:00","level":"INFO","msg":"http_request","request_id":"5bfc835c-c272-447e-b42b-ed9d417af50d","route":"POST /restful/care/receipt","method":"POST","status":500,"duration_ms":0}
+{"time":"2026-10-26T19:04:10.1637151+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:10.1637151+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+[mysql] 2026/10/26 19:04:10 packets.go:58 read tcp 127.0.0.1:7142->127.0.0.1:33372: wsarecv: An established connection was aborted by the software in your host machine.
+{"time":"2026-10-26T19:04:10.1769269+08:00","level":"INFO","msg":"database unavailable; reconnecting in background"}
+{"time":"2026-10-26T19:04:10.2794672+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.2794672+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.2799697+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.2799697+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.3215425+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.328233+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.3799443+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.3979645+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:10.4265883+08:00","level":"INFO","msg":"http_request","request_id":"14ec09fa-8cda-4c9c-b00d-ba38f6ad21d8","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:10.4276269+08:00","level":"INFO","msg":"http_request","request_id":"f16f6a53-88b5-4a40-8b16-1c66fb1c1239","route":"POST /restful/device/sos","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:10.8984496+08:00","level":"INFO","msg":"http_request","request_id":"fea211d2-93ae-46fb-86b6-d704d1d7129c","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:11.1636927+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:11.2797435+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.2797435+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.2807551+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.2807551+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.3220943+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.32828+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.3802983+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.398464+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:11.9164759+08:00","level":"INFO","msg":"http_request","request_id":"d40231cd-5358-4515-abb8-e2ca288e2e34","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:12.1637413+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:12.1637413+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:12.2802856+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.2802856+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.2815215+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.2815215+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.3223444+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.3289785+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.3809852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.3991229+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:12.9357237+08:00","level":"INFO","msg":"http_request","request_id":"c300737d-de25-4904-b1c3-31fa7d1a55ca","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":1.0039}
+{"time":"2026-10-26T19:04:13.0186126+08:00","level":"INFO","msg":"http_request","request_id":"1fa07b58-c762-4d3e-bf20-7368df4def44","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:13.1640113+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:13.2805621+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.2805621+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.2820719+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.2820719+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.3227163+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.3297504+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.3817438+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.3998239+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:13.9578266+08:00","level":"INFO","msg":"http_request","request_id":"1879d404-2f7d-4730-92fe-8ffb033ea5d7","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:14.1636223+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:14.1636223+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:14.1641323+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:14.1641323+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:14.164643+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:14.2806089+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.2806089+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.2822297+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.2822297+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.3233632+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.3302994+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.3823154+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.4002001+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:14.9776313+08:00","level":"INFO","msg":"http_request","request_id":"73113b8d-cf61-4a9c-b2f2-72e7aeb6df72","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:15.164123+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:15.2811872+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.2811872+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.2827044+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.2827044+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.3239329+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.3309582+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.3830698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:15.4006671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.0237769+08:00","level":"INFO","msg":"http_request","request_id":"34ceebe6-1c91-4bc3-8bcd-f6dfd3d34c13","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:16.1637239+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:16.1637239+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:16.2818936+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.2818936+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.2829702+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.2829702+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.3241662+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.3317413+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.3830948+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:16.4012291+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.0441545+08:00","level":"INFO","msg":"http_request","request_id":"392ce9db-9a30-41b3-8782-daa7d54d08af","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:17.1635663+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:17.2822335+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.2822335+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.2833117+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.2833117+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.3245862+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.3320919+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.3837331+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:17.4018512+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.0190002+08:00","level":"INFO","msg":"http_request","request_id":"0e9dce21-b816-4d88-b933-a83417837488","route":"/metrics","method":"GET","status":200,"duration_ms":0.503}
+{"time":"2026-10-26T19:04:18.0774214+08:00","level":"INFO","msg":"http_request","request_id":"2fff56b3-4e0e-4a72-8ae3-6dd5ee1437a0","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:18.163752+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:18.163752+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:18.2826514+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.2826514+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.2836613+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.2836613+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.3249662+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.3327991+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.3840526+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:18.4025157+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.0989968+08:00","level":"INFO","msg":"http_request","request_id":"a7736c09-5513-44aa-8f94-d0673b1142b2","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:19.1639493+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:19.1639493+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:19.1644529+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:19.1644529+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:19.2831299+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.2831299+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.2841385+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.2841385+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.3255636+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.333647+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.3846794+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:19.4034188+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.1240569+08:00","level":"INFO","msg":"http_request","request_id":"901dd701-9f29-486b-874e-bef3186bfd24","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:20.1640778+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:20.1640778+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:20.283846+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.283846+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.2843483+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.2843483+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.3260856+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.3345272+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.385585+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:20.4042516+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.1441341+08:00","level":"INFO","msg":"http_request","request_id":"4a4ae811-427b-4559-8454-9ce98bebe9e5","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:21.1636735+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:21.2842399+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.2842399+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.2847422+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.2847422+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.3267058+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.335231+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.3857159+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:21.4047951+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.1640596+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:22.1640596+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:22.1782103+08:00","level":"INFO","msg":"http_request","request_id":"7c8e1bfa-920e-47a6-9000-41015039cd5f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:22.2845869+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.2845869+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.2850902+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.2850902+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.3270801+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.3363414+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.3864604+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:22.4052205+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.0190467+08:00","level":"INFO","msg":"http_request","request_id":"475b5de8-ba2b-477f-a1b5-2b10f5bb1c29","route":"/metrics","method":"GET","status":200,"duration_ms":0.5686000000000001}
+{"time":"2026-10-26T19:04:23.1644997+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:23.2201875+08:00","level":"INFO","msg":"http_request","request_id":"3f85f213-f8d5-4a85-83f3-721054cea50f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:23.2850086+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.2855107+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.2855107+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.2855107+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.3278825+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.3370815+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.3871451+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:23.4062274+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.1643156+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:24.1643156+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:24.1643156+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:24.1643156+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:24.1643156+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:24.2527157+08:00","level":"INFO","msg":"http_request","request_id":"cde346a7-7178-4d6f-8f43-b42e4f2bc39c","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:24.2856196+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.2856196+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.2856196+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.2856196+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.3284864+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.3375168+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.3879772+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:24.4063783+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.1641701+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:25.269262+08:00","level":"INFO","msg":"http_request","request_id":"5704462c-0765-4412-a0b4-655f74d92237","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:25.2857807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.2857807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.2857807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.2857807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.3286335+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.338262+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.3885129+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:25.4069677+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.1643382+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:26.1643382+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:26.2862964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.2862964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.2862964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.2862964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.2911633+08:00","level":"INFO","msg":"http_request","request_id":"584ed5fd-fab8-48e9-9502-ccf5515a3257","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:26.3287173+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.3388497+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.3892697+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:26.4077163+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.1638819+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:27.2869162+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.2869162+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.2869162+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.2869162+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.3161564+08:00","level":"INFO","msg":"http_request","request_id":"e187a7e7-ceec-4a09-8bf3-c25afd41f400","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:27.3290896+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.3394618+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.3897729+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:27.4085555+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.0188627+08:00","level":"INFO","msg":"http_request","request_id":"f1b863ff-1b49-47b1-8c9a-fcee70d4059b","route":"/metrics","method":"GET","status":200,"duration_ms":0.503}
+{"time":"2026-10-26T19:04:28.1637931+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:28.1643108+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:28.2870547+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.2870547+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.2870547+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.2870547+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.3296207+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.339511+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.3406883+08:00","level":"INFO","msg":"http_request","request_id":"b1720921-c95a-45c1-a15b-8f01ea0868ed","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:28.3903207+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:28.4093349+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.1639438+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:29.1639438+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:29.1644463+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:29.1644463+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:29.2880594+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.2880594+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.2880594+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.2880594+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.3300341+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.3400354+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.3603871+08:00","level":"INFO","msg":"http_request","request_id":"58574fb7-139e-4b28-a2f8-e85ea6a90c70","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:29.3903618+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:29.4096727+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.1642284+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:30.1642284+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:30.2884617+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.2884617+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.2884617+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.2884617+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.3302974+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.3404053+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.382589+08:00","level":"INFO","msg":"http_request","request_id":"6e9628e5-1356-49de-8376-91e6b87bd520","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:30.3905974+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:30.4100962+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.1639136+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:31.2892328+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.2892328+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.2892328+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.2892328+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.3306698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.341257+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.3911808+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:31.4069258+08:00","level":"INFO","msg":"http_request","request_id":"8e0264da-0ecf-4aa3-a51a-b0540f251b9b","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:31.4104342+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.1638311+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:32.1638311+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:32.289532+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.289532+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.289532+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.289532+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.330886+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.3420076+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.3920487+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.411027+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:32.4320894+08:00","level":"INFO","msg":"http_request","request_id":"ced58398-626b-45e0-aaeb-d73d9c2116bd","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:33.018717+08:00","level":"INFO","msg":"http_request","request_id":"e4a09279-d7a2-4bb2-ac1f-8894ad54631e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5109}
+{"time":"2026-10-26T19:04:33.1638979+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:33.29022+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.29022+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.29022+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.29022+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.3318442+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.3428162+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.3925671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.4112378+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:33.4725+08:00","level":"INFO","msg":"http_request","request_id":"29f22eb8-c5e2-4f51-a399-915d2f27d07f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:34.1639869+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:34.1639869+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:34.1639869+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:34.1644903+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:34.1644903+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:34.1655134+08:00","level":"INFO","msg":"care: offline device scan failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:34.1655134+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:34.1655134+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:34.2904679+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.2904679+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.2904679+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.2904679+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.33193+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.3430799+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.3930947+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.4116352+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:34.4939753+08:00","level":"INFO","msg":"http_request","request_id":"6d775551-24fa-4c11-9f05-6f06446106c4","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:35.1641207+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:35.2911419+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.2911419+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.2911419+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.2911419+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.3325011+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.3436885+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.3936509+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.4122912+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:35.5161538+08:00","level":"INFO","msg":"http_request","request_id":"72e11446-7b14-4e3f-a3a5-8f454a7bc7c0","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:36.1642579+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:36.1642579+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:36.2915298+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.2915298+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.2915298+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.2915298+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.3330587+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.3440398+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.3941133+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.4127394+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:36.5402882+08:00","level":"INFO","msg":"http_request","request_id":"f84adbce-9798-484d-a542-cf91dec8fb3a","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:37.1641281+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:37.2918698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.2918698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.2918698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.2918698+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.3338398+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.3444268+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.3954622+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.4131739+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:37.5864971+08:00","level":"INFO","msg":"http_request","request_id":"e2ef487e-7e2f-4609-9f12-0b3adb3c87a0","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:38.0190105+08:00","level":"INFO","msg":"http_request","request_id":"4e00755d-c21d-48ab-89eb-6ea76d639c80","route":"/metrics","method":"GET","status":200,"duration_ms":0.5028}
+{"time":"2026-10-26T19:04:38.1641+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:38.1641+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:38.2921229+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.2921229+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.2921229+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.2921229+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.3344338+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.3449486+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.3955939+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.4136737+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:38.6299288+08:00","level":"INFO","msg":"http_request","request_id":"c99342ea-9628-4054-a39a-83a9d8112635","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:39.1640778+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:39.1640778+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:39.1640778+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:39.1645801+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:39.2926031+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.2926031+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.2926031+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.2926031+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.334844+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.3453712+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.3961351+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.4147499+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:39.6495302+08:00","level":"INFO","msg":"http_request","request_id":"84440ea2-1e39-4c9a-afab-b4395d7e2094","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:40.16412+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:40.16412+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:40.2929101+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.2929101+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.2929101+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.2929101+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.335848+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.3459081+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.3971272+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.4159189+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:40.6836321+08:00","level":"INFO","msg":"http_request","request_id":"df94e985-61e7-4997-a432-06eabf4d249e","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:41.1638807+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:41.2936402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.2936402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.2936402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.2936402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.3361566+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.3461043+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.3979732+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.416431+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:41.7020222+08:00","level":"INFO","msg":"http_request","request_id":"2eab11b8-5ef7-411c-bdbb-80d2d965e94f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:42.1638341+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:42.1638341+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:42.2938282+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.2938282+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.2938282+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.2938282+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.3377709+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.3461986+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.3985854+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.4171102+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:42.7237772+08:00","level":"INFO","msg":"http_request","request_id":"1600f2c5-7d55-4c9c-b195-597d6c5d9124","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:43.0187098+08:00","level":"INFO","msg":"http_request","request_id":"ca926ae6-094d-4a1e-b4e5-38457c7d2522","route":"/metrics","method":"GET","status":200,"duration_ms":0.5085}
+{"time":"2026-10-26T19:04:43.1640833+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:43.2945899+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.2945899+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.2945899+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.2945899+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.3382497+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.346835+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.3990997+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.417989+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:43.7598069+08:00","level":"INFO","msg":"http_request","request_id":"c26c871a-8eba-4e3f-a005-5e1c6dac5352","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:44.1637103+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:44.1637103+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:44.1642128+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:44.1642128+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:44.1642128+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:44.29491+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.29491+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.29491+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.29491+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.3388175+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.3469812+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.3992423+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.4183997+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:44.782156+08:00","level":"INFO","msg":"http_request","request_id":"53667580-508b-4267-9a0e-d064eacd5936","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:45.163842+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:45.2957964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.2957964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.2957964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.2957964+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.3391774+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.3475493+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.3998989+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.4185746+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:45.8163832+08:00","level":"INFO","msg":"http_request","request_id":"e3149680-6680-47cb-a62c-9406c5989417","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:46.1638806+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:46.1638806+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:46.2964293+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.2964293+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.2964293+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.2964293+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.3395553+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.3477366+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.4010749+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.4192219+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:46.8430529+08:00","level":"INFO","msg":"http_request","request_id":"38d2497e-e4c0-4589-b125-8e3404afa1f3","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:47.1640683+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:47.2972524+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.2972524+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.2972524+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.2972524+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.3404604+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.3479971+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.4015807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.4193374+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:47.8653637+08:00","level":"INFO","msg":"http_request","request_id":"10ad3198-d983-46c0-adda-b0a045e20296","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:48.0189311+08:00","level":"INFO","msg":"http_request","request_id":"8de5d757-9ff0-4f0a-8854-b9d2387495e4","route":"/metrics","method":"GET","status":200,"duration_ms":0.5021}
+{"time":"2026-10-26T19:04:48.1643756+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:48.1643756+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:48.2976099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.2976099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.2976099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.2976099+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.3409287+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.348443+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.4020913+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.4199563+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:48.8902907+08:00","level":"INFO","msg":"http_request","request_id":"cd5c2a85-154e-430e-b19e-139853043bc7","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:49.16458+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:49.16458+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:49.16458+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:49.1650851+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:49.2982787+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.2982787+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.2982787+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.2982787+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.3414065+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.3491893+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.4023935+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.4205986+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:49.9099161+08:00","level":"INFO","msg":"http_request","request_id":"894bb7f5-001c-41e9-9b36-6a814a2f505f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:50.163716+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:50.163716+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:50.2985895+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.2985895+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.2990918+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.2990918+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.3419598+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.3499789+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.4029378+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.4214756+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:50.9323068+08:00","level":"INFO","msg":"http_request","request_id":"575367a4-214f-41aa-8473-dfa77c2f9727","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:51.163807+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:51.2994894+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.2994894+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.2994894+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.2994894+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.342299+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.3503985+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.4037571+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.4220423+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:51.9571857+08:00","level":"INFO","msg":"http_request","request_id":"6dc53d9a-afa8-4dab-b9e0-240d55c86ecb","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:52.1635787+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:52.1635787+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:52.3001638+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.3001638+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.3001638+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.3001638+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.3427609+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.3507817+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.4039037+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.4226473+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:52.9820956+08:00","level":"INFO","msg":"http_request","request_id":"979940d3-e8ee-4814-8f19-203fa54312cc","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:53.0186471+08:00","level":"INFO","msg":"http_request","request_id":"c1d83199-19bb-4d56-a0e2-e33c3e671b33","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:53.1637708+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:53.3008552+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.3008552+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.3008552+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.3008552+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.3431823+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.3519793+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.4048026+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:53.4230438+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.0114293+08:00","level":"INFO","msg":"http_request","request_id":"0300a2a9-d4ee-4afa-895a-8cd7f1425680","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:54.1637479+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:54.1637479+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:54.1637479+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:54.1642531+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:54.1647643+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:54.3017343+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.3017343+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.3022372+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.3022372+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.3435071+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.3525541+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.4053469+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:54.4237461+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.0401939+08:00","level":"INFO","msg":"http_request","request_id":"7aa669eb-5658-40ed-a221-9a52d8508673","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:55.1639306+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:55.3022786+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.3022786+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.3022786+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.3022786+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.3443446+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.3526495+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.4059842+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:55.4243739+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.0656026+08:00","level":"INFO","msg":"http_request","request_id":"7e6a2a0d-a589-40c7-a0e2-c11e5356c821","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:56.1640124+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:56.1640124+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:56.3030671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.3030671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.3030671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.3030671+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.3446103+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.3532972+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.4064871+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:56.4250249+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.0898367+08:00","level":"INFO","msg":"http_request","request_id":"728eedbc-c258-4370-ade7-1e3dddcdf8fc","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:57.1646493+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:57.303371+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.303371+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.303371+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.303371+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.3446471+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.35342+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.406666+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:57.4254314+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.0192476+08:00","level":"INFO","msg":"http_request","request_id":"6ea28ebe-0636-4484-8fad-4b41add3a02e","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:04:58.1098974+08:00","level":"INFO","msg":"http_request","request_id":"a2dbbb44-0afd-4819-a0ae-ca26b5f88ad5","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:58.164325+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:04:58.164325+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:58.3040007+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.3040007+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.3040007+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.3040007+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.3450095+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.3536232+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.4075991+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:58.4263956+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.132008+08:00","level":"INFO","msg":"http_request","request_id":"f0a635cf-02e8-496b-a7ad-b245f898d4af","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:04:59.1639151+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:04:59.1639151+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:04:59.1644916+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:59.1649945+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:04:59.3041852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.3041852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.3041852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.3041852+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.3459835+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.3543156+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.4081394+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:04:59.4272567+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.1644158+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:00.1644158+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:00.1644158+08:00","level":"INFO","msg":"http_request","request_id":"866290ea-cd67-451f-b499-2eefcbb1fa32","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:00.3043773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.3043773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.3043773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.3043773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.346662+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.3546878+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.4087447+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:00.4276444+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.1636233+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:01.1905561+08:00","level":"INFO","msg":"http_request","request_id":"919369dd-efc0-4ebd-86de-73a8d7ae879b","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:01.3045947+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.3045947+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.3045947+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.3045947+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.3469526+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.3553787+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.4094672+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:01.4283218+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.1640726+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:02.1640726+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:02.2236014+08:00","level":"INFO","msg":"http_request","request_id":"11a408bc-fff9-4183-bd37-bbabfb59e692","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:02.3046649+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.3046649+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.3046649+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.3046649+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.3476575+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.3558243+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.4103766+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:02.4291119+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.0188726+08:00","level":"INFO","msg":"http_request","request_id":"97b16787-14b2-4487-87fb-4bfd3110383b","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:05:03.1636878+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:03.2484208+08:00","level":"INFO","msg":"http_request","request_id":"937ddccc-5c3e-4257-b000-fe466c00478d","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:03.3050756+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.3050756+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.3050756+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.3055845+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.3482417+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.3566133+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.4109306+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:03.4301327+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.16364+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:04.16364+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:05:04.16364+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:04.1641429+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:04.1641429+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:04.1641429+08:00","level":"INFO","msg":"care: offline device scan failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:04.1646509+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:04.1646509+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:04.2940592+08:00","level":"INFO","msg":"http_request","request_id":"1d829e1d-f370-4be1-8ca6-6e238efbb914","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:04.3054206+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.3054206+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.3054206+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.3059278+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.3484252+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.3574568+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.4114139+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:04.4311173+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.1646483+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:05.30561+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.30561+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.30561+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.306112+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.3210367+08:00","level":"INFO","msg":"http_request","request_id":"167952c3-6b00-4ac4-bc4e-693db9fd516e","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:05.3487874+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.358065+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.4118621+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:05.4317431+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.1645623+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:06.1645623+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:06.306544+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.306544+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.306544+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.306544+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.3482211+08:00","level":"INFO","msg":"http_request","request_id":"d5fac9eb-d88f-4324-bdf1-5c9c8af48ba6","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:06.3490039+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.3586442+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.4131459+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:06.4324421+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.1642231+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:07.3070807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3070807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3070807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3070807+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3498732+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3590175+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.3713123+08:00","level":"INFO","msg":"http_request","request_id":"532d546e-513f-411b-a4bf-225d1706b88d","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:07.4132389+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:07.433273+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.0190911+08:00","level":"INFO","msg":"http_request","request_id":"4816807d-1474-4558-8b53-c9a79555a6d3","route":"/metrics","method":"GET","status":200,"duration_ms":0.5023}
+{"time":"2026-10-26T19:05:08.1641538+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:08.1641538+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:08.3076701+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3076701+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3076701+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3076701+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3499372+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3595432+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.3961707+08:00","level":"INFO","msg":"http_request","request_id":"10c81467-ef96-4254-addd-c78fa4e635e9","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:08.4138637+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:08.4339823+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.1645197+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:09.1645197+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:09.1645197+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:05:09.1650243+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:09.3077979+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.3077979+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.3077979+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.3077979+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.350101+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.3601515+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.4145981+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:09.4211253+08:00","level":"INFO","msg":"http_request","request_id":"b79620f9-25e5-406b-8a52-e2bd49bfc4c6","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:09.4343083+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.1640937+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:10.1640937+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:10.3080938+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.3080938+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.3080938+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.3080938+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.3504954+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.3606301+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.4151211+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.4348809+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:10.4651131+08:00","level":"INFO","msg":"http_request","request_id":"0a4cd1f3-4b1d-431d-83ad-afae87a05906","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:11.1640889+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:11.3084954+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.3084954+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.3084954+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.3084954+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.3513652+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.3613772+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.4158987+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.4358572+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:11.488059+08:00","level":"INFO","msg":"http_request","request_id":"c0317325-a740-4e2d-b127-72ef76befc81","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:12.1637689+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:12.1637689+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:12.3089343+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.3089343+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.3094402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.3094402+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.3518735+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.3620138+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.416867+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.4364803+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:12.5133346+08:00","level":"INFO","msg":"http_request","request_id":"cf8facb3-ff1a-44ac-b4b8-8209da03b2bf","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:13.0191102+08:00","level":"INFO","msg":"http_request","request_id":"bc268718-2d13-4936-b60f-9a8eea945509","route":"/metrics","method":"GET","status":200,"duration_ms":0.5033000000000001}
+{"time":"2026-10-26T19:05:13.1638654+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:13.3091582+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.3091582+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.3097088+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.3097088+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.3521668+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.3628338+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.4173773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.4365637+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:13.5523702+08:00","level":"INFO","msg":"http_request","request_id":"d06eeddf-cb12-4dcd-81c4-054710cf62ff","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:14.1639405+08:00","level":"WARN","msg":"rule_engine_cycle_failed"}
+{"time":"2026-10-26T19:05:14.1639405+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:14.1639405+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:14.1644447+08:00","level":"INFO","msg":"care: heartbeat update failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:14.1644447+08:00","level":"INFO","msg":"care: escalation check failed: dial tcp 127.0.0.1:33372: connectex: No connection could be made because the target machine actively refused it."}
+{"time":"2026-10-26T19:05:14.3096738+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.3096738+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.3101764+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.3101764+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.3526749+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.3634898+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.4178773+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.4369754+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:14.5796942+08:00","level":"INFO","msg":"http_request","request_id":"dd1ecc62-e593-4148-a98a-de908110014f","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:15.1640919+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:15.3100992+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.3100992+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.3106015+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.3106015+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.3531427+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.3641571+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.4188239+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.4375777+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:15.6042473+08:00","level":"INFO","msg":"http_request","request_id":"8f441d75-2886-434e-ad59-e7e430648286","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:16.1638918+08:00","level":"WARN","msg":"message_outbox_cycle_failed"}
+{"time":"2026-10-26T19:05:16.1638918+08:00","level":"INFO","msg":"device capability maintenance failed; retrying"}
+{"time":"2026-10-26T19:05:16.3107194+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.3107194+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.3107194+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.3107194+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.3537839+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.3643864+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.4193038+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.4379915+08:00","level":"WARN","msg":"care_delivery_attempt_failed"}
+{"time":"2026-10-26T19:05:16.5370155+08:00","level":"INFO","msg":"http_request","request_id":"f2792242-a476-43ac-a6d0-5de3b63339c7","route":"/healthz","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:16.629389+08:00","level":"INFO","msg":"http_request","request_id":"82318ef8-cb50-4290-a675-c7bfe222b83a","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:17.5796307+08:00","level":"INFO","msg":"http_request","request_id":"303dfe6d-838a-4623-9265-935e8d475c0b","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:17.6771771+08:00","level":"INFO","msg":"http_request","request_id":"3a33f3e6-7e0d-400a-a643-d115e0a55d3b","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:18.0190544+08:00","level":"INFO","msg":"http_request","request_id":"40794358-16f0-4554-a2c4-d7a055f70f62","route":"/metrics","method":"GET","status":200,"duration_ms":0.5199}
+{"time":"2026-10-26T19:05:18.5809245+08:00","level":"INFO","msg":"http_request","request_id":"7bfd28e3-1fdf-4f1e-92de-ae3f56b1599c","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:18.7208118+08:00","level":"INFO","msg":"http_request","request_id":"854b04a3-7796-473f-8d5f-dc6a19cbcfd2","route":"POST /restful/care/receipt","method":"POST","status":503,"duration_ms":0}
+{"time":"2026-10-26T19:05:19.1906501+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T19:05:19.5819689+08:00","level":"INFO","msg":"http_request","request_id":"c8b662fb-a886-4f4f-9228-b653dc13e359","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:19.6111038+08:00","level":"INFO","msg":"http_request","request_id":"28320402-0687-4009-80f6-f38633c5fcde","route":"POST /restful/device/sos","method":"POST","status":200,"duration_ms":14.1938}
+{"time":"2026-10-26T19:05:19.6357032+08:00","level":"INFO","msg":"http_request","request_id":"9889c9fd-3d4e-4d57-8c3f-4e2167e60f95","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:19.746489+08:00","level":"INFO","msg":"http_request","request_id":"5919e135-76f1-494c-b29b-47c170fd89d9","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5035999999999999}
+{"time":"2026-10-26T19:05:20.7870915+08:00","level":"INFO","msg":"http_request","request_id":"d8cf0dc7-4b2f-4887-b230-68b707b4e74c","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":4.6433}
+{"time":"2026-10-26T19:05:21.823029+08:00","level":"INFO","msg":"http_request","request_id":"83975254-839f-4794-8ac1-896a4ca24d66","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5236999999999999}
+{"time":"2026-10-26T19:05:23.0188806+08:00","level":"INFO","msg":"http_request","request_id":"74954bf7-eff1-4856-97aa-c76f736119aa","route":"/metrics","method":"GET","status":200,"duration_ms":0.5033000000000001}
+{"time":"2026-10-26T19:05:28.0192654+08:00","level":"INFO","msg":"http_request","request_id":"e3245704-8b47-4d98-b8ab-08bd922625db","route":"/metrics","method":"GET","status":200,"duration_ms":0.5055}
+{"time":"2026-10-26T19:05:33.0188036+08:00","level":"INFO","msg":"http_request","request_id":"72a97631-c065-4422-8912-f960147e2918","route":"/metrics","method":"GET","status":200,"duration_ms":0.5045}
+{"time":"2026-10-26T19:05:38.0186417+08:00","level":"INFO","msg":"http_request","request_id":"af1a3e72-e92a-4123-8715-a8c7dfed8066","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+[mysql] 2026/10/26 19:05:39 packets.go:58 read tcp 127.0.0.1:4259->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:05:39.1646701+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:05:43.0191044+08:00","level":"INFO","msg":"http_request","request_id":"3e3d338b-2c09-4815-9906-0e8cb8d85d82","route":"/metrics","method":"GET","status":200,"duration_ms":0.5222}
+{"time":"2026-10-26T19:05:48.0190422+08:00","level":"INFO","msg":"http_request","request_id":"25ffebfe-9db1-4f29-8b55-c01fc54f6dce","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:05:53.0187613+08:00","level":"INFO","msg":"http_request","request_id":"256459f5-e11a-416a-88a7-de922a9d217b","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+[mysql] 2026/10/26 19:05:54 packets.go:58 read tcp 127.0.0.1:4257->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:05:54.1661036+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:05:58.0189904+08:00","level":"INFO","msg":"http_request","request_id":"214447ad-4d94-445a-a0e8-f3e6268db6f4","route":"/metrics","method":"GET","status":200,"duration_ms":0.5038}
+{"time":"2026-10-26T19:06:03.0187004+08:00","level":"INFO","msg":"http_request","request_id":"4e965d7f-06bd-455c-a12a-5d73dc3e46d3","route":"/metrics","method":"GET","status":200,"duration_ms":0.5031}
+{"time":"2026-10-26T19:06:08.0186177+08:00","level":"INFO","msg":"http_request","request_id":"94e097bb-1640-4caf-b54e-97d8ece60184","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+[mysql] 2026/10/26 19:06:09 packets.go:58 read tcp 127.0.0.1:4258->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:06:09.1687844+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:06:13.0186435+08:00","level":"INFO","msg":"http_request","request_id":"ce6c9cc4-0af8-4b66-9158-a3e0e0ec9815","route":"/metrics","method":"GET","status":200,"duration_ms":0.5091}
+{"time":"2026-10-26T19:06:18.0188209+08:00","level":"INFO","msg":"http_request","request_id":"98a2b393-fd38-4c7b-89db-745f63f6c3bb","route":"/metrics","method":"GET","status":200,"duration_ms":0.5037}
+{"time":"2026-10-26T19:06:23.0188602+08:00","level":"INFO","msg":"http_request","request_id":"a9cb2ae7-c62a-41b8-a58c-0bd729fa3711","route":"/metrics","method":"GET","status":200,"duration_ms":0.5186999999999999}
+[mysql] 2026/10/26 19:06:24 packets.go:58 read tcp 127.0.0.1:4312->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:06:24.1714912+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:06:24.9182794+08:00","level":"INFO","msg":"http_request","request_id":"df2133c0-b998-4db5-8580-0a56b6894697","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":9.2798}
+{"time":"2026-10-26T19:06:25.9825098+08:00","level":"INFO","msg":"http_request","request_id":"aae45bab-57bd-4c3a-8910-d0c87e246c74","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5029}
+{"time":"2026-10-26T19:06:28.0185876+08:00","level":"INFO","msg":"http_request","request_id":"9127d802-a243-4baf-bd54-33d0fc59677b","route":"/metrics","method":"GET","status":200,"duration_ms":0.5104000000000001}
+{"time":"2026-10-26T19:06:33.0191072+08:00","level":"INFO","msg":"http_request","request_id":"8d9e4861-4ff3-40a3-bcea-b3dfb85ff0c9","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:06:38.0187012+08:00","level":"INFO","msg":"http_request","request_id":"53c6fce9-3ef7-40c0-a846-769ea7b47272","route":"/metrics","method":"GET","status":200,"duration_ms":0.5078}
+[mysql] 2026/10/26 19:06:39 packets.go:58 read tcp 127.0.0.1:4367->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:06:39.1781483+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:06:40.04878+08:00","level":"INFO","msg":"http_request","request_id":"842b43e3-5bfb-4ebf-b0ad-740f19a280e0","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":4.656300000000001}
+{"time":"2026-10-26T19:06:41.077821+08:00","level":"INFO","msg":"http_request","request_id":"d7abff19-4597-42dc-86a5-f617a3fd8ca0","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5029}
+{"time":"2026-10-26T19:06:43.0184042+08:00","level":"INFO","msg":"http_request","request_id":"b204a000-7187-4b2b-9076-0efae188ee9b","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:06:48.0189803+08:00","level":"INFO","msg":"http_request","request_id":"c7759d30-282e-4e80-92e7-887dd6e95991","route":"/metrics","method":"GET","status":200,"duration_ms":0.51}
+{"time":"2026-10-26T19:06:53.0190321+08:00","level":"INFO","msg":"http_request","request_id":"4538927d-996f-4d03-8eb4-787f194cf908","route":"/metrics","method":"GET","status":200,"duration_ms":0.6196}
+[mysql] 2026/10/26 19:06:54 packets.go:58 read tcp 127.0.0.1:4339->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:06:54.1862277+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:06:58.0194436+08:00","level":"INFO","msg":"http_request","request_id":"34022ef5-4ce2-4101-bf36-2ff94b969359","route":"/metrics","method":"GET","status":200,"duration_ms":1.057}
+{"time":"2026-10-26T19:07:03.0188877+08:00","level":"INFO","msg":"http_request","request_id":"840c71ca-3e31-4391-b127-cb8446a52a5f","route":"/metrics","method":"GET","status":200,"duration_ms":0.503}
+{"time":"2026-10-26T19:07:08.0191442+08:00","level":"INFO","msg":"http_request","request_id":"4b0b250b-25d0-44ee-a686-1cc1c3d86101","route":"/metrics","method":"GET","status":200,"duration_ms":0.5035000000000001}
+[mysql] 2026/10/26 19:07:09 packets.go:58 read tcp 127.0.0.1:4255->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:07:09.1877733+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:07:10.1423054+08:00","level":"INFO","msg":"http_request","request_id":"ad4a1133-9839-43db-a78d-a938fdeaace9","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":6.7893}
+{"time":"2026-10-26T19:07:10.1806884+08:00","level":"INFO","msg":"http_request","request_id":"d7db5640-8509-4a2b-8b53-b6ef9e75d8a8","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":6.5327}
+{"time":"2026-10-26T19:07:10.2138531+08:00","level":"INFO","msg":"http_request","request_id":"7b9af981-6ea5-4dd2-b1bc-c90529a273b3","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":3.6631}
+{"time":"2026-10-26T19:07:11.2447165+08:00","level":"INFO","msg":"http_request","request_id":"a3703ed4-ff46-454b-b678-1ea6c5ec46e3","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":1.6416}
+{"time":"2026-10-26T19:07:11.2772534+08:00","level":"INFO","msg":"http_request","request_id":"c06eb13b-735b-4bf6-be63-6d12865dfe31","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.6074999999999999}
+{"time":"2026-10-26T19:07:11.3121627+08:00","level":"INFO","msg":"http_request","request_id":"bd5bca5e-4cec-4ab6-a573-2940eb079a5f","route":"POST /restful/care/receipt","method":"POST","status":200,"duration_ms":0.5276000000000001}
+{"time":"2026-10-26T19:07:13.0186492+08:00","level":"INFO","msg":"http_request","request_id":"311cf0a0-d668-4885-92bd-d3a2e2d45789","route":"/metrics","method":"GET","status":200,"duration_ms":0.5642}
+{"time":"2026-10-26T19:07:18.0186921+08:00","level":"INFO","msg":"http_request","request_id":"2132b005-57fe-458b-81bb-f9a8f4f98819","route":"/metrics","method":"GET","status":200,"duration_ms":0.5228}
+{"time":"2026-10-26T19:07:20.8316218+08:00","level":"INFO","msg":"http_request","request_id":"40601e31-6234-4a4f-855d-9432323467c5","route":"unknown","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:07:23.0189426+08:00","level":"INFO","msg":"http_request","request_id":"c9f3b739-de92-423e-a624-8ca6d772e970","route":"/metrics","method":"GET","status":200,"duration_ms":0.5023}
+[mysql] 2026/10/26 19:07:24 packets.go:58 read tcp 127.0.0.1:4393->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:07:24.1944304+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:07:28.0185408+08:00","level":"INFO","msg":"http_request","request_id":"32faf644-3608-4a91-8721-3a4d17535034","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:07:33.0187925+08:00","level":"INFO","msg":"http_request","request_id":"51aa9768-a7c8-4cb9-8c9b-c8763a051f03","route":"/metrics","method":"GET","status":200,"duration_ms":0.5109999999999999}
+{"time":"2026-10-26T19:07:38.0189685+08:00","level":"INFO","msg":"http_request","request_id":"0c60eb80-a4fc-4a42-aa78-0c8937551e1e","route":"/metrics","method":"GET","status":200,"duration_ms":0.5041}
+[mysql] 2026/10/26 19:07:39 packets.go:58 read tcp 127.0.0.1:4427->127.0.0.1:33372: i/o timeout
+{"time":"2026-10-26T19:07:39.2018743+08:00","level":"INFO","msg":"care: heartbeat update failed: invalid connection"}
+{"time":"2026-10-26T19:07:43.0188038+08:00","level":"INFO","msg":"http_request","request_id":"dd9c0d36-2dcc-4e41-b157-4dff6d250c31","route":"/metrics","method":"GET","status":200,"duration_ms":0.5417}
+{"time":"2026-10-26T19:07:48.0192146+08:00","level":"INFO","msg":"http_request","request_id":"7b531a5d-b008-4120-9691-fca72e2f4379","route":"/metrics","method":"GET","status":200,"duration_ms":1.0186}
+{"time":"2026-10-26T19:07:49.6629593+08:00","level":"INFO","msg":"http_request","request_id":"eaa7332c-1eac-479e-8c55-27849c933795","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:07:50.664523+08:00","level":"INFO","msg":"http_request","request_id":"ca1dc2d6-249f-4dda-97d1-45b0d7fa5867","route":"/metrics","method":"GET","status":200,"duration_ms":0}
+{"time":"2026-10-26T19:08:55.8249404+08:00","level":"INFO","msg":"careold-go listening on 127.0.0.1:18081"}
+{"time":"2026-10-26T19:08:55.8328836+08:00","level":"INFO","msg":"database ready"}
+{"time":"2026-10-26T19:08:56.3209332+08:00","level":"INFO","msg":"http_request","request_id":"79409ddc-4f8b-40ba-a0e1-e2b4cbe1b617","route":"unknown","method":"GET","status":200,"duration_ms":0}

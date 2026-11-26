@@ -1,0 +1,46 @@
+# CI-only credentials; do not share these ephemeral services with production.
+name: MySQL migration verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_only
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: yihe_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root -pci_root_only --silent"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: backend/go.sum
+      - name: Apply migrations and prove the second execution is a no-op
+        working-directory: backend
+        env:
+          MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+          TEST_MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+        run: |
+          set -euo pipefail
+          go run ./cmd/migrate
+          dump() {
+            docker exec "${{ job.services.mysql.id }}" mysqldump \
+              -u root -pci_root_only --single-transaction --skip-comments \
+              --skip-dump-date --no-tablespaces --set-gtid-purged=OFF \
+              --routines --triggers yihe_test
+          }
+          dump > "$RUNNER_TEMP/migration-first.sql"
+          go run ./cmd/migrate
+          dump > "$RUNNER_TEMP/migration-second.sql"
+          diff -u "$RUNNER_TEMP/migration-first.sql" "$RUNNER_TEMP/migration-second.sql"

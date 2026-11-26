@@ -1,0 +1,28 @@
+name: Watch simulator
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: watch-sim
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt,clippy
+      - run: cargo +1.99.1 fmt --check
+      - name: Lint simulator for Rust correctness issues
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo +1.99.1 clippy --locked --all-targets -- -D clippy::correctness
+      - run: cargo +1.99.1 test --locked --all-targets
+      - run: cargo +1.99.1 build --locked --release

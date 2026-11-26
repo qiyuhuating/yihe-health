@@ -1,0 +1,10 @@
+{
+  "stopped": [
+    "owned MySQL 33370",
+    "owned MySQL 33371",
+    "owned PostgreSQL E:\\DevEco Test\\.reliability-lab\\pg-data",
+    "owned PostgreSQL C:\\Users\\Administrator\\AppData\\Local\\Temp\\yihe-reliability-20261026\\postgres"
+  ],
+  "original_mysql_windows_service": "untouched",
+  "data_directories": "preserved for later inspection"
+}

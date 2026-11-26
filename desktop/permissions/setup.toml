@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-setup-admin"
+description = "Initialize the first administrator through the native desktop boundary."
+commands.allow = ["setup_admin"]

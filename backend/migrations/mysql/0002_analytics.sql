@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS analytics_source (
+  singleton tinyint PRIMARY KEY CHECK(singleton=1), source_id char(36) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+INSERT INTO analytics_source(singleton,source_id) VALUES(1,UUID()) ON DUPLICATE KEY UPDATE singleton=singleton;
+CREATE TABLE IF NOT EXISTS analytics_outbox (
+ id bigint AUTO_INCREMENT PRIMARY KEY,
+ entity varchar(32) NOT NULL, entity_id bigint NOT NULL,
+ payload json, deleted boolean NOT NULL DEFAULT false,
+ created_at datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+) ENGINE=InnoDB;
+CREATE TRIGGER yihe_analytics_ratepre_insert AFTER INSERT ON ratepre FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('ratepre',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'old_id',NEW.old_id,'hr',NEW.hr,'bp',NEW.bp,'rate_state',NEW.rate_state,'pre_state',NEW.pre_state,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_ratepre_update AFTER UPDATE ON ratepre FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('ratepre',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'old_id',NEW.old_id,'hr',NEW.hr,'bp',NEW.bp,'rate_state',NEW.rate_state,'pre_state',NEW.pre_state,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_ratepre_delete AFTER DELETE ON ratepre FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('ratepre',OLD.id,NULL,true);
+CREATE TRIGGER yihe_analytics_watch_day_info_insert AFTER INSERT ON watch_day_info FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('watch_day_info',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'sleep',NEW.sleep,'step',NEW.step,'sleep_sate',NEW.sleep_sate,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_watch_day_info_update AFTER UPDATE ON watch_day_info FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('watch_day_info',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'sleep',NEW.sleep,'step',NEW.step,'sleep_sate',NEW.sleep_sate,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_watch_day_info_delete AFTER DELETE ON watch_day_info FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('watch_day_info',OLD.id,NULL,true);
+CREATE TRIGGER yihe_analytics_device_location_insert AFTER INSERT ON device_location FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('device_location',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'old_id',NEW.old_id,'lng',NEW.lng,'lat',NEW.lat,'source',NEW.source,'be_time',NEW.be_time,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_device_location_update AFTER UPDATE ON device_location FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('device_location',NEW.id,JSON_OBJECT('device_id',NEW.device_id,'old_id',NEW.old_id,'lng',NEW.lng,'lat',NEW.lat,'source',NEW.source,'be_time',NEW.be_time,'create_time',NEW.create_time),false);
+CREATE TRIGGER yihe_analytics_device_location_delete AFTER DELETE ON device_location FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('device_location',OLD.id,NULL,true);
+CREATE TRIGGER yihe_analytics_care_incident_insert AFTER INSERT ON care_incident FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident',NEW.id,JSON_OBJECT('old_id',NEW.old_id,'device_id',NEW.device_id,'kind',NEW.kind,'state',NEW.state,'severity',NEW.severity,'created_at',NEW.created_at,'updated_at',NEW.updated_at,'due_at',NEW.due_at,'resolved_at',NEW.resolved_at,'verified_at',NEW.verified_at),false);
+CREATE TRIGGER yihe_analytics_care_incident_update AFTER UPDATE ON care_incident FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident',NEW.id,JSON_OBJECT('old_id',NEW.old_id,'device_id',NEW.device_id,'kind',NEW.kind,'state',NEW.state,'severity',NEW.severity,'created_at',NEW.created_at,'updated_at',NEW.updated_at,'due_at',NEW.due_at,'resolved_at',NEW.resolved_at,'verified_at',NEW.verified_at),false);
+CREATE TRIGGER yihe_analytics_care_incident_delete AFTER DELETE ON care_incident FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident',OLD.id,NULL,true);
+CREATE TRIGGER yihe_analytics_care_incident_event_insert AFTER INSERT ON care_incident_event FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident_event',NEW.id,JSON_OBJECT('incident_id',NEW.incident_id,'action',NEW.action,'created_at',NEW.created_at),false);
+CREATE TRIGGER yihe_analytics_care_incident_event_update AFTER UPDATE ON care_incident_event FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident_event',NEW.id,JSON_OBJECT('incident_id',NEW.incident_id,'action',NEW.action,'created_at',NEW.created_at),false);
+CREATE TRIGGER yihe_analytics_care_incident_event_delete AFTER DELETE ON care_incident_event FOR EACH ROW INSERT INTO analytics_outbox(entity,entity_id,payload,deleted) VALUES('care_incident_event',OLD.id,NULL,true);

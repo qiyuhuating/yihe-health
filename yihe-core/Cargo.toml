@@ -1,0 +1,16 @@
+[package]
+name = "yihe-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100.0"
+license = "MIT"
+description = "Rebuildable health analytics for Yihe"
+
+[lib]
+name = "yihe_core"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

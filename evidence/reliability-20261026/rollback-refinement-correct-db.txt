@@ -1,0 +1,4 @@
+=== RUN   TestCapabilitiesRollbackAndReapply
+--- PASS: TestCapabilitiesRollbackAndReapply (7.11s)
+PASS
+ok  	careold-go/internal/db	8.863s

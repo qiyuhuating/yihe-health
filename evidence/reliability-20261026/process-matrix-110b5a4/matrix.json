@@ -1,0 +1,187 @@
+{
+  "source_sha": "110b5a43b400f6018c496855b1458d47181785aa",
+  "working_tree_dirty": false,
+  "binary_sha256": "806c4f920014254812efa1d695ec266ada99286d0e6e8f184249bf0ef40ac244",
+  "scope": "local real processes/MySQL/PostgreSQL/TLS gateway/Prometheus/Alertmanager/receiver; synthetic device and actors; no external host or human paging verified",
+  "mysql_port": 33372,
+  "pg_port": 55471,
+  "mysql_durability": {
+    "datadir": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\yihe-reliability-20261026\\process-drill\\6f5be6807fa6\\mysql\\",
+    "version": "8.0.43",
+    "innodb_flush_log_at_trx_commit": 1
+  },
+  "postgres_version": "postgres (PostgreSQL) 16.15",
+  "cases": [
+    {
+      "case": "SOS duplicate + signed receipt",
+      "result": "pass",
+      "unix": 1793012170.0578446,
+      "incident_id": 1,
+      "notification": {
+        "id": 1,
+        "status": "delivered",
+        "attempts": 1,
+        "last_error": null,
+        "retry_seconds": -1
+      },
+      "incident": {
+        "state": "notified",
+        "resolved": null,
+        "acknowledged": null
+      }
+    },
+    {
+      "case": "connection severed after provider acceptance",
+      "result": "pass",
+      "unix": 1793012171.1987228,
+      "notification": {
+        "id": 2,
+        "status": "delivered",
+        "attempts": 1,
+        "last_error": "gateway network failure",
+        "retry_seconds": 29
+      },
+      "incident": {
+        "state": "notified",
+        "resolved": null,
+        "acknowledged": null
+      }
+    },
+    {
+      "case": "PG down + persistent 5xx + unattended escalation",
+      "result": "pass",
+      "unix": 1793012481.719878,
+      "incident_id": 3,
+      "incident": {
+        "state": "escalated",
+        "resolved": null,
+        "acknowledged": null
+      },
+      "notification": {
+        "id": 3,
+        "status": "failed",
+        "attempts": 4,
+        "last_error": "gateway HTTP 503",
+        "retry_seconds": 141
+      },
+      "core_ready": true
+    },
+    {
+      "case": "PG recovery + backlog replay",
+      "result": "pass",
+      "unix": 1793012487.1782017,
+      "pending_projection": 0
+    },
+    {
+      "case": "429 persists and backs off",
+      "result": "pass",
+      "unix": 1793012517.8170295,
+      "initial": {
+        "id": 6,
+        "status": "failed",
+        "attempts": 1,
+        "last_error": "gateway HTTP 429",
+        "retry_seconds": 30
+      },
+      "after": {
+        "id": 6,
+        "status": "failed",
+        "attempts": 2,
+        "last_error": "gateway HTTP 429",
+        "retry_seconds": 60
+      }
+    },
+    {
+      "case": "gateway stopped, outbox retained",
+      "result": "pass",
+      "unix": 1793012518.9182134,
+      "notification": {
+        "id": 7,
+        "status": "failed",
+        "attempts": 1,
+        "last_error": "gateway network failure",
+        "retry_seconds": 30
+      },
+      "receiver_alive": true
+    },
+    {
+      "case": "DNS distinguished from HTTP",
+      "result": "pass",
+      "unix": 1793012522.534241,
+      "notification": {
+        "id": 8,
+        "status": "failed",
+        "attempts": 1,
+        "last_error": "gateway dns failure",
+        "retry_seconds": 29
+      }
+    },
+    {
+      "case": "worker killed mid-send + stale lease recovery",
+      "result": "pass",
+      "unix": 1793012645.374655,
+      "notification": {
+        "id": 9,
+        "status": "delivered",
+        "attempts": 2,
+        "last_error": null,
+        "retry_seconds": -121
+      },
+      "provider_acceptances": 1
+    },
+    {
+      "case": "MySQL down critical + SOS unavailable",
+      "result": "pass",
+      "unix": 1793012716.5370154,
+      "sos_http": 503,
+      "healthz_http": 200,
+      "prometheus_alive": true
+    },
+    {
+      "case": "MySQL recovery",
+      "result": "pass",
+      "unix": 1793012719.6347847,
+      "incident_id": 8,
+      "persisted_incident_count": 8
+    },
+    {
+      "case": "care heartbeat blocked + stale alert",
+      "result": "pass",
+      "unix": 1793012840.831622,
+      "app_business_ready": true
+    },
+    {
+      "case": "acknowledged incident unattended timeout",
+      "result": "pass",
+      "unix": 1793012870.7082105,
+      "incident_id": 1,
+      "elapsed_seconds": 700.6,
+      "incident": {
+        "state": "escalated",
+        "resolved": null,
+        "acknowledged": "1"
+      }
+    },
+    {
+      "case": "app killed, monitoring delivers independent alert",
+      "result": "pass",
+      "unix": 1793012935.8056052,
+      "prometheus_alive": true,
+      "receiver_alive": true
+    },
+    {
+      "case": "Prometheus killed, separate watchdog delivers",
+      "result": "pass",
+      "unix": 1793012944.3504884,
+      "watchdog_alive": true,
+      "receiver_alive": true
+    }
+  ],
+  "complete": true,
+  "production_gates": [
+    "External host/whole-host outage detection",
+    "Real provider/hardware delivery",
+    "Actual human acknowledgement/response",
+    "Production DR and key custody"
+  ]
+}

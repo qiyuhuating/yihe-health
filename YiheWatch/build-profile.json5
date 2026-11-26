@@ -1,0 +1,15 @@
+{
+  "app": {
+    "products": [{
+      "name": "default", "compileSdkVersion": "26.0.0",
+      "compatibleSdkVersion": "5.1.0(18)", "targetSdkVersion": "5.1.0(18)",
+      "runtimeOS": "HarmonyOS"
+    }, {
+      "name": "quality", "bundleName": "com.yihe.watch.quality",
+      "compileSdkVersion": "26.0.0", "compatibleSdkVersion": "5.1.0(18)",
+      "targetSdkVersion": "5.1.0(18)", "runtimeOS": "HarmonyOS"
+    }],
+    "buildModeSet": [{ "name": "debug" }, { "name": "release" }]
+  },
+  "modules": [{ "name": "entry", "srcPath": "./entry", "targets": [{ "name": "default", "applyToProducts": ["default", "quality"] }] }]
+}

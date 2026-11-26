@@ -1,0 +1,1541 @@
+{
+  "DELETE /api/v1/risk/rules/{id}": {
+    "file": "backend/internal/handlers/handler_risk.go",
+    "request": [],
+    "response": [
+      "deleted",
+      "returnCode"
+    ]
+  },
+  "GET /api/v1/auth/session": {
+    "file": "backend/internal/handlers/handler_auth.go",
+    "request": [],
+    "response": [
+      "account",
+      "authenticated",
+      "csrfHeader",
+      "csrfToken",
+      "returnCode",
+      "setupRequired"
+    ]
+  },
+  "GET /api/v1/image/download": {
+    "file": "backend/internal/handlers/handler_social_images.go",
+    "request": [
+      "name"
+    ],
+    "response": []
+  },
+  "GET /api/v1/risk/events": {
+    "file": "backend/internal/handlers/handler_risk.go",
+    "request": [],
+    "response": [
+      "events",
+      "returnCode",
+      "rules"
+    ]
+  },
+  "GET /api/v1/service/status": {
+    "file": "backend/cmd/server/database.go",
+    "request": [],
+    "response": [
+      "returnCode",
+      "databaseReady",
+      "primaryEngine",
+      "configError",
+      "analytics"
+    ]
+  },
+  "POST /api/v1/activity/alerts/device-counts": {
+    "file": "backend/internal/handlers/handler_vitals.go",
+    "request": [],
+    "response": [
+      "returnCode",
+      "sleep"
+    ]
+  },
+  "POST /api/v1/activity/chart": {
+    "file": "backend/internal/handlers/handler_vitals_activity.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "createTime",
+      "returnCode",
+      "sleep",
+      "activityRecords"
+    ]
+  },
+  "POST /api/v1/activity/history": {
+    "file": "backend/internal/handlers/handler_vitals_activity.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "returnCode",
+      "activityRecords"
+    ]
+  },
+  "POST /api/v1/activity/latest": {
+    "file": "backend/internal/handlers/handler_vitals_activity.go",
+    "request": [
+      "name",
+      "timeFirst",
+      "timeLast",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "returnCode",
+      "activityRecords",
+      "total"
+    ]
+  },
+  "POST /api/v1/alert-reviews": {
+    "file": "backend/internal/handlers/handler_alert_review.go",
+    "request": [
+      "expectedReviewId",
+      "kind",
+      "reason",
+      "recordId",
+      "verdict"
+    ],
+    "response": [
+      "alarmStateChanged",
+      "returnCode",
+      "reviewId",
+      "verdict"
+    ]
+  },
+  "POST /api/v1/alert-reviews/search": {
+    "file": "backend/internal/handlers/handler_alert_review.go",
+    "request": [
+      "after",
+      "entity",
+      "kind",
+      "recordId"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/auth/login": {
+    "file": "backend/internal/handlers/handler_auth.go",
+    "request": [
+      "otp",
+      "password",
+      "phone",
+      "recoveryCode"
+    ],
+    "response": [
+      "authenticated",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/auth/logout": {
+    "file": "backend/internal/handlers/handler_auth.go",
+    "request": [],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/care/accessAudit": {
+    "file": "backend/internal/handlers/handler_care_staff.go",
+    "request": [],
+    "response": [
+      "accesses",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/care/accounts/status": {
+    "file": "backend/internal/handlers/handler_care_incident.go",
+    "request": [
+      "adminId",
+      "status"
+    ],
+    "response": [
+      "adminId",
+      "returnCode",
+      "status"
+    ]
+  },
+  "POST /api/v1/care/assignDuty": {
+    "file": "backend/internal/handlers/handler_care_staff.go",
+    "request": [
+      "adminId",
+      "duty"
+    ],
+    "response": [
+      "adminId",
+      "duty",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/care/diagnostics": {
+    "file": "backend/internal/handlers/handler_care_operations.go",
+    "request": [],
+    "response": [
+      "analytics",
+      "failedNotifications",
+      "note",
+      "notificationConfigured",
+      "oldestOutstandingAt",
+      "overdueIncidents",
+      "pendingNotifications",
+      "primaryEngine",
+      "receiptConfigured",
+      "returnCode",
+      "staleSending",
+      "workerHealthy",
+      "workerLastSeenAt",
+      "workerStartedAt"
+    ]
+  },
+  "POST /api/v1/care/events": {
+    "file": "backend/internal/handlers/handler_care_incident.go",
+    "request": [
+      "id",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "events",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/care/handover/accept": {
+    "file": "backend/internal/handlers/handler_care_handover.go",
+    "request": [
+      "handoverId"
+    ],
+    "response": [
+      "handoverId",
+      "returnCode",
+      "status",
+      "transferred"
+    ]
+  },
+  "POST /api/v1/care/handover/cancel": {
+    "file": "backend/internal/handlers/handler_care_handover.go",
+    "request": [
+      "handoverId"
+    ],
+    "response": [
+      "handoverId",
+      "returnCode",
+      "status"
+    ]
+  },
+  "POST /api/v1/care/handover/create": {
+    "file": "backend/internal/handlers/handler_care_handover.go",
+    "request": [
+      "toAdminId",
+      "note"
+    ],
+    "response": [
+      "handoverId",
+      "incidentIds",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/care/incidents": {
+    "file": "backend/internal/handlers/handler_care_incident.go",
+    "request": [
+      "state",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "actorId",
+      "duty",
+      "items",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/care/receipt": {
+    "file": "backend/internal/handlers/handler_care_receipt.go",
+    "request": [
+      "notificationId",
+      "status"
+    ],
+    "response": [
+      "notificationId",
+      "returnCode",
+      "status"
+    ]
+  },
+  "POST /api/v1/care/staff": {
+    "file": "backend/internal/handlers/handler_care_staff.go",
+    "request": [],
+    "response": [
+      "returnCode",
+      "staff"
+    ]
+  },
+  "POST /api/v1/care/transition": {
+    "file": "backend/internal/handlers/handler_care_incident.go",
+    "request": [
+      "action",
+      "id",
+      "note",
+      "verdict"
+    ],
+    "response": [
+      "id",
+      "returnCode",
+      "state"
+    ]
+  },
+  "POST /api/v1/desktop/exit": {
+    "file": "backend/internal/handlers/handler_auth.go",
+    "request": [],
+    "response": [
+      "closing",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device-command-profiles": {
+    "file": "backend/internal/handlers/handler_command_profile.go",
+    "request": [
+      "deviceId",
+      "enabled",
+      "protocol",
+      "wireType"
+    ],
+    "response": [
+      "deviceId",
+      "enabled",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device-commands": {
+    "file": "backend/internal/handlers/handler_commands.go",
+    "request": [
+      "action",
+      "deviceId",
+      "requestKey",
+      "ttlSeconds"
+    ],
+    "response": [
+      "commandId",
+      "duplicate",
+      "returnCode",
+      "status"
+    ]
+  },
+  "POST /api/v1/device-commands/search": {
+    "file": "backend/internal/handlers/handler_commands.go",
+    "request": [
+      "after",
+      "deviceId"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/alertCounts": {
+    "file": "backend/internal/handlers/handler_device_alert_actions.go",
+    "request": [],
+    "response": [
+      "items",
+      "personTotal",
+      "preTotal",
+      "rateTotal",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/device/alertDetail": {
+    "file": "backend/internal/handlers/handler_device_alert_actions.go",
+    "request": [
+      "deviceId",
+      "kind"
+    ],
+    "response": [
+      "alias",
+      "deviceId",
+      "deviceNo",
+      "oldPersonName",
+      "personHandled",
+      "preHandled",
+      "rateHandled",
+      "returnCode",
+      "hasAlert",
+      "message",
+      "kind",
+      "kindText",
+      "reason",
+      "detail",
+      "value",
+      "threshold",
+      "occurTime",
+      "recordId",
+      "advice"
+    ]
+  },
+  "POST /api/v1/device/bind": {
+    "file": "backend/internal/handlers/handler_device_protocol.go",
+    "request": [
+      "code",
+      "deviceNo",
+      "secret"
+    ],
+    "response": [
+      "residentId",
+      "residentName",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/bindCodeList": {
+    "file": "backend/internal/handlers/handler_device_admin.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "bindCodes",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/commandAck": {
+    "file": "backend/internal/handlers/handler_command_delivery.go",
+    "request": [
+      "deviceNo",
+      "secret",
+      "bindingVersion",
+      "commandId",
+      "deliveryToken",
+      "result"
+    ],
+    "response": [
+      "commandId",
+      "returnCode",
+      "status"
+    ]
+  },
+  "POST /api/v1/device/commandPull": {
+    "file": "backend/internal/handlers/handler_command_delivery.go",
+    "request": [
+      "bindingVersion",
+      "deviceNo",
+      "secret"
+    ],
+    "response": [
+      "command",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/create": {
+    "file": "backend/internal/handlers/handler_device_inventory.go",
+    "request": [
+      "alias",
+      "model",
+      "oldId"
+    ],
+    "response": [
+      "deviceId",
+      "deviceNo",
+      "returnCode",
+      "secret"
+    ]
+  },
+  "POST /api/v1/device/createBindCode": {
+    "file": "backend/internal/handlers/handler_device_admin.go",
+    "request": [
+      "createUser",
+      "expireDays",
+      "oldId"
+    ],
+    "response": [
+      "code",
+      "expireTime",
+      "oldId",
+      "oldPersonName",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/delete": {
+    "file": "backend/internal/handlers/handler_device_inventory.go",
+    "request": [
+      "deviceId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/deleteBindCode": {
+    "file": "backend/internal/handlers/handler_device_admin.go",
+    "request": [
+      "id"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/fencePoint": {
+    "file": "backend/internal/handlers/handler_fences.go",
+    "request": [
+      "deviceNo",
+      "secret",
+      "bindingVersion",
+      "coordinateSystem",
+      "point",
+      "accuracy",
+      "occurredAt"
+    ],
+    "response": [
+      "events",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/healthBatch": {
+    "file": "backend/internal/handlers/handler_health.go",
+    "request": [
+      "bindingVersion",
+      "deviceNo",
+      "samples",
+      "secret"
+    ],
+    "response": [
+      "accepted",
+      "duplicates",
+      "returnCode",
+      "writeRevision"
+    ]
+  },
+  "POST /api/v1/device/heartbeat": {
+    "file": "backend/internal/handlers/handler_device_protocol.go",
+    "request": [
+      "appVersion",
+      "battery",
+      "deviceNo",
+      "secret"
+    ],
+    "response": [
+      "bindingVersion",
+      "bound",
+      "residentId",
+      "pendingAlarm",
+      "reportInterval",
+      "returnCode",
+      "serverTime"
+    ]
+  },
+  "POST /api/v1/device/list": {
+    "file": "backend/internal/handlers/handler_device_admin.go",
+    "request": [
+      "query",
+      "state",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "devices",
+      "onlineCount",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/device/login": {
+    "file": "backend/internal/handlers/handler_device_protocol.go",
+    "request": [
+      "deviceNo",
+      "platform",
+      "protocolVersion",
+      "secret"
+    ],
+    "response": [
+      "alias",
+      "bindingVersion",
+      "bound",
+      "deviceId",
+      "deviceNo",
+      "residentId",
+      "returnCode",
+      "residentName",
+      "protocolVersion",
+      "maxBatchSize"
+    ]
+  },
+  "POST /api/v1/device/report": {
+    "file": "backend/internal/handlers/handler_device_telemetry.go",
+    "request": [
+      "deviceNo",
+      "secret",
+      "hr",
+      "bp",
+      "step",
+      "sleep",
+      "sleepState",
+      "lng",
+      "lat",
+      "alarm",
+      "battery",
+      "beTime",
+      "appVersion",
+      "requestId",
+      "source",
+      "positionSource",
+      "positionSampledAt",
+      "positionAccuracy"
+    ],
+    "response": [
+      "message",
+      "preState",
+      "queued",
+      "rateState",
+      "returnCode",
+      "serverTime"
+    ]
+  },
+  "POST /api/v1/device/resetSecret": {
+    "file": "backend/internal/handlers/handler_device_inventory.go",
+    "request": [
+      "deviceId"
+    ],
+    "response": [
+      "returnCode",
+      "secret"
+    ]
+  },
+  "POST /api/v1/device/resolveAlert": {
+    "file": "backend/internal/handlers/handler_device_alert_actions.go",
+    "request": [
+      "deviceId",
+      "kind",
+      "recordId"
+    ],
+    "response": [
+      "handledReason",
+      "message",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/sos": {
+    "file": "backend/internal/handlers/handler_device_sos.go",
+    "request": [
+      "alarm",
+      "bindingVersion",
+      "deviceNo",
+      "lat",
+      "lng",
+      "positionAccuracy",
+      "positionSampledAt",
+      "positionSource",
+      "requestId",
+      "secret"
+    ],
+    "response": [
+      "duplicate",
+      "incidentId",
+      "incidentState",
+      "message",
+      "notificationState",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/device/unbind": {
+    "file": "backend/internal/handlers/handler_device_inventory.go",
+    "request": [
+      "deviceId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/add": {
+    "file": "backend/internal/handlers/family_commands.go",
+    "request": [
+      "familyAddress",
+      "familyName",
+      "familyPhone",
+      "familyRelation",
+      "familySex",
+      "oldPhone"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/deleteFamily": {
+    "file": "backend/internal/handlers/family_commands.go",
+    "request": [
+      "familyId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/select": {
+    "file": "backend/internal/handlers/family_query.go",
+    "request": [
+      "familyName",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "familyDtos",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/family/selectTwo": {
+    "file": "backend/internal/handlers/family_query.go",
+    "request": [
+      "familyPhone"
+    ],
+    "response": [
+      "familyDto2",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/updateFamily": {
+    "file": "backend/internal/handlers/family_commands.go",
+    "request": [
+      "familyAddress",
+      "familyId",
+      "familyName",
+      "familyPhone",
+      "familyRelation",
+      "familySex"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/updatePassword": {
+    "file": "backend/internal/handlers/family_credentials.go",
+    "request": [
+      "familyPassword",
+      "familyPhone",
+      "oldPassword"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/updateTouPic": {
+    "file": "backend/internal/handlers/family_profile.go",
+    "request": [
+      "familyPhone",
+      "familyTouPic"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/family/updateTwo": {
+    "file": "backend/internal/handlers/family_profile.go",
+    "request": [
+      "familyAddress",
+      "familyId",
+      "familyName",
+      "familyPhone",
+      "familySex"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/fence-events/search": {
+    "file": "backend/internal/handlers/handler_fences.go",
+    "request": [
+      "after",
+      "oldId"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/fences": {
+    "file": "backend/internal/handlers/handler_fences.go",
+    "request": [
+      "coordinateSystem",
+      "coordinates",
+      "deviceId",
+      "dwellSeconds",
+      "enabled",
+      "id",
+      "maxAccuracy",
+      "minPoints",
+      "name",
+      "revision",
+      "timeBegin",
+      "timeEnd",
+      "timezone"
+    ],
+    "response": [
+      "deviceApplied",
+      "id",
+      "returnCode",
+      "revision",
+      "state"
+    ]
+  },
+  "POST /api/v1/fences/search": {
+    "file": "backend/internal/handlers/handler_fences.go",
+    "request": [
+      "deviceId"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/gallery/list": {
+    "file": "backend/internal/handlers/handler_social_pictures.go",
+    "request": [
+      "id",
+      "picName"
+    ],
+    "response": [
+      "galleryImages",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/gallery/replace": {
+    "file": "backend/internal/handlers/handler_social_pictures.go",
+    "request": [
+      "fileListName"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/guardians/create": {
+    "file": "backend/internal/handlers/handler_user.go",
+    "request": [
+      "customerAddress",
+      "customerAge",
+      "customerName",
+      "customerPhone",
+      "customerSex"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/guardians/delete": {
+    "file": "backend/internal/handlers/handler_user.go",
+    "request": [
+      "customerId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/guardians/list": {
+    "file": "backend/internal/handlers/handler_user.go",
+    "request": [
+      "customerName",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "customers",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/guardians/update": {
+    "file": "backend/internal/handlers/handler_user.go",
+    "request": [
+      "customerAddress",
+      "customerAge",
+      "customerId",
+      "customerName",
+      "customerPhone",
+      "customerSex"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/health/alerts/device-counts": {
+    "file": "backend/internal/handlers/handler_vitals.go",
+    "request": [],
+    "response": [
+      "bloodPressure",
+      "heartRate",
+      "returnCode",
+      "sleep"
+    ]
+  },
+  "POST /api/v1/health/baseline": {
+    "file": "backend/internal/handlers/handler_health_baseline.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "returnCode",
+      "oldId",
+      "metric",
+      "ready",
+      "sampleDays",
+      "trustedDays",
+      "rejectedDays",
+      "confidence",
+      "reason",
+      "observedAt",
+      "value",
+      "baseline",
+      "scale",
+      "score",
+      "direction",
+      "anomalous"
+    ]
+  },
+  "POST /api/v1/health/changes": {
+    "file": "backend/internal/handlers/handler_health.go",
+    "request": [
+      "after",
+      "limit",
+      "oldId"
+    ],
+    "response": [
+      "changes",
+      "hasMore",
+      "nextCursor",
+      "oldId",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/health/daily-query": {
+    "file": "backend/internal/handlers/handler_daily.go",
+    "request": [
+      "oldId",
+      "source",
+      "sourceDevice",
+      "metric",
+      "semantics",
+      "day",
+      "offsetMinutes",
+      "days"
+    ],
+    "response": [
+      "algorithmVersion",
+      "items",
+      "metric",
+      "offsetMinutes",
+      "returnCode",
+      "semantics",
+      "source",
+      "sourceDevice"
+    ]
+  },
+  "POST /api/v1/health/latest": {
+    "file": "backend/internal/handlers/handler_health_latest.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "items",
+      "oldId",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/health/statistics": {
+    "file": "backend/internal/handlers/handler_statistics.go",
+    "request": [
+      "from",
+      "metric",
+      "oldId",
+      "semantics",
+      "source",
+      "sourceDevice",
+      "to"
+    ],
+    "response": [
+      "metric",
+      "returnCode",
+      "semantics",
+      "source",
+      "sourceDevice",
+      "statistics"
+    ]
+  },
+  "POST /api/v1/image/saveImage": {
+    "file": "backend/internal/handlers/handler_social_images.go",
+    "request": [
+      "file"
+    ],
+    "response": [
+      "filename",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/inviteCode/checkCode": {
+    "file": "backend/internal/handlers/handler_family_invite_join.go",
+    "request": [
+      "code"
+    ],
+    "response": [
+      "expireTime",
+      "oldPersonName",
+      "remainDays",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/inviteCode/create": {
+    "file": "backend/internal/handlers/handler_family_invites.go",
+    "request": [
+      "count",
+      "createUser",
+      "expireDays",
+      "oldId"
+    ],
+    "response": [
+      "codes",
+      "expireTime",
+      "oldId",
+      "oldPersonName",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/inviteCode/delete": {
+    "file": "backend/internal/handlers/handler_family_invites.go",
+    "request": [
+      "id"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/inviteCode/join": {
+    "file": "backend/internal/handlers/handler_family_invite_join.go",
+    "request": [
+      "code",
+      "familyAddress",
+      "familyName",
+      "familyPassword",
+      "familyPhone",
+      "familyRelation",
+      "familySex"
+    ],
+    "response": [
+      "familyId",
+      "familyName",
+      "oldPersonName",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/inviteCode/list": {
+    "file": "backend/internal/handlers/handler_family_invites.go",
+    "request": [
+      "page",
+      "pageSize",
+      "state"
+    ],
+    "response": [
+      "inviteCodes",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/inviteCode/oldPersonList": {
+    "file": "backend/internal/handlers/handler_family_invite_join.go",
+    "request": [],
+    "response": [
+      "oldPeople",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/locations/alerts/resolve-latest": {
+    "file": "backend/internal/handlers/handler_device_alerts.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/locations/alerts/summary": {
+    "file": "backend/internal/handlers/handler_position.go",
+    "request": [],
+    "response": [
+      "activeAlerts",
+      "returnCode",
+      "totalResidents"
+    ]
+  },
+  "POST /api/v1/monitoring-profiles/create": {
+    "file": "backend/internal/handlers/handler_watch_info.go",
+    "request": [
+      "deviceId",
+      "hrf",
+      "hrl",
+      "bpf",
+      "bpl"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/monitoring-profiles/delete": {
+    "file": "backend/internal/handlers/handler_watch_info.go",
+    "request": [
+      "deviceId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/monitoring-profiles/list": {
+    "file": "backend/internal/handlers/handler_watch_info.go",
+    "request": [
+      "oldName",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "returnCode",
+      "total",
+      "watchDtos"
+    ]
+  },
+  "POST /api/v1/monitoring-profiles/update": {
+    "file": "backend/internal/handlers/handler_watch_info.go",
+    "request": [
+      "deviceId",
+      "hrf",
+      "hrl",
+      "bpf",
+      "bpl"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notice-comments/create": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "said",
+      "textId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notice-comments/delete": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "saidId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notice-comments/list": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "textId"
+    ],
+    "response": [
+      "returnCode",
+      "comments"
+    ]
+  },
+  "POST /api/v1/notice-comments/reply": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "back",
+      "saidId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notice-comments/search": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "returnCode",
+      "moderatedComments",
+      "total"
+    ]
+  },
+  "POST /api/v1/notice-comments/toggle-like": {
+    "file": "backend/internal/handlers/handler_social.go",
+    "request": [
+      "saidId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notices/create": {
+    "file": "backend/internal/handlers/handler_social_text.go",
+    "request": [
+      "fileListName",
+      "textMain",
+      "title"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notices/delete": {
+    "file": "backend/internal/handlers/handler_social_text.go",
+    "request": [
+      "textId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notices/detail": {
+    "file": "backend/internal/handlers/social_text_query.go",
+    "request": [
+      "textId"
+    ],
+    "response": [
+      "pics",
+      "returnCode",
+      "text"
+    ]
+  },
+  "POST /api/v1/notices/list": {
+    "file": "backend/internal/handlers/social_text_query.go",
+    "request": [
+      "title",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "returnCode",
+      "texts",
+      "total"
+    ]
+  },
+  "POST /api/v1/notices/update": {
+    "file": "backend/internal/handlers/handler_social_text.go",
+    "request": [
+      "textId",
+      "title",
+      "textMain",
+      "fileListName"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/notifications/search": {
+    "file": "backend/internal/handlers/handler_notifications.go",
+    "request": [
+      "after",
+      "familyId"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/operations/snapshot": {
+    "file": "backend/internal/handlers/handler_operations.go",
+    "request": [],
+    "response": [
+      "snapshot",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/position/select": {
+    "file": "backend/internal/handlers/handler_position.go",
+    "request": [
+      "name",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "positionDtos",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/position/selectFamily": {
+    "file": "backend/internal/handlers/handler_position.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "positionDtos",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/residents/create": {
+    "file": "backend/internal/handlers/handler_old_person.go",
+    "request": [
+      "name",
+      "bothdate",
+      "sex",
+      "phone",
+      "room",
+      "illness",
+      "warn",
+      "foodLike",
+      "foodHate",
+      "drag",
+      "customerId",
+      "deviceId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/residents/delete": {
+    "file": "backend/internal/handlers/handler_old_person.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/residents/details": {
+    "file": "backend/internal/handlers/old_person_query.go",
+    "request": [
+      "name",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "oldPersonDetails",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/residents/list": {
+    "file": "backend/internal/handlers/old_person_query.go",
+    "request": [
+      "name",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "oldPeople",
+      "page",
+      "pageSize",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/residents/update": {
+    "file": "backend/internal/handlers/handler_old_person.go",
+    "request": [
+      "oldId",
+      "name",
+      "bothdate",
+      "sex",
+      "phone",
+      "room",
+      "illness",
+      "warn",
+      "foodLike",
+      "foodHate",
+      "drag",
+      "customerId",
+      "customerName",
+      "deviceId"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/risk/rules": {
+    "file": "backend/internal/handlers/handler_risk.go",
+    "request": [
+      "action",
+      "durationHours",
+      "ip",
+      "reason"
+    ],
+    "response": [
+      "returnCode",
+      "rule"
+    ]
+  },
+  "POST /api/v1/rule-policies": {
+    "file": "backend/internal/handlers/handler_rules.go",
+    "request": [
+      "deviceId",
+      "policy",
+      "revision"
+    ],
+    "response": [
+      "policy",
+      "returnCode",
+      "revision"
+    ]
+  },
+  "POST /api/v1/security/factor": {
+    "file": "backend/internal/handlers/handler_security.go",
+    "request": [
+      "action",
+      "otp",
+      "password"
+    ],
+    "response": [
+      "returnCode",
+      "secret",
+      "uri",
+      "recoveryCodes",
+      "reloginRequired"
+    ]
+  },
+  "POST /api/v1/security/login-audit": {
+    "file": "backend/internal/handlers/handler_security.go",
+    "request": [
+      "after"
+    ],
+    "response": [
+      "items",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/setup": {
+    "file": "backend/internal/handlers/handler_auth.go",
+    "request": [
+      "name",
+      "password",
+      "phone"
+    ],
+    "response": [
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/user/select": {
+    "file": "backend/internal/handlers/handler_user.go",
+    "request": [
+      "userPhone"
+    ],
+    "response": [
+      "returnCode",
+      "usersByPhone2"
+    ]
+  },
+  "POST /api/v1/vitals/alerts/count": {
+    "file": "backend/internal/handlers/handler_vitals_alerts.go",
+    "request": [],
+    "response": [
+      "preTotal",
+      "rateTotal",
+      "returnCode",
+      "total"
+    ]
+  },
+  "POST /api/v1/vitals/alerts/detail": {
+    "file": "backend/internal/handlers/handler_vitals_alerts.go",
+    "request": [
+      "kind",
+      "oldId",
+      "recordId"
+    ],
+    "response": [
+      "hasAlert",
+      "message",
+      "returnCode",
+      "recordId",
+      "deviceId",
+      "oldId",
+      "oldPersonName",
+      "hr",
+      "bp",
+      "rateBad",
+      "preBad",
+      "occurTime",
+      "reason",
+      "detail",
+      "advice"
+    ]
+  },
+  "POST /api/v1/vitals/alerts/device-counts": {
+    "file": "backend/internal/handlers/handler_vitals.go",
+    "request": [],
+    "response": [
+      "bloodPressure",
+      "heartRate",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/vitals/alerts/resolve": {
+    "file": "backend/internal/handlers/handler_vitals_alerts.go",
+    "request": [
+      "kind",
+      "recordId"
+    ],
+    "response": [
+      "message",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/vitals/chart": {
+    "file": "backend/internal/handlers/handler_vitals_measurements.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "bps",
+      "createTimes",
+      "hrs",
+      "returnCode",
+      "time"
+    ]
+  },
+  "POST /api/v1/vitals/history": {
+    "file": "backend/internal/handlers/handler_vitals_measurements.go",
+    "request": [
+      "oldId"
+    ],
+    "response": [
+      "vitalRecords",
+      "returnCode"
+    ]
+  },
+  "POST /api/v1/vitals/latest": {
+    "file": "backend/internal/handlers/handler_vitals_measurements.go",
+    "request": [
+      "name",
+      "timeFirst",
+      "timeLast",
+      "page",
+      "pageSize"
+    ],
+    "response": [
+      "page",
+      "pageSize",
+      "vitalRecords",
+      "returnCode",
+      "total"
+    ]
+  }
+}

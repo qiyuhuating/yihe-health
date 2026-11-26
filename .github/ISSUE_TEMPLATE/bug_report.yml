@@ -1,0 +1,55 @@
+name: 缺陷反馈 (Bug Report)
+description: 报告可以复现的前端、Go、Tauri、手表或部署问题
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先检索现有 Issue，并核对实际运行的版本。
+        **不要上传真实长者或家属健康数据、位置信息、密码、密钥和数据库文件。**
+        可被利用的安全漏洞请按 SECURITY.md 私密报告，而不是公开提交。
+  - type: dropdown
+    id: module
+    attributes:
+      label: 影响的模块
+      options:
+        - 前端工作台 (frontend / Vue 3)
+        - 后端接口与数据库 (backend / Go / MySQL)
+        - 桌面客户端 (desktop / Tauri)
+        - HarmonyOS 手表 (YiheWatch)
+        - 模拟器 (watch-sim)
+        - 部署、文档或构建
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: 分支、版本或提交 SHA
+      placeholder: "preview / v2.1.0 / commit SHA"
+      description: 优先填写实际复现所用的提交 SHA，不必假设问题只存在于最新版。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 可复现的操作步骤
+      placeholder: |
+        1. 在测试环境打开……
+        2. 执行……
+        3. 观察到……
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: 实际结果与预期结果
+      description: 请区分实际观察到的行为与期望行为。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境与脱敏证据
+      description: 操作系统、浏览器或 WebView2、Go/Node、MySQL 版本、是否真实硬件及脱敏日志。请勿提交生产数据。

@@ -1,0 +1,15 @@
+{
+  "name": "yihe-watch-protocol-checks",
+  "version": "0.2.0",
+  "private": true,
+  "description": "HarmonyOS native sampling and device protocol checks; native builds use DevEco SDK",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:e2e": "node tests/backend.e2e.cjs",
+    "test:native-backend": "node tests/native-backend.e2e.cjs",
+    "test:native-ui": "node tests/native-ui.e2e.cjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

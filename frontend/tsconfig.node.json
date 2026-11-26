@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "rootDir": ".",
+    "lib": [
+      "ES2022"
+    ]
+  },
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "scripts/check-typescript-scope.ts",
+    "scripts/sfc-scripts.ts",
+    "scripts/check-vue36-readiness.ts"
+  ]
+}

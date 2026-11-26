@@ -1,0 +1,92 @@
+# CI-only service container: these ephemeral runner credentials are never shared with production.
+name: Reusable backend verification
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Test, build and vet (Go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.27.4"]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_only
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: yihe_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root -pci_root_only --silent"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: backend/go.sum
+
+      - name: Enforce native Go API boundary
+        run: python3 scripts/check-api-boundary.py
+
+      - name: Enforce Go module boundaries
+        run: python3 scripts/check-go-module-boundaries.py
+
+      - name: Check generated OpenAPI contract
+        run: python3 scripts/generate-openapi.py --check
+
+      - name: Run backend tests, build and vet
+        working-directory: backend
+        env:
+          TEST_MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+          TEST_MYSQL_CONTAINER_ID: ${{ job.services.mysql.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../evidence/ci/backend-${{ matrix.go-version }}
+          evidence=../evidence/ci/backend-${{ matrix.go-version }}
+          test -n "$TEST_MYSQL_DSN"
+          git rev-parse HEAD > "$evidence/source-sha.txt"
+          go version > "$evidence/go-version.txt"
+          go env GOOS GOARCH CGO_ENABLED >> "$evidence/go-version.txt"
+          MYSQL_PWD=ci_root_only mysql --protocol=TCP -h 127.0.0.1 -u root -N -e 'SELECT VERSION(),@@innodb_flush_log_at_trx_commit,@@version_comment' > "$evidence/mysql-environment.txt"
+          docker inspect --format '{{.Config.Image}} {{.Image}}' '${{ job.services.mysql.id }}' > "$evidence/database-images.txt"
+          go list -m -json all > "$evidence/modules.jsonl"
+          go vet ./... > "$evidence/vet.txt" 2>&1
+          go test -json -race -count=1 -timeout 45m ./... > "$evidence/mysql.jsonl" 2>&1
+          python3 ../scripts/reliability/audit-go-results.py "$evidence/mysql.jsonl" --mode mysql --output "$evidence/mysql-summary.json"
+          go build ./... > "$evidence/build.txt" 2>&1
+          CGO_ENABLED=0 go build -trimpath  -ldflags='-s -w' -o "$evidence/yihe-server" ./cmd/server
+          if readelf -l "$evidence/yihe-server" | grep -q INTERP; then
+            echo 'Server binary contains a dynamic interpreter' >&2
+            exit 1
+          fi
+          go version -m "$evidence/yihe-server" > "$evidence/server-build-info.txt"
+          grep -F 'CGO_ENABLED=0' "$evidence/server-build-info.txt"
+          unformatted="$(gofmt -l ./cmd ./internal ./migrations)"
+          if [ -n "$unformatted" ]; then
+            printf 'Go files requiring gofmt:\n%s\n' "$unformatted"
+            gofmt -d ./cmd ./internal ./migrations
+            exit 1
+          fi
+
+      - name: Preserve exact-source evidence including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: backend-${{ matrix.go-version }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/backend-${{ matrix.go-version }}/
+          if-no-files-found: error
+          retention-days: 30

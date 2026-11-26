@@ -1,0 +1,180 @@
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #f7f8f5;
+  color: var(--care-text);
+  font-family: var(--care-font-family);
+  font-optical-sizing: auto;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --care-ink: var(--care-text);
+  --care-muted: #59665f;
+  --care-primary: #235442;
+  --care-primary-dark: var(--care-brand-dark);
+  --care-canvas: #f5f7f3;
+  --care-surface: #ffffff;
+  --care-line: #e5ebe7;
+  --care-shadow: var(--care-shadow-sm);
+  --care-control-height: 52px;
+  --care-control-line: var(--care-control-border);
+  --care-motion-fast: 140ms;
+  --care-motion-settle: 200ms;
+  --care-ease: cubic-bezier(.2,.7,.3,1);
+}
+
+#app .el-button--primary.is-disabled { background: #e2e9dc; border-color: #c7d3c1; color: #59665f; }
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button { transition: background-color var(--care-motion-fast) var(--care-ease), color var(--care-motion-fast) var(--care-ease), border-color var(--care-motion-fast) var(--care-ease), transform var(--care-motion-fast) var(--care-ease); }
+button:not(:disabled):active { transform: translateY(1px); }
+
+:focus-visible {
+  outline: 3px solid var(--care-primary);
+  outline-offset: 2px;
+}
+
+#app .el-button--primary,
+#app .el-button--primary:focus {
+  background-color: var(--care-primary);
+  border-color: var(--care-primary);
+  color: #fff;
+}
+
+#app .el-button--primary:hover {
+  background-color: var(--care-primary-dark);
+  border-color: var(--care-primary-dark);
+}
+
+#app .el-button.is-link,
+#app .el-button.is-link:focus {
+  color: var(--care-primary);
+}
+
+#app .el-button.is-link:hover {
+  color: var(--care-primary-dark);
+}
+
+#app .el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--care-primary);
+  border-color: var(--care-primary);
+}
+
+#app .el-radio__input.is-checked + .el-radio__label {
+  color: var(--care-primary);
+}
+
+#app .el-switch.is-checked .el-switch__core,
+#app .el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--care-primary);
+  border-color: var(--care-primary);
+}
+
+/* The wrapper owns the field boundary; native inputs remain unframed. */
+.el-input__inner { height: calc(var(--care-control-height) - 2px); font-size: 16px; }
+#app .el-input__inner,
+#app .el-select__input,
+#app .el-range-input,
+#app .el-input__inner:focus { border: 0; border-radius: 0; box-shadow: none; outline: none; background: transparent; }
+#app .el-input__wrapper,
+#app .el-select__wrapper,
+#app .el-textarea__inner {
+  min-height: var(--care-control-height);
+  border: 1px solid var(--care-control-line);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease);
+}
+#app .el-input__wrapper { padding: 0 14px; }
+#app .el-select__wrapper { padding: 8px 14px; font-size: 16px; }
+#app .el-textarea__inner { font-size: 16px; }
+#app .el-input__wrapper:hover,
+#app .el-select__wrapper:hover,
+#app .el-textarea__inner:hover { border-color: var(--care-primary); }
+#app .el-input__wrapper:focus-within,
+#app .el-select__wrapper:focus-within,
+#app .el-select__wrapper.is-focused,
+#app .el-textarea__inner:focus {
+  border-color: var(--care-primary);
+  outline: 2px solid var(--care-primary);
+  outline-offset: -1px;
+}
+#app .el-input.is-disabled .el-input__wrapper,
+#app .el-select__wrapper.is-disabled { border-color: #cbd5c5; outline: none; background: var(--care-neutral-bg); }
+
+/* A search group has one continuous frame, including its action segment. */
+#app .el-input-group {
+  display: inline-flex;
+  min-height: var(--care-control-height);
+  border: 1px solid var(--care-control-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+  overflow: hidden;
+  transition: border-color var(--care-motion-fast) var(--care-ease);
+}
+#app .el-input-group:hover { border-color: var(--care-primary); }
+#app .el-input-group:focus-within { border-color: var(--care-primary); outline: 2px solid var(--care-primary); outline-offset: -1px; }
+#app .el-input-group .el-input__wrapper,
+#app .el-input-group .el-input__wrapper:focus-within { min-width: 0; min-height: 0; border: 0; border-radius: 0; box-shadow: none; outline: none; }
+#app .el-input-group__append { align-self: stretch; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+#app .el-input-group .el-input-group__append .el-button {
+  display: inline-flex;
+  align-self: stretch;
+  width: var(--care-control-height);
+  min-width: var(--care-control-height);
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+  color: var(--care-primary);
+  background: var(--care-surface-muted);
+}
+#app .el-input-group .el-input-group__append .el-button:not(:disabled):hover { background: #e7eee3; }
+#app .el-input-group .el-input-group__append .el-button:not(:disabled):active { transform: none; background: #dce7d6; }
+#app .el-input-group.is-disabled { border-color: #cbd5c5; background: var(--care-neutral-bg); }
+#app .el-input-group .el-input-group__append .el-button:disabled { background: var(--care-neutral-bg); color: #69796b; }
+
+#app .el-input-number { height: var(--care-control-height); }
+#app .el-input-number .el-input__wrapper { padding: 0 38px; }
+#app .el-input-number__increase,
+#app .el-input-number__decrease { border: 0; background: transparent; }
+#app .el-input-number__increase:hover,
+#app .el-input-number__decrease:hover { background: var(--care-success-bg); }
+
+.el-button { min-height: 44px; font-size: 15px; }
+.el-button--small { min-height: 40px; font-size: 14px; }
+.el-form-item__label { font-size: 15px; line-height: 1.5; }
+.el-table { font-size: 16px; }
+.el-table th.el-table__cell { font-size: 14px; }
+.el-menu-item, .el-sub-menu__title { font-size: 16px; }
+.el-tabs__item { font-size: 15px; }
+
+
+.el-table {
+  color: var(--care-ink);
+  border-radius: 10px;
+  overflow: hidden;
+}

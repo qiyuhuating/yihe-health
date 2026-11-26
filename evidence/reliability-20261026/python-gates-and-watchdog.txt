@@ -1,0 +1,15 @@
+test_accepts_exact_source_evidence (test_release_gate.ReleaseGateTests.test_accepts_exact_source_evidence) ... ok
+test_branch_move_during_verification_fails (test_release_gate.ReleaseGateTests.test_branch_move_during_verification_fails) ... ok
+test_latest_attempt_cannot_reuse_previous_green (test_release_gate.ReleaseGateTests.test_latest_attempt_cannot_reuse_previous_green) ... ok
+test_rejects_expired_or_unhashed_artifact (test_release_gate.ReleaseGateTests.test_rejects_expired_or_unhashed_artifact) ... ok
+test_rejects_stale_source_missing_runs_and_partial_gate (test_release_gate.ReleaseGateTests.test_rejects_stale_source_missing_runs_and_partial_gate) ... ok
+{"event_id": "bea7bbeb701baef65ae464653108d8c644246a46a015d3ff3a769024b1aef19e", "state": "pending_retry", "delay_seconds": 5}
+{"event_id": "bea7bbeb701baef65ae464653108d8c644246a46a015d3ff3a769024b1aef19e", "state": "receiver_accepted", "human_acknowledged": false}
+{"event_id": "913b842bbb88d66f718c92eeae025242a7640b34c1db787438b5cec3022f6d6c", "state": "receiver_accepted", "human_acknowledged": false}
+test_failure_survives_restart_and_resolved_does_not_overtake_firing (test_watchdog.WatchdogTests.test_failure_survives_restart_and_resolved_does_not_overtake_firing) ... ok
+test_receiver_boundary (test_watchdog.WatchdogTests.test_receiver_boundary) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.589s
+
+OK

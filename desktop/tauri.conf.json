@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "颐和",
+  "version": "2.1.0",
+  "identifier": "org.watchtestcs.yihe",
+  "build": {
+    "frontendDist": "bootstrap"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "capabilities": [
+        "desktop"
+      ],
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* ipc: http://ipc.localhost; font-src 'self' data:; frame-src https://www.amap.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "yihe.ico"
+    ],
+    "externalBin": [
+      "binaries/yihe-server"
+    ],
+    "shortDescription": "颐和 · 独立数据库照护桌面软件",
+    "category": "HealthcareAndFitness",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "languages": [
+          "SimpChinese"
+        ],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser"
+      }
+    },
+    "useLocalToolsDir": true
+  }
+}

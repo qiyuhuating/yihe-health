@@ -1,0 +1,33 @@
+[package]
+name = "yihe-watch-sim"
+version = "2.0.0"
+edition = "2024"
+rust-version = "1.100.0"
+license = "MIT"
+description = "颐和设备业务模拟器"
+
+[lib]
+name = "watch_sim"
+
+[[bin]]
+name = "watch-sim"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+hmac = "0.12"
+ureq = { version = "=2.12.1", default-features = false, features = ["native-tls"] }
+native-tls = "0.2"
+uuid = { version = "1", features = ["v4"] }
+itoa = "1"
+
+ctrlc = "3"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"

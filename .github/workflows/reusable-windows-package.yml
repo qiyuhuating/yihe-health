@@ -1,0 +1,166 @@
+name: Reusable Tauri contract
+on:
+  workflow_call:
+    inputs:
+      build_desktop:
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: backend/go.sum
+      - name: Validate all product versions
+        shell: pwsh
+        run: ./desktop/validate-version.ps1
+      - name: Parse active PowerShell scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem 'desktop' -Filter '*.ps1' | ForEach-Object {
+            $tokens=$null; $errors=$null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName,[ref]$tokens,[ref]$errors)
+            if($errors.Count){throw ($errors|Out-String)}
+          }
+      - name: Build native Windows sidecar and record source/hash
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force evidence/ci/windows | Out-Null
+          git rev-parse HEAD | Set-Content evidence/ci/windows/source-sha.txt
+          Push-Location 'backend'
+          $env:CGO_ENABLED = '0'
+          go build -trimpath  -ldflags='-s -w' -o '../evidence/ci/windows/yihe-server.exe' ./cmd/server
+          if ($LASTEXITCODE) { throw 'Windows sidecar build failed' }
+          Pop-Location
+          Get-FileHash evidence/ci/windows/yihe-server.exe -Algorithm SHA256 | ConvertTo-Json | Set-Content evidence/ci/windows/sha256.json
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: windows-sidecar-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/ci/windows/
+          if-no-files-found: error
+
+  desktop:
+    name: Tauri build and installation
+    if: ${{ inputs.build_desktop }}
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: backend/go.sum
+      - name: Build and exercise the actual desktop distributions
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force evidence/ci/windows-desktop | Out-Null
+          git rev-parse HEAD | Set-Content evidence/ci/windows-desktop/source-sha.txt
+          rustup toolchain install stable --profile minimal --no-self-update
+          if ($LASTEXITCODE) { throw 'Rust toolchain setup failed' }
+          rustc --version | Set-Content evidence/ci/windows-desktop/rust-version.txt
+          ./desktop/build.ps1 *>&1 | Tee-Object evidence/ci/windows-desktop/build.log
+          python ./desktop/build-fontless.py *>&1 | Tee-Object evidence/ci/windows-desktop/fontless.log
+          ./desktop/package-release.ps1 *>&1 | Tee-Object evidence/ci/windows-desktop/package.log
+
+      - name: Smoke-test installed NSIS on disposable Windows runner
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = Get-ChildItem 'outputs' -Filter 'Yihe-Setup-*-win-x64.exe' -Recurse -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (!$setup) { throw 'No NSIS installer was built' }
+          $target = Join-Path $env:RUNNER_TEMP 'yihe-pr153-installer-smoke'
+          if (Test-Path $target) { throw 'Installer test target already exists' }
+          $install = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$target") -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "NSIS silent install returned $($install.ExitCode)" }
+          $binary = Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'yihe.exe' | Select-Object -First 1
+          $sidecar = Get-ChildItem -LiteralPath $target -Recurse -File -Filter 'yihe-server*.exe' | Select-Object -First 1
+          $uninstaller = Get-ChildItem -LiteralPath $target -Recurse -File -Filter '*uninstall*.exe' | Select-Object -First 1
+          if (!$binary -or !$sidecar -or !$uninstaller) { throw 'Installer omitted application, Go sidecar, or uninstaller' }
+          $webview = @('HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F1E7A06D-06EA-45B8-9656-ED0EC0EA8DF5}', 'HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F1E7A06D-06EA-45B8-9656-ED0EC0EA8DF5}', 'HKCU:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F1E7A06D-06EA-45B8-9656-ED0EC0EA8DF5}') | ForEach-Object { Get-ItemProperty -Path $_ -Name pv -ErrorAction SilentlyContinue } | Where-Object { $_.pv }
+          $webviewExe = @("${env:ProgramFiles(x86)}\Microsoft\EdgeWebView\Application", "$env:ProgramFiles\Microsoft\EdgeWebView\Application", "$env:LOCALAPPDATA\Microsoft\EdgeWebView\Application") | Where-Object { Test-Path $_ } | ForEach-Object { Get-ChildItem $_ -Recurse -File -Filter 'msedgewebview2.exe' -ErrorAction SilentlyContinue } | Select-Object -First 1
+          if (!$webview -and !$webviewExe) { throw 'WebView2 runtime was unavailable after installer completed' }
+          $webviewVersion = if ($webview) { @($webview)[0].pv } else { $webviewExe.Directory.Name }
+          $appHash = (Get-FileHash -LiteralPath $binary.FullName -Algorithm SHA256).Hash
+          $uninstall = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "NSIS silent uninstall returned $($uninstall.ExitCode)" }
+          if (Test-Path $binary.FullName) { throw 'Application executable still present after uninstall' }
+          @{source=(git rev-parse HEAD).Trim();setupHash=(Get-FileHash $setup.FullName -Algorithm SHA256).Hash;appHash=$appHash;webview=$webviewVersion;installed=$true;uninstalled=$true} | ConvertTo-Json | Set-Content evidence/ci/windows-desktop/install-smoke.json
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-setup-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Setup-*.exe
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-portable-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Portable-*.zip
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-source-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Source-*.zip
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-win-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-win-x64.exe
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-linux-x64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-linux-x64.tar.gz
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-linux-arm64-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-linux-arm64.tar.gz
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            evidence/ci/windows-desktop/source-sha.txt
+          if-no-files-found: error
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: windows-desktop-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            evidence/ci/windows-desktop/
+            outputs/*/release/*
+          if-no-files-found: error

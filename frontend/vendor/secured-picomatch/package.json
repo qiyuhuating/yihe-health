@@ -1,0 +1,12 @@
+{
+  "name": "@ryotsu/picomatch",
+  "version": "4.0.7-a",
+  "private": true,
+  "license": "MIT",
+  "repository": "ryotsu-kankichi/secured-picomatch",
+  "main": "index.js",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=12"
+  }
+}

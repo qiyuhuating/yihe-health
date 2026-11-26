@@ -1,0 +1,93 @@
+name: Deployment contract
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compose-and-alert-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Validate Compose dependency graph and syntax
+        env:
+          MYSQL_ROOT_PASSWORD: ci-do-not-use
+          MYSQL_PASSWORD: ci-do-not-use
+          CARE_RECEIPT_SECRET: ci-placeholder-not-production-32-plus-chars
+        run: |
+          docker compose -f deploy/platform.compose.yml config --quiet
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('deploy/platform.compose.yml').read_text()
+          app = text.split('\n  app:', 1)[1].split('\n  gateway:', 1)[0]
+          monitor = text.split('\n  prometheus:', 1)[1]
+          if 'postgres:' in text or 'PG_ANALYTICS_URL:' in text or 'S3_' in text:
+              raise SystemExit('Production Compose must not include PostgreSQL or S3')
+          if 'app: {condition: service_healthy}' in monitor:
+              raise SystemExit('Prometheus must not be gated on app readiness')
+          if 'mysql: {condition: service_healthy}' not in app:
+              raise SystemExit('Business app must still require healthy MySQL')
+          if 'read_only: true' in app and ('YIHE_RISK_AUDIT_SPOOL_PATH: /tmp/' not in app or 'tmpfs: ["/tmp"]' not in app):
+              raise SystemExit('Read-only app requires an ephemeral writable risk audit journal')
+          startup = Path('scripts/start-platform.py').read_text()
+          critical = '["up", "--build", "-d", "--wait", "mysql", "app", "gateway", "prometheus"]'
+          if critical not in startup or 'postgres' in startup:
+              raise SystemExit('Startup must launch only the MySQL-backed stack')
+          unit = Path('deploy/yihe-care.service').read_text()
+          if 'postgresql.service' in unit:
+              raise SystemExit('systemd service must not depend on PostgreSQL')
+          PY
+      - name: Validate Nginx trusted proxy and shared edge limiter syntax
+        run: |
+          docker run --rm --add-host app:127.0.0.1 \
+            -v "$PWD/deploy/platform.nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
+            nginx:1.27-alpine nginx -t
+      - name: Validate Prometheus scrape and alert rules
+        run: |
+          docker run --rm --pull=always \
+            -v "$PWD/deploy:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.5.0 \
+            check rules /etc/prometheus/alerts.yml
+          docker run --rm --pull=always \
+            -v "$PWD/deploy:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.5.0 \
+            test rules /etc/prometheus/alerts_test.yml
+      - name: Verify independent watchdog with real monitoring processes
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$PWD/evidence/ci/watchdog-process"
+          mkdir -p "$evidence" "$RUNNER_TEMP/watchdog-tools"
+          prom_container=""
+          am_container=""
+          cleanup() {
+            if [ -n "$prom_container" ]; then docker rm -f "$prom_container" >/dev/null; fi
+            if [ -n "$am_container" ]; then docker rm -f "$am_container" >/dev/null; fi
+          }
+          trap cleanup EXIT
+          docker pull prom/prometheus:v3.5.0
+          docker pull prom/alertmanager:v0.28.1
+          docker image inspect --format '{{index .RepoDigests 0}}' \
+            prom/prometheus:v3.5.0 prom/alertmanager:v0.28.1 > "$evidence/monitor-images.txt"
+          prom_container="$(docker create prom/prometheus:v3.5.0)"
+          am_container="$(docker create prom/alertmanager:v0.28.1)"
+          docker cp "$prom_container:/bin/prometheus" "$RUNNER_TEMP/watchdog-tools/prometheus"
+          docker cp "$am_container:/bin/alertmanager" "$RUNNER_TEMP/watchdog-tools/alertmanager"
+          chmod +x "$RUNNER_TEMP/watchdog-tools/"*
+          python3 scripts/reliability/watchdog-process-drill.py \
+            --prometheus "$RUNNER_TEMP/watchdog-tools/prometheus" \
+            --alertmanager "$RUNNER_TEMP/watchdog-tools/alertmanager" \
+            --report-dir "$evidence"
+      - name: Preserve watchdog process evidence including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: watchdog-process-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            evidence/ci/watchdog-process/**/summary.json
+            evidence/ci/watchdog-process/monitor-images.txt
+          if-no-files-found: error

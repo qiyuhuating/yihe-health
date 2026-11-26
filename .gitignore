@@ -1,11 +1,23 @@
+# Protect local environment secrets anywhere in the repository.
+.env
+.env.*
+!.env.example
+!**/*.env.example
+
+# Repository-wide exclusions: local dependencies, generated output, databases and credentials.
+**/node_modules/
+**/target/
+**/dist/
+**/outputs/
+*.mv.db
+*.trace.db
+*.pfx
+*.p12
+*.log
+
+# Private dual-database deployment credentials
+deploy/dual-db.env
+deploy/platform.env
+deploy/secrets/
 __pycache__/
-*.pyc
-*.sqlite3*
-*.db*
-.coverage*
-coverage.json
-coverage.xml
-htmlcov/
-.test-results/
-.venv/
-docs/dist/
+/evidence/ci/

@@ -1,0 +1,124 @@
+name: Stable release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full current main commit SHA with passing stable-channel evidence
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  exact-source:
+    uses: ./.github/workflows/reusable-exact-source.yml
+    with:
+      source_sha: ${{ inputs.source_sha || github.sha }}
+      source_branch: main
+    permissions:
+      contents: read
+      actions: read
+
+  build:
+    if: github.ref == 'refs/heads/main'
+    needs: exact-source
+    permissions:
+      contents: read
+      actions: read
+    runs-on: windows-latest
+    env:
+      YIHE_RELEASE_CHANNEL: stable
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.source_sha || github.sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: backend/go.sum
+      - name: Prepare Rust
+        shell: pwsh
+        run: rustup toolchain install stable --profile minimal --no-self-update
+      - name: Build actual Windows installer
+        shell: pwsh
+        run: ./desktop/build.ps1
+      - name: Build standalone no-font native distributions
+        shell: pwsh
+        run: python ./desktop/build-fontless.py
+
+      - name: Package and verify Setup, portable and source
+        shell: pwsh
+        run: ./desktop/package-release.ps1
+      - name: Recheck stable source immediately before retaining installer
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/reliability/release-gate.py --repo '${{ github.repository }}' --branch main --sha '${{ inputs.source_sha || github.sha }}' --output release-provenance.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-windows-stable-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/*
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-setup-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Setup-*.exe
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-portable-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Portable-*.zip
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-source-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Source-*.zip
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-win-x64-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-win-x64.exe
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-linux-x64-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-linux-x64.tar.gz
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: yihe-native-nofonts-linux-arm64-${{ inputs.source_sha || github.sha }}
+          path: |
+            outputs/*/release/Yihe-Native-NoFonts-*-linux-arm64.tar.gz
+            outputs/*/release/SHA256SUMS.txt
+            outputs/*/release/release-manifest.json
+            release-provenance.json
+          if-no-files-found: error

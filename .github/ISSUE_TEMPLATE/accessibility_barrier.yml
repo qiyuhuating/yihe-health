@@ -1,0 +1,46 @@
+name: 无障碍与适老化障碍 (Accessibility Barrier)
+description: 报告键盘导航、屏幕阅读器、颜色对比、字号或窄屏问题
+title: "[A11y]: "
+labels:
+  - accessibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请尽可能使用模拟或脱敏数据复现，勿上传真实健康信息、位置信息和账户凭据。
+        项目设计参考 WCAG 2.1 AA，但不宣称所有界面已经完成独立认证。
+  - type: input
+    id: page
+    attributes:
+      label: 页面、操作入口或路由
+      placeholder: "/family-portal/overview、/sign-in 等"
+    validations:
+      required: true
+  - type: checkboxes
+    id: mode
+    attributes:
+      label: 复现条件
+      options:
+        - label: 大字模式 (html.large-text)
+        - label: 系统或应用减弱动画
+        - label: 仅键盘操作 (Tab、Enter、Esc)
+        - label: 屏幕阅读器（如 NVDA、Narrator、VoiceOver）
+        - label: 窄屏或移动设备
+        - label: 其他缩放、语言或高对比模式
+  - type: input
+    id: viewport
+    attributes:
+      label: 视口或缩放（如果相关）
+      placeholder: "390 × 844，200% 缩放"
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 障碍、复现步骤及预期行为
+      description: 请明确哪一步无法完成、实际表现及期望的操作路径。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 浏览器、辅助技术及脱敏截图（可选）
+      description: 提供相关版本和实际观察，不要上传敏感个人信息。

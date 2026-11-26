@@ -1,0 +1,84 @@
+
+> yihe-ui@2.1.0 build
+> vite build
+
+[36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 2344 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                      1.18 kB │ gzip:   0.63 kB
+dist/assets/position-B8a8AGcN.css                    0.08 kB │ gzip:   0.08 kB
+dist/assets/stepfamily-Bj1dK7qG.css                  0.08 kB │ gzip:   0.09 kB
+dist/assets/positionfamily-yI47DIHL.css              0.09 kB │ gzip:   0.10 kB
+dist/assets/inviteCode-DCzlyO6L.css                  0.25 kB │ gzip:   0.17 kB
+dist/assets/rateprefamily-DIMpapJS.css               0.36 kB │ gzip:   0.23 kB
+dist/assets/SecurityPanel-BxSUTqGL.css               0.85 kB │ gzip:   0.36 kB
+dist/assets/annex-C_RDEg9p.css                       1.05 kB │ gzip:   0.44 kB
+dist/assets/device-CXQ4-6HM.css                      1.15 kB │ gzip:   0.42 kB
+dist/assets/RecordCards-DrdQ6mO5.css                 1.44 kB │ gzip:   0.51 kB
+dist/assets/textMainUser-D5huNmTW.css                1.64 kB │ gzip:   0.60 kB
+dist/assets/Setup-C5R8dxt5.css                       1.70 kB │ gzip:   0.60 kB
+dist/assets/textOpt-De-1nL5c.css                     1.85 kB │ gzip:   0.61 kB
+dist/assets/me-BmFeO1E4.css                          1.98 kB │ gzip:   0.65 kB
+dist/assets/textMain-CX_v3dRy.css                    2.12 kB │ gzip:   0.70 kB
+dist/assets/NoticeEditor-DvGlCuPU.css                2.39 kB │ gzip:   0.73 kB
+dist/assets/Header-C03xX-Zw.css                      2.47 kB │ gzip:   0.76 kB
+dist/assets/Register-B0raAO0I.css                    4.35 kB │ gzip:   1.16 kB
+dist/assets/Home-C8Djf2JV.css                        5.24 kB │ gzip:   1.42 kB
+dist/assets/familyHome-DGTvvvs-.css                  5.44 kB │ gzip:   1.48 kB
+dist/assets/Login-DlreuNuY.css                       5.57 kB │ gzip:   1.43 kB
+dist/assets/familyMain-Vq_QiNK0.css                  6.46 kB │ gzip:   1.57 kB
+dist/assets/main-BxX0xIn1.css                        8.20 kB │ gzip:   1.95 kB
+dist/assets/PositionMap-Bi2f0d7n.css                16.22 kB │ gzip:   6.70 kB
+dist/assets/index-kJ-Gl3tX.css                     441.32 kB │ gzip:  69.41 kB
+dist/assets/care-courtyard-CJhr71K1.js               0.05 kB │ gzip:   0.07 kB
+dist/assets/care-announcement-empty-Cd09MsA3.js      0.06 kB │ gzip:   0.08 kB
+dist/assets/yihe-logo-192-D8Nl0I9O.js             0.10 kB │ gzip:   0.08 kB
+dist/assets/care-lakeside-artisan-DkJ9ugHL.js        0.11 kB │ gzip:   0.09 kB
+dist/assets/client-CAhUUAAn.js                       0.21 kB │ gzip:   0.21 kB
+dist/assets/latestRead-DDFr1Ks6.js                   0.39 kB │ gzip:   0.25 kB
+dist/assets/textTwo-D6Bk0kmL.js                      0.41 kB │ gzip:   0.28 kB
+dist/assets/text-BveUP-dK.js                         0.43 kB │ gzip:   0.29 kB
+dist/assets/rolldown-runtime-XKyaHtl9.js             0.72 kB │ gzip:   0.42 kB
+dist/assets/annex-dpgsookd.js                        0.95 kB │ gzip:   0.69 kB
+dist/assets/RecordCards-CEls7rOR.js                  2.19 kB │ gzip:   1.10 kB
+dist/assets/Header-DFWpaUd4.js                       2.34 kB │ gzip:   1.29 kB
+dist/assets/SecurityPanel-BCHp7IOH.js                2.91 kB │ gzip:   1.51 kB
+dist/assets/textMainUser-DAnr7f96.js                 3.45 kB │ gzip:   1.60 kB
+dist/assets/Setup-DMKtTejG.js                        3.50 kB │ gzip:   1.96 kB
+dist/assets/positionfamily-xTc_Of-U.js               3.72 kB │ gzip:   1.76 kB
+dist/assets/life-CiXejVHF.js                         3.81 kB │ gzip:   1.76 kB
+dist/assets/familyHome-Ck02CVtw.js                   4.17 kB │ gzip:   1.86 kB
+dist/assets/stepfamily-Dza4Jvrp.js                   5.41 kB │ gzip:   2.37 kB
+dist/assets/familyMain-D1EPozs3.js                   5.85 kB │ gzip:   2.47 kB
+dist/assets/step-B6ZD03S5.js                         5.90 kB │ gzip:   2.50 kB
+dist/assets/rateprefamily-CMPRt6L1.js                5.93 kB │ gzip:   2.44 kB
+dist/assets/textMain-WCOxZGVx.js                     6.09 kB │ gzip:   2.59 kB
+dist/assets/saidOperation-s_yE1qqx.js                6.27 kB │ gzip:   2.44 kB
+dist/assets/Login-DiQm7iO_.js                        6.60 kB │ gzip:   3.16 kB
+dist/assets/position-7K4ppAOH.js                     6.62 kB │ gzip:   2.72 kB
+dist/assets/Home-mx_FwaCK.js                         7.13 kB │ gzip:   2.98 kB
+dist/assets/NoticeEditor-49W3Z-ak.js                 7.94 kB │ gzip:   3.49 kB
+dist/assets/textOpt-NoB2ldCp.js                      8.45 kB │ gzip:   3.48 kB
+dist/assets/Register-C2NY2-fC.js                     9.62 kB │ gzip:   3.43 kB
+dist/assets/watch-hWoL3Idy.js                        9.99 kB │ gzip:   3.24 kB
+dist/assets/customer-BiHHKEYH.js                    10.38 kB │ gzip:   3.59 kB
+dist/assets/family-DxTDpooW.js                      10.88 kB │ gzip:   3.40 kB
+dist/assets/me-DxqAUoez.js                          11.98 kB │ gzip:   3.61 kB
+dist/assets/inviteCode-BIsQOhWH.js                  12.87 kB │ gzip:   4.50 kB
+dist/assets/ratepre-DAGrLqkU.js                     14.26 kB │ gzip:   4.62 kB
+dist/assets/person-O3KsZfT-.js                      16.39 kB │ gzip:   4.67 kB
+dist/assets/main-DoE4rdER.js                        24.53 kB │ gzip:   8.88 kB
+dist/assets/device-Cd3DJDe_.js                      30.21 kB │ gzip:   8.76 kB
+dist/assets/_plugin-vue_export-helper-CJMv9Rw7.js   66.65 kB │ gzip:  26.07 kB
+dist/assets/PositionMap-siujRMif.js                150.79 kB │ gzip:  44.65 kB
+dist/assets/charts-CweEC4t2.js                     522.78 kB │ gzip: 177.11 kB
+dist/assets/index-CjWwiCxW.js                      639.04 kB │ gzip: 207.05 kB
+
+[32m✓ built in 979ms[39m
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m

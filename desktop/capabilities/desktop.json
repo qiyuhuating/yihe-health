@@ -1,0 +1,17 @@
+{
+  "identifier": "desktop",
+  "description": "Only the main local care interface may initialize an administrator or control fullscreen.",
+  "windows": [
+    "main"
+  ],
+  "remote": {
+    "urls": [
+      "http://127.0.0.1:*"
+    ]
+  },
+  "permissions": [
+    "allow-setup-admin",
+    "core:window:allow-is-fullscreen",
+    "core:window:allow-set-fullscreen"
+  ]
+}

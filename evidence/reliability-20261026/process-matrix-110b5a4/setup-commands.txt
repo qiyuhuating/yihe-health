@@ -1,0 +1,584 @@
+git exit=0
+110b5a43b400f6018c496855b1458d47181785aa
+
+git exit=0
+
+mysqld.exe exit=0
+2026-10-26T10:55:54.320961Z 0 [System] [MY-013169] [Server] C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe (mysqld 8.0.43) initializing of server in progress as process 28616
+2026-10-26T10:55:54.334704Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-10-26T10:55:54.785079Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-10-26T10:55:56.688500Z 5 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+
+mysql.exe exit=1
+ERROR 2003 (HY000): Can't connect to MySQL server on '127.0.0.1:33372' (10060)
+
+mysql.exe exit=0
+
+mysql.exe exit=0
+
+createdb.exe exit=0
+
+reliability.exe exit=0
+Disposable synthetic fixture initialized; credentials written only to private state file
+
+mysql.exe exit=0
+{"datadir": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\yihe-reliability-20261026\\process-drill\\6f5be6807fa6\\mysql\\", "version": "8.0.43", "innodb_flush_log_at_trx_commit": 1}
+
+postgres.exe exit=0
+postgres (PostgreSQL) 16.15
+
+mysql.exe exit=0
+{"id": 1, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 1, "status": "delivered", "attempts": 1, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"state": "notified", "resolved": null, "acknowledged": null}
+
+mysql.exe exit=0
+{"id": 1, "status": "delivered", "attempts": 1, "last_error": null, "retry_seconds": -1}
+
+mysql.exe exit=0
+{"state": "notified", "resolved": null, "acknowledged": null}
+
+mysql.exe exit=0
+{"id": 2, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 2, "status": "delivered", "attempts": 1, "last_error": "gateway network failure", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"id": 2, "status": "delivered", "attempts": 1, "last_error": "gateway network failure", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"id": 2, "status": "delivered", "attempts": 1, "last_error": "gateway network failure", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"state": "notified", "resolved": null, "acknowledged": null}
+
+pg_ctl.exe exit=0
+waiting for server to shut down.... done
+server stopped
+
+mysql.exe exit=0
+{"id": 3, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 3, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 503", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"state": "escalated", "resolved": null, "acknowledged": null}
+
+mysql.exe exit=0
+{"state": "escalated", "resolved": null, "acknowledged": null}
+
+mysql.exe exit=0
+{"state": "escalated", "resolved": null, "acknowledged": null}
+
+mysql.exe exit=0
+{"id": 3, "status": "failed", "attempts": 4, "last_error": "gateway HTTP 503", "retry_seconds": 141}
+
+pg_ctl.exe exit=0
+waiting for server to start....... done
+server started
+
+mysql.exe exit=0
+0
+
+mysql.exe exit=0
+{"id": 6, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 30}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 30}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 22}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 22}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 21}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 20}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 19}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 18}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 17}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 16}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 15}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 14}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 13}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 12}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 11}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 10}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 9}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 8}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 7}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 6}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 5}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 4}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 3}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 2}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 1, "last_error": "gateway HTTP 429", "retry_seconds": 1}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 2, "last_error": "gateway HTTP 429", "retry_seconds": 60}
+
+mysql.exe exit=0
+{"id": 6, "status": "failed", "attempts": 2, "last_error": "gateway HTTP 429", "retry_seconds": 60}
+
+mysql.exe exit=0
+{"id": 7, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 7, "status": "failed", "attempts": 1, "last_error": "gateway network failure", "retry_seconds": 30}
+
+mysql.exe exit=0
+{"id": 7, "status": "failed", "attempts": 1, "last_error": "gateway network failure", "retry_seconds": 30}
+
+mysql.exe exit=0
+{"id": 8, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 8, "status": "failed", "attempts": 1, "last_error": "gateway dns failure", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"id": 8, "status": "failed", "attempts": 1, "last_error": "gateway dns failure", "retry_seconds": 29}
+
+mysql.exe exit=0
+{"id": 9, "status": "pending", "attempts": 0, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": 0}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -1}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -2}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -3}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -4}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -5}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -6}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -7}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -8}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -9}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -10}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -11}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -12}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -13}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -15}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -16}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -17}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -18}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -19}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -20}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -21}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -22}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -23}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -24}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -25}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -26}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -27}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -28}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -29}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -30}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -31}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -32}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -33}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -34}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -35}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -36}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -37}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -38}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -39}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -40}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -41}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -42}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -43}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -44}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -45}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -46}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -47}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -48}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -49}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -50}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -51}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -52}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -53}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -54}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -55}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -56}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -57}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -58}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -59}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -61}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -62}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -63}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -64}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -65}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -66}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -67}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -68}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -69}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -70}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -71}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -72}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -73}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -74}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -75}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -76}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -77}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -78}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -79}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -80}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -81}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -82}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -83}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -84}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -85}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -86}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -87}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -88}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -89}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -90}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -91}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -92}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -93}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -94}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -95}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -96}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -97}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -98}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -99}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -100}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -101}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -102}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -103}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -104}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -105}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -106}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -108}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -109}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -110}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -111}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -112}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -113}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -114}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -115}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -116}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -117}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -118}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 1, "last_error": null, "retry_seconds": -119}
+
+mysql.exe exit=0
+{"id": 9, "status": "sending", "attempts": 2, "last_error": null, "retry_seconds": -120}
+
+mysql.exe exit=0
+{"id": 9, "status": "delivered", "attempts": 2, "last_error": null, "retry_seconds": -121}
+
+mysql.exe exit=0
+{"id": 9, "status": "delivered", "attempts": 2, "last_error": null, "retry_seconds": -121}
+
+mysql.exe exit=0
+{"id": 9, "status": "delivered", "attempts": 2, "last_error": null, "retry_seconds": -121}
+
+mysql.exe exit=0
+C:\Users\Administrator\AppData\Local\Temp\yihe-reliability-20261026\process-drill\6f5be6807fa6\mysql\
+
+mysqladmin.exe exit=0
+
+mysql.exe exit=0
+1
+
+mysql.exe exit=0
+8
+
+mysql.exe exit=0
+{"state": "escalated", "resolved": null, "acknowledged": "1"}
+
+mysql.exe exit=0
+{"state": "escalated", "resolved": null, "acknowledged": "1"}
+
+mysql.exe exit=0
+C:\Users\Administrator\AppData\Local\Temp\yihe-reliability-20261026\process-drill\6f5be6807fa6\mysql\
+
+mysqladmin.exe exit=0
+
