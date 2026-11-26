@@ -75,10 +75,6 @@
 .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 28px; }
 .overview-card { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-height: 142px; padding: 24px 26px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); transition: border-color var(--care-motion-fast) var(--care-ease), box-shadow var(--care-motion-fast) var(--care-ease), transform var(--care-motion-fast) var(--care-ease); }
 .overview-card:hover { border-color: var(--care-neutral-border); box-shadow: var(--care-shadow-card); transform: translateY(-1px); }
-.alert-card { border-top: 3px solid var(--care-warning); }
-.care-card { border-top: 3px solid var(--care-danger); }
-.device-card { border-top: 3px solid var(--care-warning); }
-.fall-card { border-top: 3px solid var(--care-danger); }
 .metric-icon { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; font-size: 20px; }
 .metric-icon.amber { background: var(--care-warning-bg); color: var(--care-warning-strong); }
 .metric-icon.rose { background: var(--care-danger-bg); color: var(--care-danger); }
