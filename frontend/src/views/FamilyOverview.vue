@@ -34,28 +34,27 @@
   </div>
 </template>
 <style scoped>
-.family-dashboard { color: var(--care-ink); }
-.welcome-card { display: grid; grid-template-columns: 1.08fr 1fr; gap: 40px; align-items: center; margin: 12px 0 36px; }
-.welcome-copy { padding: 24px 0 28px; }
-.eyebrow { margin: 0 0 18px; color: var(--care-text-secondary); font-size: 18px; font-weight: 500; }
+.family-dashboard { max-width: 1280px; margin-inline: auto; color: var(--care-ink); }
+.welcome-card { display: grid; grid-template-columns: 1.08fr 1fr; gap: 32px; align-items: center; margin: 8px 0 28px; }
+.welcome-copy { padding: 16px 0 20px; }
+.eyebrow { margin: 0 0 12px; color: var(--care-text-secondary); font-size: 18px; font-weight: 500; }
 .welcome-card h1 { margin: 0; color: var(--care-heading); font-family: inherit; font-size: 40px; line-height: 1.35; font-weight: 500; letter-spacing: -.015em; }
-.welcome-description { max-width: 32em; margin: 18px 0 26px; color: var(--care-text-muted); font-size: 18px; line-height: 1.9; }
+.welcome-description { max-width: 32em; margin: 14px 0 20px; color: var(--care-text-muted); font-size: 18px; line-height: 1.9; }
 .welcome-copy :deep(.el-button) { min-height: 52px; padding: 12px 24px; border-radius: 8px; font-size: 18px; }
 .welcome-copy :deep(.el-button i) { margin-left: 16px; }
-.welcome-scene { position: relative; min-width: 0; height: 348px; overflow: hidden; border-radius: var(--care-panel-radius); }
+.welcome-scene { position: relative; min-width: 0; height: clamp(240px, 32vh, 320px); overflow: hidden; border-radius: var(--care-panel-radius); }
 .welcome-scene img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .family-daily-grid { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap: 32px; align-items: start; }
 .family-info-row { min-width: 0; display: grid; gap: 12px; }
 .records-heading { margin: 0; padding: 6px 0 10px; color: var(--care-heading); font-size: var(--care-section-title); font-weight: 600; }
-.info-tile { display: flex; align-items: flex-start; gap: 16px; min-width: 0; padding: 18px 20px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); color: var(--care-ink); text-decoration: none; transition: background-color 180ms cubic-bezier(.2,.7,.3,1), border-color 180ms cubic-bezier(.2,.7,.3,1), box-shadow 180ms cubic-bezier(.2,.7,.3,1), transform 180ms cubic-bezier(.2,.7,.3,1); }
-.info-tile:hover { background: var(--care-surface-hover); border-color: var(--care-neutral-border); box-shadow: var(--care-shadow-card); }
-.info-tile:hover .tile-action { transform: translateX(3px); }
+.info-tile { display: flex; align-items: flex-start; gap: 16px; min-width: 0; padding: 18px 20px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); color: var(--care-ink); text-decoration: none; transition: background-color 180ms cubic-bezier(.2,.7,.3,1), border-color 180ms cubic-bezier(.2,.7,.3,1), transform 180ms cubic-bezier(.2,.7,.3,1); }
+.info-tile:hover { background: var(--care-surface-hover); border-color: var(--care-neutral-border); }
 .info-tile:active { transform: translateY(1px); }
 .tile-icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; background: var(--care-success-bg); color: var(--care-primary); font-size: 24px; }
 .tile-copy { min-width: 0; flex: 1; }
 .tile-copy h3 { margin: 0; color: var(--care-heading); font-size: 20px; line-height: 1.5; font-weight: 500; }
 .tile-copy p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 16px; line-height: 1.8; text-wrap: balance; }
-.tile-action { align-self: center; flex: 0 0 20px; color: var(--care-primary); font-size: 18px; transition: transform 180ms cubic-bezier(.2,.7,.3,1); }
+.tile-action { align-self: center; flex: 0 0 20px; color: var(--care-primary); font-size: 18px; }
 .announcement-panel { min-width: 0; padding: 24px 28px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .panel-heading h2 { margin: 0; color: var(--care-heading); font-size: var(--care-section-title); font-weight: 600; }
@@ -90,7 +89,7 @@
   .data-caption { margin-top: 16px; }
 }
 @media (max-width: 1180px) { .welcome-card { gap: 28px; } .welcome-card h1 { font-size: 36px; } .welcome-scene { height: 320px; } .family-daily-grid { grid-template-columns: 1fr; gap: 28px; } }
-@media (max-width: 700px) { .welcome-card { grid-template-columns: 1fr; gap: 8px; margin: 0 0 28px; } .welcome-copy { padding: 4px 0 20px; } .welcome-card h1 { font-size: 32px; } .welcome-scene { height: 164px; border-radius: var(--care-panel-radius); } .welcome-scene img { object-position: center; } .welcome-description { margin: 14px 0 22px; } .family-daily-grid { gap: 24px; } .announcement-panel { padding: 20px 18px; } .announcement-list li { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: start; gap: 10px; } .announcement-list :deep(.el-button) { grid-column: 2; justify-self: start; margin-left: 0; } .panel-heading { align-items: flex-start; } .announcement-copy h3 { font-size: 18px; } .desktop-break { display: none; } }
+@media (max-width: 700px) { .welcome-card { grid-template-columns: 1fr; gap: 8px; margin: 0 0 28px; } .welcome-copy { padding: 4px 0 12px; } .welcome-card h1 { font-size: 32px; } .welcome-scene { height: 132px; border-radius: var(--care-panel-radius); } .welcome-scene img { object-position: center; } .welcome-description { margin: 14px 0 22px; } .family-daily-grid { gap: 24px; } .announcement-panel { padding: 20px 18px; } .announcement-list li { display: grid; grid-template-columns: 28px minmax(0,1fr); align-items: start; gap: 10px; } .announcement-list :deep(.el-button) { grid-column: 2; justify-self: start; margin-left: 0; } .panel-heading { align-items: flex-start; } .announcement-copy h3 { font-size: 18px; } .desktop-break { display: none; } }
 html.large-text .care-family .welcome-card h1 { font-size: 48px; }
 html.large-text .care-family .welcome-description { font-size: 21px; }
 html.large-text .care-family .tile-copy h3 { font-size: 23px; }

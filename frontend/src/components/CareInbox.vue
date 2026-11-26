@@ -2,7 +2,7 @@
   <section class="care-inbox" aria-labelledby="care-inbox-title" :aria-busy="loading">
     <div class="care-inbox-heading">
       <div><h2 id="care-inbox-title">{{ scope === 'verified' ? '已复核的照护任务' : '需要接手的照护任务' }}</h2><p>求助已接收不等于通知送达；只有人工接单及复核才会结束任务。</p></div>
-      <div class="care-inbox-tools"><label for="care-task-scope">任务范围</label><el-select id="care-task-scope" v-model="scope" :disabled="saving" @change="changeScope"><el-option label="待复核任务" value="active"/><el-option label="已复核任务" value="verified"/></el-select><el-button plain :disabled="saving" @click="load">刷新任务</el-button></div>
+      <div class="care-inbox-tools"><label for="care-task-scope">任务范围</label><el-select id="care-task-scope" v-model="scope" :disabled="saving" @change="changeScope"><el-option label="待复核任务" value="active"/><el-option label="已复核任务" value="verified"/></el-select><el-button plain :aria-busy="loading" :disabled="saving" @click="load">刷新任务</el-button></div>
     </div>
     <p v-if="loading && !tasks.length" role="status" class="care-loading">正在读取照护任务…（可继续刷新或切换分页）</p>
     <p v-if="error" role="alert" class="care-error">{{ error }}</p>
@@ -207,26 +207,27 @@ onBeforeUnmount(() => {
 })
 </script>
 <style scoped>
-.care-inbox { margin-bottom: 24px; padding: 24px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
+.care-inbox { margin-bottom: 24px; padding: 24px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); }
 .care-inbox-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
-.care-inbox-heading h2 { font-size: 20px; font-weight: 600; margin: 0; color: var(--care-primary); }
-.care-inbox-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 14px; }
+.care-inbox-heading h2 { font-size: var(--care-section-title); font-weight: 600; margin: 0; color: var(--care-heading); }
+.care-inbox-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 15px; max-width: 38em; }
 .care-inbox-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .care-inbox-tools .el-select { width: 160px; }
 .care-inbox :deep(.el-pagination) { margin-top: 18px; max-width: 100%; overflow-x: auto; }
 .care-task-list { display: grid; gap: 12px; }
 .care-task { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--care-surface-subtle); border: 1px solid var(--care-border); border-radius: 12px; transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease); }
-.care-task:hover { border-color: var(--care-neutral-border); background: var(--care-surface-hover); }
+.care-task:focus-within { border-color: var(--care-neutral-border); }
 .care-task.overdue, .care-task.urgent { background: var(--care-danger-bg); }
 .care-priority { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .care-priority.priority-p0 { background: var(--care-danger-bg); color: var(--care-danger); }
 .care-priority.priority-p1 { background: var(--care-warning-bg); color: var(--care-warning-strong); }
 .care-priority.priority-normal { background: var(--care-neutral-bg); color: var(--care-text-muted); }
-.care-task-main { display: grid; gap: 4px; min-width: 0; }
-.care-task-main strong { color: var(--care-heading); }
+.care-task-main { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.care-task-main > strong { color: var(--care-heading); font-size: 17px; font-weight: 600; }
 .care-next-step { font-weight: 600; color: var(--care-primary) !important; }
 .care-task-main span, .care-task-main small { color: var(--care-text-muted); }
 .care-task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.care-task-actions :deep(.el-button + .el-button) { margin-left: 0; }
 .care-loading { margin: 10px 0; color: var(--care-text-muted); font-size: 14px; }
 .care-error { color: var(--care-danger); }
 .care-history { list-style: decimal; padding-left: 24px; }
@@ -234,9 +235,10 @@ onBeforeUnmount(() => {
 .care-history small { display: block; color: var(--care-text-muted); }
 .care-history p { margin: 4px 0; color: var(--care-text); }
 .care-empty { color: var(--care-text-muted); }
-.care-inbox-empty { display: flex; align-items: center; gap: var(--care-space-4); padding: var(--care-space-2) 0; }
+.care-inbox-empty { display: flex; align-items: center; gap: var(--care-space-4); padding: 0; }
 .care-inbox-empty img { flex: 0 0 auto; object-fit: contain; }
 .care-inbox-empty p { margin: 0; max-width: 42em; }
 @media (max-width: 480px) { .care-inbox-empty img { width: 80px; height: 60px; } }
-@media (max-width: 700px) { .care-inbox-heading, .care-task { align-items: stretch; flex-direction: column; } }
+@media (max-width: 700px) { .care-inbox { padding: var(--care-space-4); } .care-inbox-heading, .care-task { align-items: stretch; flex-direction: column; } }
+:global(html.large-text) .care-inbox-heading p, :global(html.large-text) .care-task-main small { font-size: 18px; }
 </style>
