@@ -1,4 +1,4 @@
-# MySQL-only release candidate
+# MySQL-only Architecture & Migration
 
 The new backend keeps **MySQL 8.4 as the only authoritative and persistent application datastore**. It does not connect to PostgreSQL, S3, a local image directory or Redis. Browser cache, short-lived service memory, HarmonyOS encrypted offline upload queues, Prometheus metrics and operating-system files used to start the application are not alternative business databases.
 
@@ -41,8 +41,8 @@ SELECT name, size_bytes, content_sha256, state FROM image_blob ORDER BY name LIM
 
 The last trigger count must be **0**, and referenced objects must pass full authenticated SHA-256 verification. Verify original and restored MySQL row counts, binding/SOS workflow and transaction rollback, backup/restore of large `MEDIUMBLOB` rows, user login, image upload/download, and database restart. An optional local image backup is a **migration input**, never a runtime fallback.
 
-**Rollback requires restoring the complete pre-upgrade MySQL backup**, including the old migration ledger and triggers, along with the original image storage. After the new service has accepted writes, reconcile those writes against the rollback target before restoring the old backup. The migration ledger rejects old binaries started against an upgraded schema. Do not claim a production-ready release until native and real-data recovery gates pass.
-## Preview 隐私迁移编号衔接
+**Rollback requires restoring the complete pre-upgrade MySQL backup**, including the old migration ledger and triggers, along with the original image storage. After the new service has accepted writes, reconcile those writes against the rollback target before restoring the old backup. The migration ledger rejects old binaries started against an upgraded schema. Do not claim production readiness until native and real-data recovery gates pass.
+## 隐私迁移编号衔接
 
 本分支保留上游 `0033_mysql_image_payload.sql` 和 `0034_retire_pg_projection.sql`，
 社交手机号、长者照护档案和监护人联系方式分别使用 `0035`、`0036`、`0037`。

@@ -1,10 +1,10 @@
-# 颐和 2.1.0 使用指南
+# 颐和使用指南
 
-适用于颐和 2.1.0 Windows 桌面端及浏览器工作台。开发分支与正式版功能可能不同，以对应版本的发布清单和实际构建为准。
+适用于颐和 Windows 桌面端及浏览器工作台。功能以当前仓库源码与实际构建为准。
 
 ## 1. 首次使用
 
-1. 从项目 [GitHub Releases](https://github.com/WatchTestCs/smart-elderly-watch-management/releases) 下载与系统架构对应的安装包。Windows 可使用 Setup；Portable 必须完整解压，保留 `yihe.exe` 与 `yihe-server.exe`。按同一发布批次的 `SHA256SUMS.txt` 核对下载文件。
+1. 按 [构建指南](BUILD.md) 从源码构建 Windows 桌面端或服务端（当前暂未提供预编译发行包）。运行便携产物时需完整保留 `yihe.exe` 与 `yihe-server.exe`。
 2. 由部署人员准备 MySQL 8.4 业务库和长期保管的加密密钥。当前版本不连接 PostgreSQL 分析库或 S3；配置、加密图片和历史迁移见 [MySQL 单库迁移](MYSQL_ONLY_MIGRATION.md) 与 [备份恢复](runbooks/backup-restore.md)。
 3. 启动桌面应用。首次安装按初始化界面创建管理员。**系统没有默认管理员账号或通用密码**。若提示数据库未连接，先检查服务与配置，不要重复初始化。
 4. 管理员登录后建立老人档案，补齐必要的监护人和家属关联，再到设备管理登记手表并完成绑定。
@@ -79,7 +79,7 @@ Google 官方 [Maps Embed API](https://developers.google.com/maps/documentation/
 | 登录失败、提示初始化 | 用户身份、账号状态、数据库与会话配置 | 核对登录凭据及管理员初始化状态；不要寻找默认密码 |
 | 仍配置旧 PostgreSQL 或 S3 地址 | 是否沿用旧部署环境变量 | 新版拒绝这些旧配置；保留旧数据并按 MySQL 单库迁移手册完成停写和迁移 |
 | 安装后无法启动 | WebView2、Windows 版本与完整安装日志 | 检查 WebView2；Portable 必须完整解压并保留 sidecar |
-| Windows 提示未知发布者 | 是否来自官方发布页、SHA-256 是否匹配 | 校验来源和清单后再决定是否运行；本地自签名不等于其他设备信任 |
+| Windows 提示未知发布者 | 确认安装包来源与本地构建哈希 | 当前默认构建尚未使用受信任证书签名；本地自签名不等于其他设备信任 |
 | 设备离线或数据不更新 | 网络、设备认证、绑定版本、最后上报时间 | 先恢复连接；换绑后在手表端重新认证，不要把旧绑定采样归到新老人 |
 | SOS 发送后没有看到通知 | 事件工单、通知状态、网关和人工值守 | **先核对是否已生成工单**；超时响应不能直接断定未处理，避免重复派单 |
 | 健康值与预期不同 | 来源、语义、采样时间、阈值、设备时钟 | 核对原始记录；勿把历史、缺失或不同设备的采样强行合并 |
@@ -101,6 +101,6 @@ Google 官方 [Maps Embed API](https://developers.google.com/maps/documentation/
 
 ## 5. 提交问题与已知限制
 
-**报告问题时提供：** 应用版本或 Git SHA、操作系统、角色、重现步骤、预期/实际结果、是否复现、数据库是否就绪，以及脱敏后的截图或日志。请勿上传密码、设备密钥、真实健康或位置信息。通过 [GitHub Issues](https://github.com/WatchTestCs/smart-elderly-watch-management/issues) 提交；安全问题使用 [私密安全报告](../.github/SECURITY.md)。
+**报告问题时提供：** 分支或 Git SHA、操作系统、角色、重现步骤、预期/实际结果、是否复现、数据库是否就绪，以及脱敏后的截图或日志。请勿上传密码、设备密钥、真实健康或位置信息。通过 [GitHub Issues](https://github.com/qiyuhuating/yihe-health/issues) 提交；安全问题使用 [私密安全报告](../.github/SECURITY.md)。
 
-**当前验收边界：** CI 的编译和无界面启动检查不等于真实手表、短信网关、Windows 10 实机、缺失 WebView2 时的联网补装、生产库迁移或长期 SOS 送达测试。完整上线前需要机构独立验收。发布门禁状态见 [发行治理](reliability/release-governance.md)。
+**当前验收边界：** CI 的编译和无界面启动检查不等于真实手表、短信网关、Windows 10 实机、缺失 WebView2 时的联网补装、生产库迁移或长期 SOS 送达测试。完整上线前需要机构独立验收。门禁状态见 [仓库保护规则](reliability/release-governance.md)。

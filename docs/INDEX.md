@@ -6,7 +6,7 @@
 
 | 目的 | 文档 |
 | --- | --- |
-| 下载 Windows 安装版、免安装 ZIP、源码 ZIP | [正式 2.1.0 发行说明](releases/2.1.0.md) · [GitHub 最新发布](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest) |
+| 从源码构建桌面客户端与服务端 | [构建指南](BUILD.md) |
 | 首次创建管理员、绑定手表、查看健康数据和告警 | [使用指南](USER_GUIDE.md) |
 | 无法启动、无法登录、设备未上报、如何反馈 | [支持与排查](SUPPORT.md) |
 | 无障碍设计与反馈范围 | [无障碍说明](ACCESSIBILITY.md) |
@@ -33,14 +33,13 @@
 | 如何提交 PR、合规和行为规范 | [贡献指南](CONTRIBUTING.md) · [行为准则](CODE_OF_CONDUCT.md) |
 | 安全漏洞的私密报告入口 | [安全政策](../.github/SECURITY.md) |
 
-## 仓库维护与发布
+## 仓库维护与治理
 
 | 目的 | 文档 |
 | --- | --- |
-| 查询版本变更 | [Changelog](CHANGELOG.md) · [发行资产](https://github.com/WatchTestCs/smart-elderly-watch-management/releases) |
-| 理解 `main`、`preview` 和过时分支清理准则 | [分支生命周期](reliability/branch-lifecycle.md) |
+| 理解分支保护和过时分支清理准则 | [分支生命周期](reliability/branch-lifecycle.md) |
 | PR 文档快速通道与源码必需检查 | [分级验收](reliability/pr-verification.md) |
-| 发布规则、CodeQL、发布证据与例外 | [仓库发布保护](reliability/release-governance.md) |
-| 正式版候选的 SHA 检查与晋升 | [main 晋升手册](reliability/main-promotion.md) |
+| 分支保护、CodeQL、构建门禁与例外 | [仓库保护规则](reliability/release-governance.md) |
+| 候选提交的 SHA 检查与晋升 | [main 晋升手册](reliability/main-promotion.md) |
 
 旧架构的 PostgreSQL/S3 说明及历史 PR 证据保留在对应源码标签和必要的可靠性记录中，不能将其当成当前部署指南。任何 CI 绿色状态、模拟器成功或自动检查都不代表已完成真实手表、短信网关和生产迁移验收。

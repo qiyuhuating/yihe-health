@@ -14,7 +14,7 @@
 
 ## systemd 部署示例
 
-发行源码包含 `deploy/yihe-care.service`，修改路径、建专用最小权限账号后：
+仓库包含 `deploy/yihe-care.service`，修改路径、建专用最小权限账号后：
 
 ```sh
 sudo install -d -m 700 -o yihe -g yihe /var/lib/yihe

@@ -5,9 +5,9 @@ title: "[Docs]: "
 labels: ["documentation"]
 ---
 
-### 文档地址与版本 / Page and version
+### 文档地址与提交 / Page and revision
 
-请提供页面链接、文件路径，以及阅读时对应的分支、版本或提交 SHA。
+请提供页面链接、文件路径，以及阅读时对应的分支或提交 SHA。
 
 ### 实际问题 / What is incorrect
 
@@ -21,4 +21,4 @@ labels: ["documentation"]
 
 如与安装或运行有关，请填写操作系统、客户端/后端版本、MySQL 版本以及脱敏后的错误信息。
 
-安全漏洞与隐私泄露请勿在这里公开提交，参见 [私密安全报告指引](https://github.com/WatchTestCs/smart-elderly-watch-management/blob/main/.github/SECURITY.md)。
+安全漏洞与隐私泄露请勿在这里公开提交，参见 [私密安全报告指引](https://github.com/qiyuhuating/yihe-health/blob/main/.github/SECURITY.md)。

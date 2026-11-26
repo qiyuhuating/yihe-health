@@ -1,4 +1,4 @@
-# 颐和 Go 后端 · 2.1.0
+# 颐和 Go 后端
 
 Go 服务端负责业务 API、设备鉴权与遥测、会话/权限、照护任务、通知作业及加密图片，使用 MySQL 8.4 作为唯一持久化业务数据库。Windows 桌面端由 Tauri 托管 Go 进程；全天候手表上报需要独立常驻的 Go 服务。
 
@@ -59,7 +59,7 @@ go run ./cmd/server
 
 默认情况下，`healthBatch` 遵循 `device 行锁 -> health_owner_clock 行锁 -> 样本与历史事务提交` 的加锁顺序，确保单设备高频并发上报与告警规则判定时的数据一致性。
 
-当启用 `HEALTH_LATE_DEVICE_LOCK=1` 时，加锁顺序反转会变为 `health_owner_clock -> device`。为避免死锁，切勿让新旧两种加锁顺序的实例同时运行，切换前必须先停机排空所有应用实例。相关压测数据见 [MySQL 8.4 行锁隔离实验记录](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/runs/397637821)。
+当启用 `HEALTH_LATE_DEVICE_LOCK=1` 时，加锁顺序反转会变为 `health_owner_clock -> device`。为避免死锁，切勿让新旧两种加锁顺序的实例同时运行，切换前必须先停机排空所有应用实例。
 
 ## Go 运行时内存与容器 CPU 调度
 

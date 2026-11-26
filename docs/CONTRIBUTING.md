@@ -8,9 +8,9 @@ We welcome pull requests that improve documentation, translations, accessibility
 
 ## Target branch / 目标分支
 
-Base your work on `preview` and open pull requests against `preview`. The `main` branch is the stable channel and receives only validated promotions from `preview`; ordinary feature, refactor, dependency, and documentation PRs do not target `main`. Release tags and binary attachments are managed separately by maintainers during formal releases.
+Base your work on `main` and open pull requests against `main`.
 
-日常开发与维护均在 `preview` 分支进行，提交 PR 时请将目标分支选为 `preview`。`main` 是稳定通道，只接收已经完成候选验证的 `preview` 提升，不直接承接日常功能、重构、依赖升级或文档 PR。
+日常开发与维护均以 `main` 为目标分支，提交 PR 时请将目标分支选为 `main`。
 
 Merged head branches are deleted automatically when possible. Keep active PR branches until their changes are integrated or explicitly superseded; see [branch lifecycle](reliability/branch-lifecycle.md). Planned upgrades across Node.js, TypeScript or Vue Router major versions require explicit compatibility checks rather than unreviewed automatic major-version PRs.
 

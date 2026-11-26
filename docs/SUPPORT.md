@@ -2,7 +2,7 @@
 
 首次使用步骤、各角色功能及可逐项核对的故障解决清单见[颐和使用指南](USER_GUIDE.md)。
 
-项目通过 [GitHub Issues](https://github.com/WatchTestCs/smart-elderly-watch-management/issues) 接收缺陷报告、功能建议与[无障碍问题](../.github/ISSUE_TEMPLATE/accessibility_barrier.yml)，可使用中文或英文。维护者按实际时间处理，不提供响应时限或生产可用性保证。
+项目通过 [GitHub Issues](https://github.com/qiyuhuating/yihe-health/issues) 接收缺陷报告、功能建议与[无障碍问题](../.github/ISSUE_TEMPLATE/accessibility_barrier.yml)，可使用中文或英文。维护者按实际时间处理，不提供响应时限或生产可用性保证。
 
 安全漏洞请按照 [安全政策](../.github/SECURITY.md) 私下报告。公开 Issue 不要包含真实长者资料、健康数据、位置记录、数据库文件、密码、设备密钥或私钥。日志和截图先脱敏。
 
@@ -10,13 +10,13 @@
 
 | 情况 | 检查 |
 | --- | --- |
-| 数据库未连接 | 检查 MySQL DSN、服务状态和迁移结果。当前稳定版和 `preview` 均不依赖 PostgreSQL 生产分析投影。 |
+| 数据库未连接 | 检查 MySQL DSN、服务状态和迁移结果。当前版本不依赖 PostgreSQL 生产分析投影。 |
 | 无法登录或初始化 | 系统没有默认管理员密码。首次初始化需要可用的业务数据库及桌面初始化入口。 |
-| 免安装版无法启动 | 完整解压 ZIP，保留主程序和 Go sidecar，并确认已安装 WebView2。 |
+| 免安装版无法启动 | 完整保留主程序和 Go sidecar，并确认已安装 WebView2。 |
 | 升级后找不到旧数据 | 旧 PostgreSQL 业务数据需要离线导入空 MySQL；上传图片须另行迁移。安装程序不会自动转换数据库。 |
-| 显示未知发布者 | 当前 Windows 正式安装包尚未使用受信任证书签名。下载后核对发布页的 SHA-256。 |
+| 显示未知发布者 | 当前 Windows 本地构建尚未使用受信任证书签名。 |
 
-下载、安装和配置见 [项目 README](../README.md)。设备重新绑定后，旧绑定版本的健康记录不能以新绑定身份补传。
+构建和配置见 [项目 README](../README.md)。设备重新绑定后，旧绑定版本的健康记录不能以新绑定身份补传。
 
 ## 缺陷报告
 
@@ -58,4 +58,4 @@ MySQL 是否就绪：
 对已有数据 / 会话的影响：
 ```
 
-代码贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)，当前版本的发布记录见 [CHANGELOG.md](CHANGELOG.md)。
+代码贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。

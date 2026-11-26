@@ -1,5 +1,3 @@
-> **Stable release 2.1.0**: MySQL 8.4 is the sole application datastore. [Get the latest release](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest). `preview` is the development branch; `main` tracks stable releases.
-
 <p align="center">
   <img src="frontend/public/static/brand/yihe-logo-192.webp" width="88" height="88" alt="Yihe · Elderly Care Management">
 </p>
@@ -12,24 +10,24 @@
   <a href="README.md">简体中文</a> · <a href="README.en.md">English</a>
 </p>
 
-[![Preview CI](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml?query=branch%3Apreview)
-[![CodeQL](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml?query=branch%3Apreview)
-[![Release](https://img.shields.io/github/v/release/WatchTestCs/smart-elderly-watch-management?label=Release)](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest)
-[![License](https://img.shields.io/github/license/WatchTestCs/smart-elderly-watch-management)](LICENSE)
-[![Open issues](https://img.shields.io/github/issues/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/pulls)
-[![Accessibility](https://img.shields.io/badge/Accessibility-report%20a%20barrier-blue)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new?template=accessibility_barrier.yml)
+[![CI](https://github.com/qiyuhuating/yihe-health/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/qiyuhuating/yihe-health/actions/workflows/ci.yml?query=branch%3Amain)
+[![CodeQL](https://github.com/qiyuhuating/yihe-health/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/qiyuhuating/yihe-health/actions/workflows/security.yml?query=branch%3Amain)
+[![License](https://img.shields.io/github/license/qiyuhuating/yihe-health)](LICENSE)
+[![Open issues](https://img.shields.io/github/issues/qiyuhuating/yihe-health)](https://github.com/qiyuhuating/yihe-health/issues)
+[![Open PRs](https://img.shields.io/github/issues-pr/qiyuhuating/yihe-health)](https://github.com/qiyuhuating/yihe-health/pulls)
+[![Accessibility](https://img.shields.io/badge/Accessibility-report%20a%20barrier-blue)](https://github.com/qiyuhuating/yihe-health/issues/new?template=accessibility_barrier.yml)
 
-Community: [Report a bug or request a feature](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) · [Contribute](docs/CONTRIBUTING.md) · [Accessibility feedback](docs/ACCESSIBILITY.md) · [Private security reporting](.github/SECURITY.md) · [Code of conduct](docs/CODE_OF_CONDUCT.md)
+Community: [Report a bug or request a feature](https://github.com/qiyuhuating/yihe-health/issues/new/choose) · [Contribute](docs/CONTRIBUTING.md) · [Accessibility feedback](docs/ACCESSIBILITY.md) · [Private security reporting](.github/SECURITY.md) · [Code of conduct](docs/CODE_OF_CONDUCT.md)
 
+[Capabilities](#capabilities) · [First-time setup](#first-time-setup) · [Architecture](#architecture) · [Development](#development) · [Troubleshooting](#troubleshooting) · [Documentation and support](#documentation-and-support)
 
-[Capabilities](#capabilities) · [Downloads](#downloads) · [First-time setup](#first-time-setup) · [Architecture](#architecture) · [Development](#development) · [Troubleshooting](#troubleshooting) · [Documentation and support](#documentation-and-support)
+> **Project status**: This repository is under active development and has no pre-built binary releases yet. Build the desktop client/server from source or start the local Docker Compose stack; **MySQL 8.4** is the sole application datastore.
 
 Yihe combines resident records, wearable readings, location alerts, and care tasks for care organizations and authorized family members. This repository includes the Windows desktop client, a separately deployable Go server, browser interface, HarmonyOS watch app, and Rust protocol simulator.
 
 ![Yihe care workspace with sample data](docs/screenshots/overview-desktop.png)
 
-*The screenshot uses test data. Available capabilities depend on the deployed version, devices, and connected services.*
+*The screenshot uses test data. Available capabilities depend on the deployed environment, devices, and connected services.*
 
 ## Capabilities
 
@@ -46,24 +44,9 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 
 **Operational limits:** missing readings are not evidence of normal health. A notification gateway accepting a request does not prove message delivery or that staff responded. Unattended SOS handling needs an independent, always-on service, reliable notification channels, and staffed procedures.
 
-## Downloads
-
-Latest stable release: **2.1.0 · Windows x64**, published on [GitHub Releases](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest).
-
-| Download | Intended use | How to start |
-| --- | --- | --- |
-| [Windows installer](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Setup-2.1.0-win-x64.exe) | General desktop use | Run Setup and launch Yihe after installation |
-| [Portable ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Portable-2.1.0-win-x64.zip) | Desktop without an installer | Extract the entire ZIP, then run `yihe.exe`; keep the companion server EXE |
-| [Source ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Source-2.1.0.zip) | Developers and auditors | Exact release sources, deployment tooling, and database migrations |
-| [Standalone Go server for Windows](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Native-NoFonts-2.1.0-win-x64.exe) | Server operators | No desktop UI; database and network must be configured separately |
-
-[Release notes](docs/releases/2.1.0.md) · [SHA-256 checksums](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/SHA256SUMS.txt) · [Build and verification manifest](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/release-manifest.json)
-
-**MySQL is not bundled** with the application. The Windows client requires WebView2; the installer handles prerequisites according to its build configuration, while Portable requires an existing WebView2 runtime. Windows binaries are not signed with a publicly trusted code-signing certificate.
-
 ## First-time setup
 
-### Windows desktop
+### Windows desktop (built from source)
 
 1. Provision **MySQL 8.4** and a dedicated application account. Production environments also need database backups, access controls, and TLS where appropriate. The connection uses a Go MySQL DSN such as `yihe:password@tcp(127.0.0.1:3306)/yihe?parseTime=true`; use your actual host and port.
 2. For a new installation, generate a random 32-byte encryption key and **store it securely**. The following PowerShell 7 command produces its Base64 representation. Reuse the existing key for upgrades; regenerating it can make previously encrypted data unreadable.
@@ -72,7 +55,7 @@ Latest stable release: **2.1.0 · Windows x64**, published on [GitHub Releases](
    [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
    ```
 
-3. Provide the database DSN and saved key in the desktop launch environment. This interactive example avoids hardcoding real credentials into the repository.
+3. After [building from source](#development), provide the database DSN and saved key in the desktop launch environment (the Windows client requires WebView2). This interactive example avoids hardcoding real credentials into the repository.
 
    ```powershell
    $env:YIHE_MYSQL_DSN = Read-Host 'MySQL DSN' -MaskInput
@@ -83,7 +66,7 @@ Latest stable release: **2.1.0 · Windows x64**, published on [GitHub Releases](
 
 4. Once migrations complete, follow the initial setup screen to create an administrator, then add residents and bind watches. **There is no default admin account or shared password.**
 
-The interface may open when MySQL is unreachable, but login and data writes require a ready database. Backups must include stored image/health data, BLOB columns, and recoverable encryption keys. Migrating from an earlier PostgreSQL/S3 deployment requires stopping writers, backing up, and following the [MySQL-only migration guide](docs/MYSQL_ONLY_MIGRATION.md); the installer does not migrate data for you.
+The interface may open when MySQL is unreachable, but login and data writes require a ready database. Backups must include stored image/health data, BLOB columns, and recoverable encryption keys. Migrating from an earlier PostgreSQL/S3 deployment requires stopping writers, backing up, and following the [MySQL-only migration guide](docs/MYSQL_ONLY_MIGRATION.md); the application does not migrate data automatically.
 
 Set `MYSQL_STATISTICS_MAX_CONNS` (0–64, default 0) to enable a dedicated health statistics pool on the same MySQL primary. Budget 20 business connections, one liveness connection, and the configured statistics connections per instance.
 
@@ -121,16 +104,16 @@ MySQL 8.4 is the **only production application database** for resident data, ses
 
 ## Development
 
-Everyday contributions target `preview`; `main` tracks stable releases. Building the current Windows desktop requires **PowerShell 7, Node.js 24.x, Go 1.27.4, and Rust 1.99.1 or newer**, plus MSVC C++ Build Tools and the Windows SDK. See [Windows build setup](docs/BUILD.md).
+The active default branch is `main`. Building the Windows desktop requires **PowerShell 7, Node.js (`^20.19.0 || >=22.12.0`), Go 1.27.4, and Rust 1.100.0 or newer**, plus MSVC C++ Build Tools and the Windows SDK. See [Windows build setup](docs/BUILD.md).
 
 ```powershell
-git clone --branch preview https://github.com/WatchTestCs/smart-elderly-watch-management.git
-Set-Location smart-elderly-watch-management
+git clone https://github.com/qiyuhuating/yihe-health.git
+Set-Location yihe-health
 ./desktop/validate-version.ps1
 ./desktop/build.ps1
 ```
 
-Main directories: `frontend/` (Vue UI), `backend/` (Go API and MySQL migrations), `desktop/` (Tauri client and packaging), `YiheWatch/` (HarmonyOS wearable), `watch-sim/` (Rust simulator), and `deploy/` (containers and monitoring).
+Main directories: `frontend/` (Vue UI), `backend/` (Go API and MySQL migrations), `desktop/` (Tauri client and packaging), `YiheWatch/` (HarmonyOS wearable), `watch-sim/` (Rust simulator), `yihe-core/` (Rust statistics accelerator), and `deploy/` (containers and monitoring).
 
 Useful change-scoped checks:
 
@@ -155,12 +138,12 @@ Database integration and race tests need a **disposable test database** configur
 | Symptom | What to check |
 | --- | --- |
 | Window opens, but login or saving fails | MySQL connectivity, DSN, migration state, and `DATA_ENCRYPTION_KEY`; `/healthz` alone does not prove database readiness |
-| Portable application will not launch | Extract the whole ZIP, keep `yihe.exe` and `yihe-server.exe` together, and check WebView2 |
+| Portable application will not launch | Keep `yihe.exe` and `yihe-server.exe` together, and verify WebView2 is installed |
 | A watch cannot connect | The desktop server only listens on loopback; connect external devices to a separately deployed Go API |
 | Legacy deployment settings fail | PostgreSQL analytics and S3 are no longer runtime dependencies; follow the migration guide without discarding old data |
 | Need to recover data | Back up MySQL, encryption keys, and deployment configuration; test recovery in an isolated environment |
 
-The `preview` development branch supports bounded offline encryption backfills through `go run ./cmd/yihe-ctl protect <target> --limit 100`. For care notes, use `go run ./cmd/protect-notes --limit 100`. Both default to a read-only preview; stop all writers and verify your backup before adding `--apply`. See the [backend operations guide](backend/README.md).
+The backend supports bounded offline encryption backfills through `go run ./cmd/yihe-ctl protect <target> --limit 100`. For care notes, use `go run ./cmd/protect-notes --limit 100`. Both default to a read-only preview; stop all writers and verify your backup before adding `--apply`. See the [backend operations guide](backend/README.md).
 
 ## Documentation and support
 
@@ -171,8 +154,8 @@ The [documentation index](docs/INDEX.md) groups setup, development, operations a
 | Deployment, migration, backup | [MySQL migration](docs/MYSQL_ONLY_MIGRATION.md) · [Backup/restore](docs/runbooks/backup-restore.md) |
 | Architecture and APIs | [Implementation guide](docs/ARCHITECTURE.md) · [API contracts](docs/API_CONTRACTS.md) |
 | Watches and simulation | [Watch integration](docs/WATCH_INTEGRATION.md) · [Rust simulator](watch-sim/README.md) |
-| Help and contributions | [Support](docs/SUPPORT.md) · [Contributing](docs/CONTRIBUTING.md) · [Issue templates](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) |
+| Help and contributions | [Support](docs/SUPPORT.md) · [Contributing](docs/CONTRIBUTING.md) · [Issue templates](https://github.com/qiyuhuating/yihe-health/issues/new/choose) |
 
-When reporting a bug, include the **version or commit SHA, reproduction steps, OS, deployment mode, and redacted logs**. Never publish resident health records, locations, passwords, or device keys. Use [private security reporting](.github/SECURITY.md) for vulnerabilities.
+When reporting a bug, include the **branch or commit SHA, reproduction steps, OS, deployment mode, and redacted logs**. Never publish resident health records, locations, passwords, or device keys. Use [private security reporting](.github/SECURITY.md) for vulnerabilities.
 
-Code is licensed under [MIT](LICENSE); bundled fonts, maps, and third-party dependencies retain their own licensing terms. The historical preview release is archived as [`v2.0.7`](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/tag/v2.0.7), although its original binaries still identify themselves as 2.1.0. For current use, download the **official 2.1.0 release** above.
+Code is licensed under [MIT](LICENSE); bundled fonts, maps, and third-party dependencies retain their own licensing terms.

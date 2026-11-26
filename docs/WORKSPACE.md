@@ -1,6 +1,6 @@
-# 工作区与职责边界（preview）
+# 工作区与职责边界
 
-本仓库当前使用 Tauri 2 / Rust、Go、Vue 3 和 MySQL 8.4。`preview` 的唯一持久化业务数据库是 **MySQL**。PostgreSQL/S3 仅是历史版本迁移来源，不是运行时依赖。
+本仓库当前使用 Tauri 2 / Rust、Go、Vue 3 和 MySQL 8.4。当前唯一持久化业务数据库是 **MySQL**。PostgreSQL/S3 仅是历史版本迁移来源，不是运行时依赖。
 
 | 目录 | 责任范围 | 关键入口 |
 | --- | --- | --- |

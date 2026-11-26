@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        请先检索现有 Issue，并核对实际运行的版本。
+        请先检索现有 Issue，并核对实际运行的分支或提交。
         **不要上传真实长者或家属健康数据、位置信息、密码、密钥和数据库文件。**
         可被利用的安全漏洞请按 SECURITY.md 私密报告，而不是公开提交。
   - type: dropdown
@@ -26,8 +26,8 @@ body:
   - type: input
     id: revision
     attributes:
-      label: 分支、版本或提交 SHA
-      placeholder: "preview / v2.1.0 / commit SHA"
+      label: 分支或提交 SHA
+      placeholder: "main / commit SHA"
       description: 优先填写实际复现所用的提交 SHA，不必假设问题只存在于最新版。
     validations:
       required: true

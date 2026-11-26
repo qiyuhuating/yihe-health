@@ -1,5 +1,3 @@
-> **正式版 2.1.0**：业务数据使用 MySQL 8.4 单库；[下载最新版](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest)。开发分支为 `preview`，稳定版为 `main`。
-
 <p align="center">
   <img src="frontend/public/static/brand/yihe-logo-192.webp" width="88" height="88" alt="颐和·智慧养老">
 </p>
@@ -12,24 +10,24 @@
   <a href="README.md">简体中文</a> · <a href="README.en.md">English</a>
 </p>
 
-[![Preview CI](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/ci.yml?query=branch%3Apreview)
-[![CodeQL](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml/badge.svg?branch=preview)](https://github.com/WatchTestCs/smart-elderly-watch-management/actions/workflows/security.yml?query=branch%3Apreview)
-[![Release](https://img.shields.io/github/v/release/WatchTestCs/smart-elderly-watch-management?label=Release)](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest)
-[![License](https://img.shields.io/github/license/WatchTestCs/smart-elderly-watch-management)](LICENSE)
-[![Open issues](https://img.shields.io/github/issues/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/WatchTestCs/smart-elderly-watch-management)](https://github.com/WatchTestCs/smart-elderly-watch-management/pulls)
-[![Accessibility](https://img.shields.io/badge/Accessibility-report%20a%20barrier-blue)](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new?template=accessibility_barrier.yml)
+[![CI](https://github.com/qiyuhuating/yihe-health/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/qiyuhuating/yihe-health/actions/workflows/ci.yml?query=branch%3Amain)
+[![CodeQL](https://github.com/qiyuhuating/yihe-health/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/qiyuhuating/yihe-health/actions/workflows/security.yml?query=branch%3Amain)
+[![License](https://img.shields.io/github/license/qiyuhuating/yihe-health)](LICENSE)
+[![Open issues](https://img.shields.io/github/issues/qiyuhuating/yihe-health)](https://github.com/qiyuhuating/yihe-health/issues)
+[![Open PRs](https://img.shields.io/github/issues-pr/qiyuhuating/yihe-health)](https://github.com/qiyuhuating/yihe-health/pulls)
+[![Accessibility](https://img.shields.io/badge/Accessibility-report%20a%20barrier-blue)](https://github.com/qiyuhuating/yihe-health/issues/new?template=accessibility_barrier.yml)
 
-社区入口：[反馈缺陷或建议](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) · [参与贡献](docs/CONTRIBUTING.md) · [无障碍反馈](docs/ACCESSIBILITY.md) · [私密安全报告](.github/SECURITY.md) · [行为准则](docs/CODE_OF_CONDUCT.md)
+社区入口：[反馈缺陷或建议](https://github.com/qiyuhuating/yihe-health/issues/new/choose) · [参与贡献](docs/CONTRIBUTING.md) · [无障碍反馈](docs/ACCESSIBILITY.md) · [私密安全报告](.github/SECURITY.md) · [行为准则](docs/CODE_OF_CONDUCT.md)
 
+[功能与使用场景](#功能与使用场景) · [首次启动](#首次启动) · [系统架构](#系统架构) · [开发与构建](#开发与构建) · [常见问题](#常见问题) · [文档与反馈](#文档与反馈)
 
-[功能与使用场景](#功能与使用场景) · [下载安装](#下载安装) · [首次启动](#首次启动) · [系统架构](#系统架构) · [开发与构建](#开发与构建) · [常见问题](#常见问题) · [文档与反馈](#文档与反馈)
+> **项目状态**：当前仓库处于持续开发阶段，暂未发布预编译发行包。请通过源码构建桌面端/服务端，或使用本地 Compose 启动完整服务栈；业务数据统一使用 **MySQL 8.4** 单库存储。
 
 颐和将长者档案、手表数据、位置告警和照护任务集中在同一工作台，供照护机构及已关联的家属使用。仓库同时包含 Windows 桌面端、可独立部署的 Go 服务、浏览器界面、HarmonyOS 手表端及 Rust 协议模拟器。
 
 ![使用测试数据的颐和管理工作台](docs/screenshots/overview-desktop.png)
 
-*界面示例使用测试数据；具体功能取决于所部署版本、设备和服务配置。*
+*界面示例使用测试数据；具体功能取决于所部署环境、设备和服务配置。*
 
 ## 功能与使用场景
 
@@ -46,24 +44,9 @@
 
 **使用边界：** 未上报不代表健康状态正常；网关接受通知也不代表家属已收到或照护人员已到场。真实 SOS 值守必须配置独立常驻服务、可靠通知渠道和人工响应机制，不能只依赖桌面窗口。
 
-## 下载安装
-
-最新正式版：**2.1.0 · Windows x64**。从 [GitHub Releases](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/latest) 获取发行包。
-
-| 下载 | 适合谁 | 使用方式 |
-| --- | --- | --- |
-| [Windows Setup 安装包](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Setup-2.1.0-win-x64.exe) | 日常使用者 | 运行安装程序，完成安装后启动颐和 |
-| [Portable 免安装 ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Portable-2.1.0-win-x64.zip) | 不希望安装客户端的用户 | 完整解压后运行 `yihe.exe`，不要单独复制 EXE |
-| [完整源码 ZIP](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Source-2.1.0.zip) | 开发及审计人员 | 对应正式发布提交，包含部署和迁移脚本 |
-| [独立 Go 服务端 EXE](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/Yihe-Native-NoFonts-2.1.0-win-x64.exe) | 服务端部署人员 | 无桌面界面，需自行配置数据库和网络 |
-
-[正式版更新说明](docs/releases/2.1.0.md) · [SHA-256 校验清单](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/SHA256SUMS.txt) · [实际构建与验收清单](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/download/v2.1.0%2B20261122/release-manifest.json)
-
-安装包**不附带 MySQL**。Windows 客户端需要 WebView2；安装版会按构建配置处理所需运行组件，Portable 需系统已经安装 WebView2。当前 Windows 发行文件未使用公开受信任的代码签名证书。
-
 ## 首次启动
 
-### Windows 桌面端
+### Windows 桌面端（源码构建后运行）
 
 1. 准备 **MySQL 8.4** 数据库及专用账号，授予应用所需权限。生产部署还需设置备份、TLS 和访问限制。数据库连接信息采用 Go MySQL DSN 格式，例如 `yihe:密码@tcp(127.0.0.1:3306)/yihe?parseTime=true`；实际端口按部署环境调整。
 2. 首次部署时生成并**安全保存**随机 32 字节数据加密密钥。可以在 PowerShell 7 中生成 Base64 值，保存到受控密钥存储；升级时必须使用原有密钥，不能每次重新生成。
@@ -72,7 +55,7 @@
    [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
    ```
 
-3. 将数据库连接和保存的密钥配置到桌面启动环境，再运行程序。以下命令会交互式读取配置，不需要将真实密码写入仓库。
+3. 完成[源码构建](#开发与构建)后，将数据库连接和保存的密钥配置到桌面启动环境，再运行生成的客户端程序（Windows 桌面端依赖系统 WebView2 运行环境）。以下命令会交互式读取配置，不需要将真实密码写入仓库。
 
    ```powershell
    $env:YIHE_MYSQL_DSN = Read-Host 'MySQL DSN' -MaskInput
@@ -83,7 +66,7 @@
 
 4. 确认数据库迁移完成后，按初始化界面创建管理员，再建立长者档案与设备绑定。**没有预置管理员账号或通用密码。**
 
-数据库连接失败时仍可能打开界面，但登录和业务写入不可用。图片及健康相关数据存储在 MySQL 中，备份必须包含 BLOB 和用于解密的密钥。旧 PostgreSQL/S3 部署的迁移必须停写、备份并按 [MySQL 单库迁移手册](docs/MYSQL_ONLY_MIGRATION.md) 操作，安装程序不会自动迁移旧数据。
+数据库连接失败时仍可能打开界面，但登录和业务写入不可用。图片及健康相关数据存储在 MySQL 中，备份必须包含 BLOB 和用于解密的密钥。旧 PostgreSQL/S3 部署的迁移必须停写、备份并按 [MySQL 单库迁移手册](docs/MYSQL_ONLY_MIGRATION.md) 操作，系统不会自动迁移旧数据。
 
 可选设置 `MYSQL_STATISTICS_MAX_CONNS`（0–64，默认 0）为健康统计启用同一 MySQL 主库的独立连接池，避免统计事务耗尽原有业务连接。部署时须按每个实例的 20 个业务连接、1 个探活连接及配置的统计连接预算核算 MySQL 总连接数。
 
@@ -123,16 +106,16 @@ MySQL 8.4 是**唯一生产业务数据库**，保存档案、会话、告警、
 
 ## 开发与构建
 
-日常开发以 `preview` 为目标分支，`main` 对应稳定发布。完整构建要求：**PowerShell 7、Node.js 24.x、Go 1.27.4、Rust（至少 1.99.1）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
+当前主分支为 `main`。完整构建要求：**PowerShell 7、Node.js（`^20.19.0 || >=22.12.0`）、Go 1.27.4、Rust（最低 1.100.0）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
 
 ```powershell
-git clone --branch preview https://github.com/WatchTestCs/smart-elderly-watch-management.git
-Set-Location smart-elderly-watch-management
+git clone https://github.com/qiyuhuating/yihe-health.git
+Set-Location yihe-health
 ./desktop/validate-version.ps1
 ./desktop/build.ps1
 ```
 
-主要目录：`frontend/`（Vue 前端）、`backend/`（Go API 与 MySQL 迁移）、`desktop/`（Tauri 桌面及打包）、`YiheWatch/`（HarmonyOS 手表端）、`watch-sim/`（Rust 模拟器）、`deploy/`（容器、网关与监控）。
+主要目录：`frontend/`（Vue 前端）、`backend/`（Go API 与 MySQL 迁移）、`desktop/`（Tauri 桌面及打包）、`YiheWatch/`（HarmonyOS 手表端）、`watch-sim/`（Rust 模拟器）、`yihe-core/`（Rust 统计加速内核）、`deploy/`（容器、网关与监控）。
 
 常用的变更相关验证：
 
@@ -157,12 +140,12 @@ Pop-Location
 | 现象 | 排查 |
 | --- | --- |
 | 窗口能打开，但无法登录或保存 | 检查 MySQL 服务、DSN、迁移状态以及 `DATA_ENCRYPTION_KEY`。`/healthz` 成功不代表数据库就绪 |
-| Portable 无法运行 | 完整解压 ZIP，确认 `yihe.exe` 与 `yihe-server.exe` 在同一目录，并检查 WebView2 |
+| 便携版程序无法运行 | 确认 `yihe.exe` 与 `yihe-server.exe` 在同一目录，并检查系统是否已安装 WebView2 |
 | 手表无法连接 | 桌面本地服务只监听回环地址；外部设备应连接独立部署的 Go API，而不是桌面随机端口 |
-| 旧版本升级后配置报错 | 不再支持 PostgreSQL 分析库和 S3 作为运行时依赖；按迁移手册清理旧配置，勿直接删除原数据 |
+| 旧部署配置报错 | 不再支持 PostgreSQL 分析库和 S3 作为运行时依赖；按迁移手册清理旧配置，勿直接删除原数据 |
 | 担心数据丢失 | 单独备份 MySQL 数据、加密密钥与部署配置，并在隔离环境验证恢复 |
 
-`preview` 开发分支支持统一离线回填入口 `go run ./cmd/yihe-ctl protect <target> --limit 100`。转换照护备注请使用 `go run ./cmd/protect-notes --limit 100`，默认只盘点；执行 `--apply` 前必须停写并核验备份。详细命令见 [后端运维说明](backend/README.md)。
+后端支持统一离线回填入口 `go run ./cmd/yihe-ctl protect <target> --limit 100`。转换照护备注请使用 `go run ./cmd/protect-notes --limit 100`，默认只盘点；执行 `--apply` 前必须停写并核验备份。详细命令见 [后端运维说明](backend/README.md)。
 
 ## 文档与反馈
 
@@ -173,8 +156,8 @@ Pop-Location
 | 部署、迁移、备份 | [MySQL 迁移](docs/MYSQL_ONLY_MIGRATION.md) · [备份恢复](docs/runbooks/backup-restore.md) |
 | 理解架构和接口 | [实现架构](docs/ARCHITECTURE.md) · [API 契约](docs/API_CONTRACTS.md) |
 | 接入手表和模拟器 | [手表接入](docs/WATCH_INTEGRATION.md) · [Rust 模拟器](watch-sim/README.md) |
-| 遇到问题与参与开发 | [支持与排查](docs/SUPPORT.md) · [贡献指南](docs/CONTRIBUTING.md) · [Issue 模板](https://github.com/WatchTestCs/smart-elderly-watch-management/issues/new/choose) |
+| 遇到问题与参与开发 | [支持与排查](docs/SUPPORT.md) · [贡献指南](docs/CONTRIBUTING.md) · [Issue 模板](https://github.com/qiyuhuating/yihe-health/issues/new/choose) |
 
-提交问题时请说明**版本或 commit SHA、复现步骤、操作系统、部署方式及脱敏日志**；不要公开健康记录、定位、密码和设备密钥。安全问题请使用 [私密报告方式](.github/SECURITY.md)。
+提交问题时请说明**分支或 commit SHA、复现步骤、操作系统、部署方式及脱敏日志**；不要公开健康记录、定位、密码和设备密钥。安全问题请使用 [私密报告方式](.github/SECURITY.md)。
 
-项目代码采用 [MIT License](LICENSE)。所含字体、地图和第三方依赖适用各自许可证。历史预览发布现归档为 [`v2.0.7`](https://github.com/WatchTestCs/smart-elderly-watch-management/releases/tag/v2.0.7)，其旧附件内部仍显示 2.1.0；请下载上方 **2.1.0 正式版**，不要混用历史包。
+项目代码采用 [MIT License](LICENSE)。所含字体、地图和第三方依赖适用各自许可证。

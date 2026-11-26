@@ -24,9 +24,8 @@
 
 对已经使用的仓库管理员，可按需从 GitHub 查看：
 
-- [分支](https://github.com/WatchTestCs/smart-elderly-watch-management/branches)和[开放 PR](https://github.com/WatchTestCs/smart-elderly-watch-management/pulls)；确认分支没有依赖关系后才删除
-- [规则设置](https://github.com/WatchTestCs/smart-elderly-watch-management/settings/rules)和[Actions](https://github.com/WatchTestCs/smart-elderly-watch-management/actions)；核对生效配置与实际任务状态
-- [版本发布](https://github.com/WatchTestCs/smart-elderly-watch-management/releases)；确认 SHA、安装包、签名状态和校验清单
-- [Dependabot 告警](https://github.com/WatchTestCs/smart-elderly-watch-management/security/dependabot)；不将没有修复或没有证据的中危告警标记为已解决
+- [分支](https://github.com/qiyuhuating/yihe-health/branches)和[开放 PR](https://github.com/qiyuhuating/yihe-health/pulls)；确认分支没有依赖关系后才删除
+- [规则设置](https://github.com/qiyuhuating/yihe-health/settings/rules)和[Actions](https://github.com/qiyuhuating/yihe-health/actions)；核对生效配置与实际任务状态
+- [Dependabot 告警](https://github.com/qiyuhuating/yihe-health/security/dependabot)；不将没有修复或没有证据的中危告警标记为已解决
 
 保护优先级是：不遗失尚未整合的工作、不重写已发布源码、不削弱代码变更安全验证；清理以可核查事实为依据。

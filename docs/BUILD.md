@@ -1,4 +1,4 @@
-# Windows 构建 · 2.1.0
+# Windows 构建
 
 准备 Windows x64、C++ Build Tools（MSVC + Windows SDK）、Rust stable（最低版本 1.100.0，见 `desktop/Cargo.toml`）、Go 1.27.4（与 `backend/go.mod` 和 CI 一致）、Node.js 26.x（LTS）、PowerShell 7。推荐在开发者 PowerShell 环境中构建。前端依赖由 `frontend/package-lock.json` 锁定，Tauri/Rust 依赖由 `desktop/Cargo.lock` 锁定。
 
@@ -11,22 +11,22 @@
 ./desktop/build.ps1 -SelfSign
 ```
 
-按顺序执行前端安装/构建、嵌入静态资源、Go 测试及编译、生成 sidecar 哈希、Tauri 原生编译、NSIS 打包。默认从干净源码构建发布，避免将旧生成资源带入安装包。
+按顺序执行前端安装/构建、嵌入静态资源、Go 测试及编译、生成 sidecar 哈希、Tauri 原生编译、NSIS 打包。默认从干净源码构建，避免将旧生成资源带入安装包。
 
-产物为 `outputs/v2.1.0-stable/Yihe-Setup-2.1.0-win-x64.exe`，附校验和及可选签名记录。当前源码使用 `downloadBootstrapper`、`silent: true`：不附带 WebView2 运行时或引导程序。安装时检测已有组件，缺失时才联网下载微软引导程序并静默补装；下载或补装失败时安装器报错，不把缺少组件的状态当成成功。WebView2 安装为 Windows 共享组件，卸载颐和不会移除它。缺少组件且无法联网时不能完成安装。当前构建默认未签名；脚本支持 `CARGO_TARGET_DIR`。
+安装包产物位于 `outputs/` 对应构建目录，附校验和及可选签名记录。当前源码使用 `downloadBootstrapper`、`silent: true`：不附带 WebView2 运行时或引导程序。安装时检测已有组件，缺失时才联网下载微软引导程序并静默补装；下载或补装失败时安装器报错，不把缺少组件的状态当成成功。WebView2 安装为 Windows 共享组件，卸载颐和不会移除它。缺少组件且无法联网时不能完成安装。当前构建默认未签名；脚本支持 `CARGO_TARGET_DIR`。
 
-数据库服务不需要为纯编译保持运行；需要验证数据库集成测试时，仅使用指向独立实例的 `TEST_MYSQL_DSN`。未配置时相关测试可能跳过，不能将跳过报告为数据库集成验收通过。直接 Go 开发可使用纯 API 模式；桌面发布必须嵌入真实前端。
+数据库服务不需要为纯编译保持运行；需要验证数据库集成测试时，仅使用指向独立实例的 `TEST_MYSQL_DSN`。未配置时相关测试可能跳过，不能将跳过报告为数据库集成验收通过。直接 Go 开发可使用纯 API 模式；桌面打包必须嵌入真实前端。
 
 Tauri 官方参考：[Windows 前置条件](https://v2.tauri.app/start/prerequisites/)、[Windows 安装包](https://v2.tauri.app/distribute/windows-installer/)、[sidecar](https://v2.tauri.app/develop/sidecar/)。
 
-2.1.0 的 `package-release.ps1` 在隔离临时目录检查免安装和安装后启动、内嵌页面、父进程终止清理及卸载保留资料；附件保存在 `outputs/v2.1.0-stable/release`。使用有 WebView2 的 Windows 构建环境。该检查不连接生产数据库，也不代表完整可视验收。
+`package-release.ps1` 可在隔离临时目录检查便携包和安装后启动、内嵌页面、父进程终止清理及卸载保留资料；本地打包产物保存在 `outputs/` 目录下。使用有 WebView2 的 Windows 构建环境。该检查不连接生产数据库，也不代表完整可视验收。
 
 ## 容器构建入口
 
 Dockerfile 位于 `deploy/Dockerfile`，构建上下文仍是仓库根目录，`.dockerignore` 保留在根目录。从仓库根目录执行：
 
 ```sh
-docker build -f deploy/Dockerfile -t yihe:preview .
+docker build -f deploy/Dockerfile -t yihe:local .
 ```
 
 `deploy/platform.compose.yml` 已使用同一 Dockerfile 路径；完整平台配置与密钥准备见项目 README。
