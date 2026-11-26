@@ -42,15 +42,17 @@ textarea {
   font: inherit;
 }
 
-button {
-  transition: background-color var(--care-motion-fast) var(--care-ease),
-    color var(--care-motion-fast) var(--care-ease),
-    border-color var(--care-motion-fast) var(--care-ease),
-    transform var(--care-motion-fast) var(--care-ease);
+button, .el-button {
+  transition: none;
 }
 
-button:not(:disabled):active {
-  transform: translateY(1px);
+html[data-care-input="pointer"] :is(button, .el-button):not(:disabled, .is-disabled, .is-loading, .navigation-toggle, .el-dialog__headerbtn, .el-message-box__headerbtn, .el-input-group__append *) {
+  transition: transform 100ms var(--care-ease);
+}
+
+html[data-care-input="pointer"] :is(button, .el-button):not(:disabled, .is-disabled, .is-loading, .navigation-toggle, .el-dialog__headerbtn, .el-message-box__headerbtn, .el-input-group__append *):active {
+  transform: scale(.97);
+  transition-duration: 160ms;
 }
 
 :focus-visible {

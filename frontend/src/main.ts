@@ -17,6 +17,9 @@ import '@/assets/css/accessibility.css'
 import '@/assets/css/commercial.css'
 
 applyMapPreferences()
+// Keyboard-driven UI must respond immediately; only pointer input opts into motion.
+window.addEventListener('pointerdown', () => { document.documentElement.dataset.careInput = 'pointer' }, { capture: true, passive: true })
+window.addEventListener('keydown', () => { document.documentElement.dataset.careInput = 'keyboard' }, { capture: true })
 const app = createApp(App)
 app.component('database-notice', DatabaseNotice)
 installElement(app)

@@ -20,8 +20,7 @@
 #app .care-app .collection-heading p { margin: 0; color: var(--care-text-muted); font-size: 15px; line-height: 1.85; }
 #app .care-app .collection-eyebrow { margin: 0; color: var(--care-text-muted); font-size: 13px; letter-spacing: .12em; }
 #app .care-app .collection-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-bottom: 22px; }
-#app .care-app .collection-metrics article { display: flex; flex-direction: column; padding: 22px 24px; gap: 8px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); transition: border-color var(--care-motion-fast) var(--care-ease), box-shadow var(--care-motion-fast) var(--care-ease); }
-#app .care-app .collection-metrics article:hover { border-color: var(--care-neutral-border); box-shadow: var(--care-shadow-card); }
+#app .care-app .collection-metrics article { display: flex; flex-direction: column; padding: 22px 24px; gap: 8px; border: 1px solid var(--care-border); border-radius: var(--care-card-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
 #app .care-app .collection-metrics span, #app .care-app .collection-metrics small { color: var(--care-text-muted); font-size: 14px; line-height: 1.8; }
 #app .care-app .collection-metrics strong { color: var(--care-heading); font-size: 36px; line-height: 1.3; font-variant-numeric: tabular-nums; font-weight: 600; }
 #app .care-app .collection-metrics .attention-number { color: var(--care-danger); }

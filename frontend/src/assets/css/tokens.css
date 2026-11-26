@@ -74,7 +74,8 @@
   /* Motion */
   --care-motion-fast: 140ms;
   --care-motion-settle: 200ms;
-  --care-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --care-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --care-motion-popover: 180ms;
 
   /* Focus ring */
   --care-focus-width: 3px;

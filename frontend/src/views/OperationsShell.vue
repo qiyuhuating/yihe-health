@@ -17,7 +17,7 @@
             <h1>{{ route.meta.title }}</h1>
             <p class="view-description">{{ pageDescription }}</p>
           </header>
-          <router-view v-slot="{ Component }"><transition name="care-view" mode="out-in"><ErrorBoundary :key="route.path"><component :is="Component" /></ErrorBoundary></transition></router-view>
+          <router-view v-slot="{ Component }"><ErrorBoundary :key="route.path"><component :is="Component" /></ErrorBoundary></router-view>
         </section>
       </main>
     </div>

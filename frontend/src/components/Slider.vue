@@ -73,7 +73,7 @@ watch(() => route.path, async () => {
 }
 .care-menu :deep(.el-menu) { background: transparent; }
 .care-menu .el-menu-item,
-.care-menu :deep(.el-sub-menu__title) { height: 48px; line-height: 48px; margin: 3px 0; border-radius: 8px; color: var(--care-sidebar-text); font-size: 15px; transition: background-color var(--care-motion-fast) var(--care-ease), color var(--care-motion-fast) var(--care-ease); }
+.care-menu :deep(.el-sub-menu__title) { height: 48px; line-height: 48px; margin: 3px 0; border-radius: 8px; color: var(--care-sidebar-text); font-size: 15px; transition: none; }
 .care-menu .el-menu-item .el-icon,
 .care-menu :deep(.el-sub-menu__title .el-icon),
 .care-menu :deep(.el-sub-menu__icon-arrow) { color: var(--care-sidebar-muted); font-size: 17px; }

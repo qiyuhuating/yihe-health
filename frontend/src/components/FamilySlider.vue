@@ -30,7 +30,7 @@ const route = useRoute()
   border-right: 0;
   background: transparent;
 }
-.care-menu .el-menu-item { position: relative; display: flex; align-items: center; height: 58px; margin: 6px 0; padding: 0 18px !important; border-radius: 9px; color: var(--care-sidebar-text); transition: background-color var(--care-motion-fast) var(--care-ease), color var(--care-motion-fast) var(--care-ease); }
+.care-menu .el-menu-item { position: relative; display: flex; align-items: center; height: 58px; margin: 6px 0; padding: 0 18px !important; border-radius: 9px; color: var(--care-sidebar-text); transition: none; }
 .care-menu .el-menu-item .el-icon { margin-right: 14px; color: var(--care-sidebar-muted); font-size: 22px; }
 .care-menu .el-menu-item:hover,
 .care-menu .el-menu-item:focus { background: var(--care-sidebar-hover); color: #ffffff; }

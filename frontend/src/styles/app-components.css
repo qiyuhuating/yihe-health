@@ -47,39 +47,62 @@ html.large-text #app .care-app .el-button {
   box-shadow: var(--care-shadow-dialog);
 }
 
-/* One short, interruptible response to navigation; no looping or scroll effects. */
-.care-view-enter-active {
-  transition: opacity var(--care-motion-settle) var(--care-ease),
-    transform var(--care-motion-settle) var(--care-ease);
+/* High-frequency navigation and keyboard input do not animate layout. */
+.care-app .el-tabs__active-bar,
+.care-app .el-collapse-transition-enter-active,
+.care-app .el-collapse-transition-leave-active,
+.care-app .el-sub-menu__icon-arrow {
+  transition: none !important;
 }
 
-.care-view-enter-from {
-  opacity: 0;
-  transform: translateY(5px);
-}
-
-.dialog-fade-enter-active {
+.dialog-fade-enter-active,
+.dialog-fade-leave-active,
+.dialog-fade-enter-active .el-overlay-dialog,
+.dialog-fade-leave-active .el-overlay-dialog {
   animation: none !important;
+  transition: none;
+}
+
+html[data-care-input="pointer"] .dialog-fade-enter-active {
   transition: opacity var(--care-motion-settle) var(--care-ease);
 }
 
-.dialog-fade-leave-active {
-  animation: none !important;
+html[data-care-input="pointer"] .dialog-fade-leave-active {
   transition: opacity var(--care-motion-fast) var(--care-ease);
 }
 
-.dialog-fade-enter-from,
-.dialog-fade-leave-to {
+html[data-care-input="pointer"] :is(.dialog-fade-enter-from, .dialog-fade-leave-to) {
   opacity: 0;
 }
 
-.dialog-fade-enter-active .el-dialog {
+html[data-care-input="pointer"] .dialog-fade-enter-active .el-dialog {
+  transform-origin: center;
   transition: transform var(--care-motion-settle) var(--care-ease);
 }
 
-.dialog-fade-enter-from .el-dialog {
-  transform: translateY(8px);
+html[data-care-input="pointer"] .dialog-fade-enter-from .el-dialog {
+  transform: scale(.97);
 }
+
+/* Keep Element Plus positioning; replace its scaleY(0) dropdown entrance. */
+.el-popper:is(.el-zoom-in-top-enter-active, .el-zoom-in-top-leave-active) {
+  transition: none;
+  opacity: 1;
+  transform: none;
+}
+html[data-care-input="pointer"] .el-popper:is(.el-zoom-in-top-enter-active, .el-zoom-in-top-leave-active) {
+  transition: opacity var(--care-motion-popover) var(--care-ease), transform var(--care-motion-popover) var(--care-ease);
+  opacity: 1;
+  transform: scale(1);
+}
+html[data-care-input="pointer"] .el-popper:is(.el-zoom-in-top-enter-from, .el-zoom-in-top-leave-to) {
+  opacity: 0;
+  transform: scale(.97);
+}
+.el-popper[data-popper-placement^="bottom"] { transform-origin: top center; }
+.el-popper[data-popper-placement^="top"] { transform-origin: bottom center; }
+.el-popper[data-popper-placement^="left"] { transform-origin: right center; }
+.el-popper[data-popper-placement^="right"] { transform-origin: left center; }
 
 .el-button.is-loading,
 .el-button.is-disabled {
