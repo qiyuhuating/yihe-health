@@ -79,12 +79,26 @@ func (b *Box) Seal(text, scope string) (string, error) {
 // SealBytes accepts an already encoded payload without a string round trip.
 // The authenticated envelope format and fresh random nonce are unchanged.
 func (b *Box) SealBytes(text []byte, scope string) (string, error) {
+	encoded, err := b.SealEncodedBytes(text, scope)
+	return string(encoded), err
+}
+
+// SealEncodedBytes returns an owned envelope for byte-oriented storage.
+func (b *Box) SealEncodedBytes(text []byte, scope string) ([]byte, error) {
 	if b == nil {
-		return "", errors.New("encryption key is not configured")
+		return nil, errors.New("encryption key is not configured")
 	}
-	nonce := make([]byte, b.aead.NonceSize())
+	n := b.aead.NonceSize()
+	// Bound the fast-path capacity arithmetic. Larger inputs retain the
+	// original AEAD growth behavior instead of imposing a new size limit.
+	var nonce []byte
+	if len(text) <= 16<<20 && n == 12 && b.aead.Overhead() == 16 {
+		nonce = make([]byte, 12, len(text)+28)
+	} else {
+		nonce = make([]byte, n)
+	}
 	if _, err := rand.Read(nonce); err != nil {
-		return "", err
+		return nil, err
 	}
 	prefix := Prefix
 	if b.active != "" {
@@ -92,44 +106,90 @@ func (b *Box) SealBytes(text []byte, scope string) (string, error) {
 		scope += "\x00" + b.active
 	}
 	data := b.aead.Seal(nonce, nonce, text, []byte(scope))
-	return prefix + base64.RawStdEncoding.EncodeToString(data), nil
+	if len(data) > (16<<20)+64 || len(prefix) > 128 {
+		return base64.RawStdEncoding.AppendEncode([]byte(prefix), data), nil
+	}
+	encoded := make([]byte, len(prefix), len(prefix)+base64.RawStdEncoding.EncodedLen(len(data)))
+	copy(encoded, prefix)
+	return base64.RawStdEncoding.AppendEncode(encoded, data), nil
 }
 func (b *Box) Open(text, scope string) (string, error) {
-	if b == nil || !strings.HasPrefix(text, Prefix) {
-		return "", errors.New("encrypted value or key is missing")
+	plain, err := b.OpenBytes(text, scope)
+	return string(plain), err
+}
+
+// OpenBytes authenticates the envelope and returns owned plaintext bytes.
+// Decode into a private buffer and reuse its ciphertext storage for GCM.
+func (b *Box) OpenBytes(text, scope string) ([]byte, error) {
+	return b.OpenBytesReuse(text, scope, nil)
+}
+
+// OpenBytesReuse authenticates as OpenBytes does, but can reuse caller-owned
+// scratch storage. Its result is valid only until the next use of scratch.
+// Scratch must be private to one sequential consumer, never shared or pooled.
+func (b *Box) OpenBytesReuse(text, scope string, scratch *[]byte) ([]byte, error) {
+	return openEncoded(b, text, scope, scratch)
+}
+
+// OpenEncodedBytes authenticates a byte-oriented envelope without copying
+// its encoded contents to a string. The input is never modified.
+func (b *Box) OpenEncodedBytes(text []byte, scope string) ([]byte, error) {
+	return openEncoded(b, text, scope, nil)
+}
+
+func openEncoded[T ~string | ~[]byte](b *Box, text T, scope string, scratch *[]byte) ([]byte, error) {
+	if b == nil || len(text) < len(Prefix) || string(text[:len(Prefix)]) != Prefix {
+		return nil, errors.New("encrypted value or key is missing")
 	}
-	encoded := strings.TrimPrefix(text, Prefix)
+	encoded := text[len(Prefix):]
 	aead := b.aead
-	if strings.HasPrefix(encoded, "v2:") {
-		id, payload, ok := strings.Cut(strings.TrimPrefix(encoded, "v2:"), ":")
-		if !ok || b.readers[id] == nil {
-			return "", errors.New("encrypted value key version is unavailable")
+	if len(encoded) >= 3 && string(encoded[:3]) == "v2:" {
+		// Key IDs are validated to at most 32 ASCII bytes when loading a keyring.
+		end := 3
+		for end < len(encoded) && end <= 35 && encoded[end] != ':' {
+			end++
 		}
-		aead, encoded, scope = b.readers[id], payload, scope+"\x00"+id
+		if end == len(encoded) || end > 35 {
+			return nil, errors.New("encrypted value key version is unavailable")
+		}
+		id := string(encoded[3:end])
+		if b.readers[id] == nil {
+			return nil, errors.New("encrypted value key version is unavailable")
+		}
+		aead, encoded, scope = b.readers[id], encoded[end+1:], scope+"\x00"+id
 	} else if len(b.readers) != 0 {
 		// Legacy envelopes have no key ID. Bounded keyrings can read them
 		// during migration; new writes always identify and authenticate the ID.
 		for _, reader := range b.readers {
-			if plain, err := openEnvelope(reader, encoded, scope); err == nil {
+			if plain, err := openEnvelope(reader, encoded, scope, scratch); err == nil {
 				return plain, nil
 			}
 		}
-		return "", errors.New("legacy encrypted value authentication failed")
+		return nil, errors.New("legacy encrypted value authentication failed")
 	}
-	return openEnvelope(aead, encoded, scope)
+	return openEnvelope(aead, encoded, scope, scratch)
 }
 
-func openEnvelope(aead cipher.AEAD, encoded, scope string) (string, error) {
-	data, err := base64.RawStdEncoding.Strict().DecodeString(encoded)
+func openEnvelope[T ~string | ~[]byte](aead cipher.AEAD, encoded T, scope string, scratch *[]byte) ([]byte, error) {
+	var data []byte
+	var err error
+	if scratch == nil {
+		data = make([]byte, base64.RawStdEncoding.DecodedLen(len(encoded)))
+		n, decodeErr := base64.RawStdEncoding.Strict().Decode(data, []byte(encoded))
+		data, err = data[:n], decodeErr
+	} else {
+		data, err = base64.RawStdEncoding.Strict().AppendDecode((*scratch)[:0], []byte(encoded))
+		*scratch = data[:0]
+	}
 	if err != nil || len(data) < aead.NonceSize() {
-		return "", errors.New("invalid encrypted value")
+		return nil, errors.New("invalid encrypted value")
 	}
 	n := aead.NonceSize()
-	plain, err := aead.Open(nil, data[:n], data[n:], []byte(scope))
+	plain, err := aead.Open(data[n:n], data[:n], data[n:], []byte(scope))
 	if err != nil {
-		return "", errors.New("encrypted value authentication failed")
+		return nil, errors.New("encrypted value authentication failed")
 	}
-	return string(plain), nil
+	return plain[:len(plain):len(plain)], nil
 }
 
 // NewKeyring separates encryption key rotation from deterministic lookup keys.

@@ -3,7 +3,9 @@ package rules
 
 import (
 	"fmt"
+	"maps"
 	"sync"
+	"sync/atomic"
 	"time"
 	_ "time/tzdata"
 )
@@ -45,44 +47,57 @@ func (p Policy) Night(at time.Time) bool {
 	if err != nil {
 		return false
 	}
-	t := at.In(loc)
-	s := t.Hour()*3600 + t.Minute()*60 + t.Second()
+	hour, minute, second := at.In(loc).Clock()
+	s := hour*3600 + minute*60 + second
 	if p.NightBegin < p.NightEnd {
 		return s >= p.NightBegin && s < p.NightEnd
 	}
 	return s >= p.NightBegin || s < p.NightEnd
 }
 
-// Locations are immutable. Bound the cache so policy timezone strings cannot
-// grow process memory; failed lookups are never retained.
-var locations = struct {
-	sync.RWMutex
-	values map[string]*time.Location
+// Locations are immutable. Hot lookups share a read-only bounded snapshot.
+// Cache misses serialize publication only; failed lookups are not retained.
+type locationCache struct {
+	values atomic.Pointer[map[string]*time.Location]
+	mu     sync.Mutex
 	keys   [64]string
 	next   int
-}{values: make(map[string]*time.Location)}
+}
+
+var locations locationCache
 
 func ruleLocation(name string) (*time.Location, error) {
-	locations.RLock()
-	loc := locations.values[name]
-	locations.RUnlock()
-	if loc != nil {
-		return loc, nil
+	return locations.get(name)
+}
+
+func (c *locationCache) get(name string) (*time.Location, error) {
+	if snapshot := c.values.Load(); snapshot != nil {
+		if loc := (*snapshot)[name]; loc != nil {
+			return loc, nil
+		}
 	}
 	loc, err := time.LoadLocation(name)
 	if err != nil {
 		return nil, err
 	}
-	locations.Lock()
-	if cached := locations.values[name]; cached != nil {
-		loc = cached
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var next map[string]*time.Location
+	if snapshot := c.values.Load(); snapshot != nil {
+		if cached := (*snapshot)[name]; cached != nil {
+			return cached, nil
+		}
+		next = maps.Clone(*snapshot)
 	} else {
-		delete(locations.values, locations.keys[locations.next])
-		locations.values[name] = loc
-		locations.keys[locations.next] = name
-		locations.next = (locations.next + 1) % len(locations.keys)
+		next = make(map[string]*time.Location)
 	}
-	locations.Unlock()
+	if len(next) == len(c.keys) {
+		delete(next, c.keys[c.next])
+	}
+	next[name] = loc
+	c.keys[c.next] = name
+	c.next = (c.next + 1) % len(c.keys)
+	c.values.Store(&next)
 	return loc, nil
 }
 

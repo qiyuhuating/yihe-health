@@ -26,7 +26,7 @@ func (d *databaseStore) create(ctx context.Context, sess *Session) bool {
 	if err != nil {
 		return false
 	}
-	sealed, err := d.box.Seal(string(b), "session")
+	sealed, err := d.box.SealBytes(b, "session")
 	if err != nil {
 		return false
 	}
@@ -50,11 +50,11 @@ func (d *databaseStore) get(ctx context.Context, id string) *Session {
 		return nil
 	}
 	decodeStart := time.Now()
-	plain, err := d.box.Open(sealed, "session")
+	plain, err := d.box.OpenBytes(sealed, "session")
 	var sess Session
 	decodeErr := err
 	if decodeErr == nil {
-		decodeErr = json.Unmarshal([]byte(plain), &sess)
+		decodeErr = json.Unmarshal(plain, &sess)
 	}
 	observability.Default.Add("yihe_session_decode_seconds_total", time.Since(decodeStart).Seconds())
 	if decodeErr != nil || sess.ID != id || time.Now().After(sess.ExpiresAt) || sess.Principal.Role != role || sess.Principal.ID != actorID || ctx.Err() != nil {

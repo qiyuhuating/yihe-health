@@ -89,7 +89,11 @@ func (c *coreCache) get(key coreKey, revision, from, to int64, now time.Time) (h
 }
 
 func (c *coreCache) put(s *coreSeries) {
-	if c == nil || s == nil || s.cost() > c.perShard {
+	if c == nil || s == nil {
+		return
+	}
+	cost := s.cost()
+	if cost > c.perShard {
 		return
 	}
 	shard := c.shard(s.key)
@@ -100,15 +104,22 @@ func (c *coreCache) put(s *coreSeries) {
 		if old.revision > s.revision || (old.revision == s.revision && old.from <= s.from && old.to >= s.to && old.expires.After(s.expires.Add(-statisticsCacheTTL))) {
 			return
 		}
-		shard.remove(prev)
+		// Replacement never grows the entry count. Reuse the existing map
+		// slot and list node, then evict from the unchanged LRU tail.
+		shard.bytes += cost - old.cost()
+		prev.Value = s
+		shard.lru.MoveToFront(prev)
+		for shard.bytes > c.perShard {
+			shard.remove(shard.lru.Back())
+		}
+		return
 	}
-	for shard.bytes > c.perShard-s.cost() || shard.lru.Len() >= statisticsCacheMaxEntries/coreShardCount {
+	for shard.bytes > c.perShard-cost || shard.lru.Len() >= statisticsCacheMaxEntries/coreShardCount {
 		shard.remove(shard.lru.Back())
 	}
 	shard.entries[s.key] = shard.lru.PushFront(s)
-	shard.bytes += s.cost()
+	shard.bytes += cost
 }
-
 func (s *coreShard) remove(e *list.Element) {
 	v := e.Value.(*coreSeries)
 	delete(s.entries, v.key)
