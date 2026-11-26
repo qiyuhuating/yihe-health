@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 	"yihe-care/internal/db"
 	"yihe-care/internal/observability"
 	"yihe-care/internal/securestore"
-	"time"
 )
 
 const latestSampleSQL = `SELECT sample_id,revision,payload,payload_cipher FROM health_sample WHERE old_id=? AND device_id=? AND epoch=? AND metric=? AND NOT deleted AND sample_start>=? AND sample_start<=? ORDER BY sample_start DESC,revision DESC LIMIT 1`
