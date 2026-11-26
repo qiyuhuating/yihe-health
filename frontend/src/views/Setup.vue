@@ -1,12 +1,12 @@
 <template>
   <main class="setup-page">
-    <section class="setup-story" aria-label="颐和健康">
-      <img src="/static/brand/yihe-logo-512.webp" width="280" height="280" alt="颐和健康山水标志">
+    <section class="setup-story" aria-label="颐和">
+      <img src="/static/brand/yihe-logo-512.webp" width="280" height="280" alt="颐和山水标志">
       <p>岁月有伴，日常安宁</p>
       <h1>从此刻，<br>安放每一份牵挂。</h1>
     </section>
     <section class="setup-panel">
-      <span class="setup-kicker">初次相见 · 颐和健康</span>
+      <span class="setup-kicker">初次相见 · 颐和</span>
       <h2>开启照护日常</h2>
       <database-notice><p class="setup-intro">创建管理员账号。业务记录保存在独立数据库中，关闭软件不会清除记录。</p></database-notice>
       <el-form ref="form" :model="account" :disabled="busy" label-position="top" :rules="rules" @submit.prevent="submit">

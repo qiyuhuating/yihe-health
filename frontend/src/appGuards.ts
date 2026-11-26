@@ -2,7 +2,7 @@ const CHUNK_ERROR = /Failed to fetch dynamically imported module|error loading d
 const RELOAD_KEY = 'care.chunk-reload-at'
 const RELOAD_COOLDOWN_MS = 60_000
 
-export const APP_TITLE = '颐和健康 · 智慧养老管理平台'
+export const APP_TITLE = '颐和 · 智慧养老管理平台'
 
 export function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : ''

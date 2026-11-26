@@ -23,7 +23,7 @@ run(async ({ page, context, base, report, setRole, setSignedIn, setMode }) => {
       const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, title: document.title, logo: !!document.querySelector('img[src*="yihe-logo"]') }));
       check(report, `${width} ${route}: no horizontal overflow`, layout.scrollWidth <= width, layout);
       check(report, `${width} ${route}: brand image loaded`, await page.locator('img[src*="yihe-logo"]').evaluate(image => image.complete && image.naturalWidth > 0));
-      check(report, `${width} ${route}: new page title`, (layout.title.startsWith('颐和健康') || layout.title.includes(' · 颐和健康 · ')));
+      check(report, `${width} ${route}: new page title`, (layout.title.startsWith('颐和') || layout.title.includes(' · 颐和 · ')));
       if (['/sign-in','/join-family','/family-portal/overview','/operations/overview'].includes(route)) await page.screenshot({ path: path.join(images, route.slice(1)+'-'+width+'.png'), fullPage: true });
     }
   }
@@ -32,10 +32,10 @@ run(async ({ page, context, base, report, setRole, setSignedIn, setMode }) => {
     await visit('/family-portal/overview', 'FAMILY');
     await page.getByRole('button', { name: '切换为更大字号', exact: true }).click();
     check(report, `${width} large text: no horizontal overflow`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-    check(report, `${width} brand returns to family home`, await page.getByRole('link', {name:'颐和健康，返回首页'}).getAttribute('href') === '#/family-portal/overview');
-    await page.getByRole('link', { name:'颐和健康，返回首页' }).focus();
-    check(report, `${width} brand keyboard focus`, await page.getByRole('link', { name:'颐和健康，返回首页' }).evaluate(link => link === document.activeElement));
-    check(report, `${width} brand visible keyboard focus`, await page.getByRole('link', { name:'颐和健康，返回首页' }).evaluate(link => parseFloat(getComputedStyle(link).outlineWidth)>0));
+    check(report, `${width} brand returns to family home`, await page.getByRole('link', {name:'颐和，返回首页'}).getAttribute('href') === '#/family-portal/overview');
+    await page.getByRole('link', { name:'颐和，返回首页' }).focus();
+    check(report, `${width} brand keyboard focus`, await page.getByRole('link', { name:'颐和，返回首页' }).evaluate(link => link === document.activeElement));
+    check(report, `${width} brand visible keyboard focus`, await page.getByRole('link', { name:'颐和，返回首页' }).evaluate(link => parseFloat(getComputedStyle(link).outlineWidth)>0));
     await page.getByRole('button', { name: '切换为标准字号', exact:true }).click();
   }
   // 图表库升级后的实际 Canvas 渲染和关闭清理。

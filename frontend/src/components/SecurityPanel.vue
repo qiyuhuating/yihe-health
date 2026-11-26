@@ -10,7 +10,7 @@
       <template v-if="secret">
         <label for="security-secret">在验证器中手动添加此密钥</label>
         <input id="security-secret" :value="secret" readonly autocomplete="off" />
-        <p>账号：颐和健康；6 位动态码，每 30 秒更新。请勿截图或转发密钥。</p>
+        <p>账号：颐和；6 位动态码，每 30 秒更新。请勿截图或转发密钥。</p>
       </template>
       <label for="security-otp">动态验证码</label>
       <input id="security-otp" v-model="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" />

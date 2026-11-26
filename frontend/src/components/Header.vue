@@ -1,9 +1,9 @@
 <template>
   <header class="care-header">
-    <router-link class="brand" :to="isFamily ? '/family-portal/overview' : '/operations/overview'" aria-label="颐和健康，返回首页">
+    <router-link class="brand" :to="isFamily ? '/family-portal/overview' : '/operations/overview'" aria-label="颐和，返回首页">
       <img class="brand-mark" src="/static/brand/yihe-logo-96.webp" srcset="/static/brand/yihe-logo-96.webp 96w, /static/brand/yihe-logo-192.webp 192w" sizes="56px" width="56" height="56" alt="" aria-hidden="true" decoding="async">
       <span class="brand-copy">
-        <strong>颐和健康</strong>
+        <strong>颐和</strong>
         <small>智慧养老管理平台</small>
       </span>
     </router-link>

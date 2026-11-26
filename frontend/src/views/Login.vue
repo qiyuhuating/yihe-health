@@ -13,7 +13,7 @@
     <main class="auth-panel">
       <div class="auth-card">
         <el-button class="login-text-toggle" link :aria-label="largeText ? '切换为标准字号' : '切换为更大字号'" :aria-pressed="String(largeText)" @click="toggleTextSize">{{ largeText ? '标准字' : '大字' }}</el-button>
-        <div class="auth-brand"><img class="auth-mark" src="/static/brand/yihe-logo-96.webp" srcset="/static/brand/yihe-logo-96.webp 96w, /static/brand/yihe-logo-192.webp 192w" sizes="72px" width="72" height="72" alt="" aria-hidden="true" decoding="async"><span>颐和健康</span></div>
+        <div class="auth-brand"><img class="auth-mark" src="/static/brand/yihe-logo-96.webp" srcset="/static/brand/yihe-logo-96.webp 96w, /static/brand/yihe-logo-192.webp 192w" sizes="72px" width="72" height="72" alt="" aria-hidden="true" decoding="async"><span>颐和</span></div>
         <p class="auth-eyebrow">智慧养老管理平台</p>
         <h2>欢迎回来</h2>
         <database-notice><p class="auth-intro">登录后查看设备状态与家人近况</p></database-notice>
@@ -40,7 +40,7 @@
         <div class="auth-register"><span>首次使用？</span><el-button link @click="goRegister">使用邀请码注册</el-button></div>
         <p class="auth-footnote"><el-icon><Setting aria-hidden="true" /></el-icon> 账号信息仅用于本系统登录</p>
       </div>
-      <footer class="auth-footer">颐和健康 · 让关怀始终在线</footer>
+      <footer class="auth-footer">颐和 · 让关怀始终在线</footer>
     </main>
   </div>
 </template>

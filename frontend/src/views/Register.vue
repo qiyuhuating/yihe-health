@@ -8,7 +8,7 @@
     <main class="register-panel">
       <div class="register-card">
         <div class="register-title">
-          <div class="register-brand-row"><div class="register-brand"><img class="register-mark" :src="brandLogo" :srcset="brandLogoSrcset" sizes="64px" width="64" height="64" alt="" aria-hidden="true" decoding="async"><span>颐和健康</span></div><el-button class="register-text-toggle" link :aria-label="largeText ? '切换为标准字号' : '切换为更大字号'" :aria-pressed="String(largeText)" @click="toggleTextSize">{{ largeText ? '标准字' : '大字' }}</el-button></div>
+          <div class="register-brand-row"><div class="register-brand"><img class="register-mark" :src="brandLogo" :srcset="brandLogoSrcset" sizes="64px" width="64" height="64" alt="" aria-hidden="true" decoding="async"><span>颐和</span></div><el-button class="register-text-toggle" link :aria-label="largeText ? '切换为标准字号' : '切换为更大字号'" :aria-pressed="String(largeText)" @click="toggleTextSize">{{ largeText ? '标准字' : '大字' }}</el-button></div>
           <div class="register-sub">创建家属账号 · 需要管理员发放的邀请码</div>
         </div>
 
@@ -70,7 +70,7 @@
           </el-form-item>
         </el-form>
       </div>
-      <footer class="register-footer">颐和健康 · 让关怀始终在线</footer>
+      <footer class="register-footer">颐和 · 让关怀始终在线</footer>
     </main>
   </div>
 </template>

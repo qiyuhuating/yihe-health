@@ -88,7 +88,7 @@ test('each encryption uses fresh random nonce and authenticates multi-chunk UTF-
   const boundary = cryptoBoundary();
   const { WatchVault } = load('services/WatchVault', boundary.mocks);
   const vault = new WatchVault();
-  const content = '颐和健康数据'.repeat(20000);
+  const content = '颐和数据'.repeat(20000);
   const a = await vault.seal(content), b = await vault.seal(content);
   assert.notEqual(JSON.parse(a).nonce, JSON.parse(b).nonce);
   assert.notEqual(a, b);

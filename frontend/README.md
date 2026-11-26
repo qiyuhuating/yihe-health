@@ -1,6 +1,6 @@
-# 颐和健康前端 · 2.1.0
+# 颐和前端 · 2.1.0
 
-颐和健康前端基于 Vue 3、Vue Router 4、Element Plus 2 与 Vite 8 构建，使用 Axios 调用 Go 后端接口，通过 ECharts 6 渲染健康趋势图表，并集成 Leaflet 与 OpenStreetMap 展示定位与轨迹。在 Windows 桌面端中，Tauri 2（WebView2）直接加载编译内嵌在 Go 服务端中的生产静态资源。
+颐和前端基于 Vue 3、Vue Router 4、Element Plus 2 与 Vite 8 构建，使用 Axios 调用 Go 后端接口，通过 ECharts 6 渲染健康趋势图表，并集成 Leaflet 与 OpenStreetMap 展示定位与轨迹。在 Windows 桌面端中，Tauri 2（WebView2）直接加载编译内嵌在 Go 服务端中的生产静态资源。
 
 [整体技术栈与架构](../docs/WORKSPACE.md) · [源码工程总览](../README.md) · [后端接口与数据](../backend/README.md) · [历史改进记录](../docs/CHANGELOG.md)
 
