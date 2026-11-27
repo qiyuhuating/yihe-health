@@ -6,10 +6,12 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"yihe-care/internal/auth"
+	"yihe-care/internal/carepolicy"
 	"yihe-care/internal/config"
 	"yihe-care/internal/health"
 	"yihe-care/internal/session"
@@ -225,5 +227,75 @@ func TestHealthStatisticsHotCacheOverflowResultConsistency(t *testing.T) {
 		if got.Code != want.Code || !bytes.Equal(got.Body.Bytes(), want.Body.Bytes()) {
 			t.Fatalf("cache changed an unencodable result: %s / %s", got.Body.String(), want.Body.String())
 		}
+	}
+}
+
+func TestFamilyStatisticsRevisionSharesSnapshotWithoutOwnerLock(t *testing.T) {
+	pool := testDatabase(t)
+	seedDevice(t, pool)
+	mustExec(t, pool, "INSERT INTO family(family_id,family_phone) VALUES(1,'1')")
+	mustExec(t, pool, "UPDATE oldperson SET family_id=1 WHERE old_id=1")
+	ctx := context.Background()
+	at := time.Date(2026, 10, 22, 9, 0, 0, 0, time.UTC)
+	sample := health.Sample{RecordID: "snapshot", Source: "watch", SourceDevice: "WATCH001", Metric: "heart_rate", Unit: "count/min", Value: health.Number(72), Start: at, End: at, Version: 1}
+	device := int64(1)
+	owner := health.Owner{OldID: 1, DeviceID: &device, Epoch: 1}
+	save := func(tx *sql.Tx) {
+		t.Helper()
+		if _, _, err := health.SaveBatch(ctx, tx, owner, []health.Sample{sample}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tx, err := pool.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	save(tx)
+	if err = tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	original, err := health.StatisticsRevision(ctx, pool, 1)
+	if err != nil || original == 0 {
+		t.Fatal(original, err)
+	}
+	writer, err := pool.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer writer.Rollback()
+	sample.Version, sample.Value = 2, health.Number(95)
+	save(writer)
+	bounded, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	r := httptest.NewRequest("POST", "/api/v1/health/statistics", nil).WithContext(bounded)
+	r = session.WithContext(r, &session.Session{Principal: session.Principal{Role: auth.RoleFamily, ID: 1}})
+	w := httptest.NewRecorder()
+	var revision int64
+	read, ok := beginScopedResidentReadOn(w, r, pool.DB, 1, carepolicy.ReadHealthData, sql.LevelRepeatableRead, &revision)
+	if !ok {
+		t.Fatal("clock subquery waited on writer or denied valid family", w.Code, w.Body.String())
+	}
+	defer read.Rollback()
+	if revision != original {
+		t.Fatal("uncommitted revision exposed", revision, original)
+	}
+	if err = writer.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	observed, err := health.StatisticsRevision(bounded, read, 1)
+	if err != nil || observed != revision {
+		t.Fatal("revision and sample snapshots diverged", observed, revision, err)
+	}
+	samples, _, _, _, err := health.LoadStatisticsSamples(bounded, read, 1, health.StatisticsQuery{Source: "watch", SourceDevice: "WATCH001", Metric: "heart_rate", Semantics: "instant", From: at.Add(-time.Hour), To: at.Add(time.Hour)}, nil, false)
+	if err != nil || len(samples) != 1 || samples[0].Value == nil || *samples[0].Value != 72 {
+		t.Fatal("new data mixed with old revision", samples, err)
+	}
+	if err = read.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	current, err := health.StatisticsRevision(ctx, pool, 1)
+	if err != nil || current <= original {
+		t.Fatal("write not committed", current, err)
 	}
 }

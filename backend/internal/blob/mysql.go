@@ -151,7 +151,7 @@ func (s *Encrypted) putMySQLCatalog(ctx context.Context, database *sql.DB, key s
 	if len(data) > MaxPlainBytes {
 		return ErrIntegrity
 	}
-	ciphertext, err := s.Box.Seal(string(data), "image:"+key)
+	ciphertext, err := s.Box.SealEncodedBytes(data, "image:"+key)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (s *Encrypted) putMySQLCatalog(ctx context.Context, database *sql.DB, key s
 	}
 	defer tx.Rollback()
 	if _, err = tx.ExecContext(ctx, "INSERT INTO image_blob(name,content_sha256,size_bytes,state) VALUES(?,?,?,'ready')", key, Digest(data), len(data)); err == nil {
-		_, err = tx.ExecContext(ctx, "INSERT INTO image_payload(name,payload) VALUES(?,?)", key, []byte(ciphertext))
+		_, err = tx.ExecContext(ctx, "INSERT INTO image_payload(name,payload) VALUES(?,?)", key, ciphertext)
 	}
 	if err != nil {
 		var duplicate *mysql.MySQLError

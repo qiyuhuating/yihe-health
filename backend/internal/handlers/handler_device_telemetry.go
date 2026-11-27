@@ -16,7 +16,7 @@ import (
 
 // POST /api/v1/device/report —— 设备数据上报（公开，事务）。
 func (h *Handler) deviceReport(w http.ResponseWriter, r *http.Request) {
-	r, signedOK := h.prepareSignedDeviceRequest(w, r)
+	r, _, signedOK := h.prepareSignedDeviceRequest(w, r)
 	if !signedOK {
 		return
 	}

@@ -218,6 +218,7 @@ async function main() {
   const { AutoMonitor } = load('services/AutoMonitor');
   const synchronizer = new WatchSynchronizer(automaticStore, watch, new HealthSensors(), { applicationInfo: { accessTokenId: 100 } });
   const results = [];
+  const automaticStart = signedAttempts.length;
   let completed, failed;
   const finished = new Promise((resolve, reject) => { completed = resolve; failed = reject; });
   const automatic = new AutoMonitor(async () => {
@@ -233,6 +234,8 @@ async function main() {
     await Promise.race([finished, new Promise((_, reject) => { deadline = setTimeout(() => reject(new Error('Automatic cycles did not complete')), 15000); })]);
   } finally { automatic.setEnabled(false); synchronizer.suspend(); clearTimeout(deadline); }
   assert.deepEqual(results.map(item => item.sampled), [1, 2]);
+  assert.deepEqual(signedAttempts.slice(automaticStart).map(item => item.path.split('/').pop()),
+    ['login', 'healthBatch', 'healthBatch'], 'second cycle must not duplicate login or liveness writes');
   assert.ok(results.every(item => item.queued === 0 && !item.offline));
   assert.equal(automaticStore.batch(), undefined); assert.equal(dialogs, 0);
   const automaticChanges = await request('/api/v1/health/changes', { oldId: elder.oldId, after: 0, limit: 100 });

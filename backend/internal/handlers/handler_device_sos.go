@@ -7,15 +7,17 @@ import (
 	"net/http"
 	"time"
 
+	"yihe-care/internal/config"
 	"yihe-care/internal/deviceprotocol"
 	"yihe-care/internal/devicerepo"
+
 	"yihe-care/internal/deviceworkflow"
 	"yihe-care/internal/response"
 )
 
 // POST /api/v1/device/sos: parse request and map the transactional outcome.
 func (h *Handler) deviceSos(w http.ResponseWriter, r *http.Request) {
-	r, signedOK := h.prepareSignedDeviceRequest(w, r)
+	r, _, signedOK := h.prepareSignedDeviceRequest(w, r)
 	if !signedOK {
 		return
 	}
@@ -29,26 +31,50 @@ func (h *Handler) deviceSos(w http.ResponseWriter, r *http.Request) {
 	}
 	lng, _ := vstr(m, "lng")
 	lat, _ := vstr(m, "lat")
-	var invalidPosition string
+	// Prepare request-only work before acquiring the resident/device locks.
+	// Defer validation errors until after auth, idempotency and nonce checks.
+	repo := telemetryRepository{box: h.Box}
+	invalidPosition := checkPosition(lng, lat)
 	errInvalidPosition := errors.New("invalid SOS position")
-	result, failure, err := deviceworkflow.SOS(r.Context(), h.DB, h.Box, deviceworkflow.SOSInput{
+	var prepared preparedSOSPosition
+	var meta positionMetadata
+	var metaErr, prepareErr error
+	if invalidPosition == "" {
+		meta, metaErr = parsePositionMetadata(m, lng, lat, time.Now())
+		if metaErr == nil {
+			prepared, prepareErr = repo.prepareSOSPosition(lng, lat, meta)
+		}
+	}
+	var prioritize func(context.Context, string, int64) (func(), error)
+	if h.sosPriorityEnabled() {
+		prioritize = h.healthWrites.prioritizeSOS
+	}
+	result, failure, err := deviceworkflow.SOS(r.Context(), h.DB.SOSPool(), h.Box, deviceworkflow.SOSInput{
 		Number: req.deviceNo, Secret: req.secret, Epoch: req.bindingVersion, RequestID: req.requestID,
 	}, deviceworkflow.SOSHooks{
+		Prioritize: prioritize,
 		AcceptNonce: func(ctx context.Context, tx *sql.Tx, deviceID int64) bool {
 			return acceptSignedDeviceNonce(w, ctx, tx, deviceID)
 		},
 		Persist: func(ctx context.Context, tx *sql.Tx, device *devicerepo.DeviceRecord) (int64, error) {
-			if msg := checkPosition(lng, lat); msg != "" {
-				invalidPosition = msg
+			if invalidPosition != "" {
 				return 0, errInvalidPosition
 			}
 			now := time.Now()
-			position, err := parsePositionMetadata(m, lng, lat, now)
-			if err != nil {
-				invalidPosition = err.Error()
-				return 0, errInvalidPosition
+			// Preserve the original validation clock at the transaction boundary.
+			// The normal valid path uses the already prepared ciphertext.
+			if metaErr != nil || (meta.SampledAt != nil && meta.SampledAt.After(now.Add(5*time.Minute))) {
+				meta, metaErr = parsePositionMetadata(m, lng, lat, now)
+				if metaErr != nil {
+					invalidPosition = metaErr.Error()
+					return 0, errInvalidPosition
+				}
+				prepared, prepareErr = repo.prepareSOSPosition(lng, lat, meta)
 			}
-			return (telemetryRepository{box: h.Box}).PersistSOSIncident(ctx, tx, device, lng, lat, req.requestID, position, now)
+			if prepareErr != nil {
+				return 0, prepareErr
+			}
+			return repo.PersistSOSIncident(ctx, tx, device, req.requestID, prepared, now)
 		},
 	})
 	if failure == deviceworkflow.NonceRejected {
@@ -94,6 +120,13 @@ func (h *Handler) deviceSos(w http.ResponseWriter, r *http.Request) {
 		"incidentId": result.IncidentID, "incidentState": result.IncidentState,
 		"notificationState": result.NotificationState,
 	})
+}
+
+func (h *Handler) sosPriorityEnabled() bool {
+	if h.Cfg.Requests.Loaded {
+		return h.Cfg.Requests.SOSPriority
+	}
+	return config.Enabled("YIHE_SOS_PRIORITY")
 }
 
 type sosRequest struct {

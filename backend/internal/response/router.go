@@ -14,10 +14,12 @@ func Router(mux *http.ServeMux) http.Handler {
 			return
 		}
 		allowed := []string{}
+		// Handler only matches the request; it does not dispatch it or mutate
+		// request-owned maps. Reuse a private shallow copy for method probes.
+		probe := *r
 		for _, method := range []string{"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"} {
-			probe := r.Clone(r.Context())
 			probe.Method = method
-			if _, match := mux.Handler(probe); match != "" {
+			if _, match := mux.Handler(&probe); match != "" {
 				allowed = append(allowed, method)
 			}
 		}

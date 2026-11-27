@@ -41,10 +41,20 @@ func IntervalSteps(s Sample, from, to time.Time) (float64, error) {
 	if !b.After(a) {
 		return 0, nil
 	}
+	count := uint64(*s.Value)
+	if a.Equal(s.Start) && b.Equal(s.End) {
+		return float64(count), nil
+	}
 	allocated := func(at time.Time) uint64 {
+		if at.Equal(s.Start) {
+			return 0
+		}
+		if at.Equal(s.End) {
+			return count
+		}
 		// A 128-bit product avoids overflow and floating-point rounding near
 		// half steps, including counts close to the exact integer limit.
-		hi, lo := bits.Mul64(uint64(*s.Value), uint64(at.Sub(s.Start)))
+		hi, lo := bits.Mul64(count, uint64(at.Sub(s.Start)))
 		q, r := bits.Div64(hi, lo, uint64(duration))
 		if r >= uint64(duration)-r {
 			q++
@@ -76,6 +86,12 @@ func Aggregate(samples []Sample, from, to time.Time) (Statistics, error) {
 	if s.Semantics != "daily_total" && s.Metric != "sleep_stage" && !(s.Metric == "steps" && s.Semantics == "interval") {
 		return aggregateScalars(samples, s)
 	}
+	if s.Semantics != "daily_total" && s.Metric == "sleep_stage" {
+		return aggregateSleepSeries(samples, from, to)
+	}
+	if s.Metric == "steps" && s.Semantics == "interval" {
+		return aggregateStepSeries(samples, s, from, to)
+	}
 	out := Statistics{}
 	type calendarDay struct {
 		year  int
@@ -83,7 +99,16 @@ func Aggregate(samples []Sample, from, to time.Time) (Statistics, error) {
 		day   int
 	}
 	daily := map[calendarDay]*Sample{}
-	var dailyObserved map[time.Time]float64
+	// Ordered observations only need the preceding timestamp. On the first
+	// reversal, reconstruct the already validated prefix in a compact map.
+	type instant struct {
+		seconds int64
+		nanos   int32
+	}
+	keyAt := func(t time.Time) instant { return instant{t.Unix(), int32(t.Nanosecond())} }
+	var dailyObserved map[instant]float64
+	var previous *Sample
+	observed := 0
 	filtered := []*Sample{}
 	first := &samples[0]
 	for i := range samples {
@@ -95,14 +120,33 @@ func Aggregate(samples []Sample, from, to time.Time) (Statistics, error) {
 			return out, err
 		}
 		if s.Semantics == "daily_total" {
-			if dailyObserved == nil {
-				dailyObserved = make(map[time.Time]float64)
-			}
 			at := s.Start.UTC()
-			if value, exists := dailyObserved[at]; exists && value != *s.Value {
+			if dailyObserved == nil && previous != nil && at.Before(previous.Start.UTC()) {
+				live := observed + 1
+				for j := i + 1; j < len(samples); j++ {
+					if !samples[j].Deleted && samples[j].Value != nil {
+						live++
+					}
+				}
+				dailyObserved = make(map[instant]float64, min(live, 100000))
+				for j := 0; j < i; j++ {
+					prior := &samples[j]
+					if !prior.Deleted && prior.Value != nil {
+						dailyObserved[keyAt(prior.Start)] = *prior.Value
+					}
+				}
+			}
+			if dailyObserved != nil {
+				key := keyAt(at)
+				if value, exists := dailyObserved[key]; exists && value != *s.Value {
+					return out, fmt.Errorf("conflicting daily totals at the same observation time")
+				}
+				dailyObserved[key] = *s.Value
+			} else if previous != nil && at.Equal(previous.Start.UTC()) && *previous.Value != *s.Value {
 				return out, fmt.Errorf("conflicting daily totals at the same observation time")
 			}
-			dailyObserved[at] = *s.Value
+			previous = s
+			observed++
 			year, month, day := s.Start.In(from.Location()).Date()
 			key := calendarDay{year, month, day}
 			if old, ok := daily[key]; !ok || s.Start.After(old.Start) {
@@ -127,38 +171,102 @@ func Aggregate(samples []Sample, from, to time.Time) (Statistics, error) {
 		out.StageMinutes, out.AsleepMinutes, out.ConflictingSleepMinutes = aggregateSleep(filtered, from, to)
 		return out, nil
 	}
-	if first.Metric == "steps" && first.Semantics == "interval" {
+
+	return aggregateTotals(filtered, first, out)
+}
+
+// SQL supplies ordered windows. Validate the entire series first to preserve
+// error precedence, then aggregate directly without materializing pointers.
+// Unordered imports retain the original sort-based path.
+func aggregateStepSeries(samples []Sample, first *Sample, from, to time.Time) (Statistics, error) {
+	var previous *Sample
+	ordered := true
+	count := 0
+	for i := range samples {
+		s := &samples[i]
+		if s.Deleted || s.Value == nil {
+			continue
+		}
+		if err := validateSeriesSample(first, s); err != nil {
+			return Statistics{}, err
+		}
+		if previous != nil && s.Start.Before(previous.Start) {
+			ordered = false
+		}
+		previous = s
+		count++
+	}
+	out := Statistics{Unit: first.Unit}
+	if !ordered {
+		filtered := make([]*Sample, 0, count)
+		for i := range samples {
+			s := &samples[i]
+			if !s.Deleted && s.Value != nil {
+				filtered = append(filtered, s)
+			}
+		}
 		return aggregateStepIntervals(filtered, out, from, to)
 	}
-	return aggregateTotals(filtered, first, out)
+	var acc stepAccumulator
+	acc.low, acc.high = math.Inf(1), math.Inf(-1)
+	for i := range samples {
+		s := &samples[i]
+		if s.Deleted || s.Value == nil {
+			continue
+		}
+		if err := acc.add(s, from, to); err != nil {
+			out.Count = acc.count
+			return out, err
+		}
+	}
+	return acc.result(out), nil
+}
+
+type stepAccumulator struct {
+	previous         *Sample
+	total, low, high float64
+	count            int
+}
+
+func (a *stepAccumulator) add(s *Sample, from, to time.Time) error {
+	if a.previous != nil && s.Start.Before(a.previous.End) {
+		return fmt.Errorf("overlapping step intervals require source review")
+	}
+	a.previous = s
+	v, err := IntervalSteps(*s, from, to)
+	if err != nil {
+		return err
+	}
+	if !s.End.After(from) || !s.Start.Before(to) {
+		return nil
+	}
+	a.total += v
+	if a.total > 9007199254740991 {
+		return fmt.Errorf("step total exceeds exact integer range")
+	}
+	a.low, a.high = math.Min(a.low, v), math.Max(a.high, v)
+	a.count++
+	return nil
+}
+
+func (a *stepAccumulator) result(out Statistics) Statistics {
+	out.Count = a.count
+	if a.count > 0 {
+		out.Total, out.Min, out.Max = Number(a.total), Number(a.low), Number(a.high)
+	}
+	return out
 }
 
 func aggregateStepIntervals(filtered []*Sample, out Statistics, from, to time.Time) (Statistics, error) {
 	sort.Slice(filtered, func(i, j int) bool { return filtered[i].Start.Before(filtered[j].Start) })
-	total, low, high := 0.0, math.Inf(1), math.Inf(-1)
-	out.Count = 0
-	for i, s := range filtered {
-		if i > 0 && s.Start.Before(filtered[i-1].End) {
-			return out, fmt.Errorf("overlapping step intervals require source review")
-		}
-		v, err := IntervalSteps(*s, from, to)
-		if err != nil {
+	acc := stepAccumulator{low: math.Inf(1), high: math.Inf(-1)}
+	for _, s := range filtered {
+		if err := acc.add(s, from, to); err != nil {
+			out.Count = acc.count
 			return out, err
 		}
-		if !s.End.After(from) || !s.Start.Before(to) {
-			continue
-		}
-		total += v
-		if total > 9007199254740991 {
-			return out, fmt.Errorf("step total exceeds exact integer range")
-		}
-		low, high = math.Min(low, v), math.Max(high, v)
-		out.Count++
 	}
-	if out.Count > 0 {
-		out.Total, out.Min, out.Max = Number(total), Number(low), Number(high)
-	}
-	return out, nil
+	return acc.result(out), nil
 }
 
 func aggregateTotals(filtered []*Sample, first *Sample, out Statistics) (Statistics, error) {

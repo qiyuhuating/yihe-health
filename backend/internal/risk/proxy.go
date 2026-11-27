@@ -16,8 +16,9 @@ import (
 // intelligenceSnapshot is immutable after publication. Request handling never
 // reads intelligence files or waits for a feed refresh to finish.
 type intelligenceSnapshot struct {
-	signals map[netip.Prefix]NetworkSignal
-	legacy  map[netip.Prefix]struct{}
+	signals            map[netip.Prefix]NetworkSignal
+	legacy             map[netip.Prefix]struct{}
+	ipv4Bits, ipv6Bits []int // Descending lengths present in either feed.
 }
 
 func (m *Manager) publishIntelligence(signals map[netip.Prefix]NetworkSignal, legacy map[netip.Prefix]struct{}) {
@@ -30,6 +31,31 @@ func (m *Manager) publishIntelligence(signals map[netip.Prefix]NetworkSignal, le
 			}
 			if legacy == nil {
 				next.legacy = old.legacy
+			}
+		}
+		var ipv4 [33]bool
+		var ipv6 [129]bool
+		add := func(p netip.Prefix) {
+			if p.Addr().Is4() {
+				ipv4[p.Bits()] = true
+			} else {
+				ipv6[p.Bits()] = true
+			}
+		}
+		for p := range next.signals {
+			add(p)
+		}
+		for p := range next.legacy {
+			add(p)
+		}
+		for bits := len(ipv4) - 1; bits >= 0; bits-- {
+			if ipv4[bits] {
+				next.ipv4Bits = append(next.ipv4Bits, bits)
+			}
+		}
+		for bits := len(ipv6) - 1; bits >= 0; bits-- {
+			if ipv6[bits] {
+				next.ipv6Bits = append(next.ipv6Bits, bits)
 			}
 		}
 		if m.intelligence.CompareAndSwap(old, next) {
@@ -185,10 +211,13 @@ func (m *Manager) classifyNetworkLocked(ip string) NetworkClassification {
 	if snapshot == nil {
 		return NetworkClassification{Kind: "unclassified"}
 	}
-	// At most 129 prefix lookups. Lookup is lock-free, no file access, DNS,
-	// network operation, allocation-heavy filter or vendor call.
+	// Only probe lengths present in this immutable snapshot, longest first.
+	lengths := snapshot.ipv6Bits
+	if addr.Is4() {
+		lengths = snapshot.ipv4Bits
+	}
 	now := m.now()
-	for bits := addr.BitLen(); bits >= 0; bits-- {
+	for _, bits := range lengths {
 		prefix := netip.PrefixFrom(addr, bits).Masked()
 		if row, found := snapshot.signals[prefix]; found {
 			age := now.Sub(row.ObservedAt)

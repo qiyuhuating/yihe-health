@@ -1,0 +1,179 @@
+package handlers
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"sort"
+	"strconv"
+	"sync"
+	"testing"
+	"time"
+
+	"yihe-care/internal/health"
+)
+
+// TestMixedSOSLatencyAB is opt-in. It uses disposable MySQL, real HTTP and
+// continuously loaded, independently owned devices; SOS shares two devices
+// with uploads. Report rejected uploads separately from successful latencies.
+func TestMixedSOSLatencyAB(t *testing.T) {
+	if os.Getenv("RUN_MIXED_SOS_AB") != "1" {
+		t.Skip("opt-in mixed SOS latency A/B")
+	}
+	workers := 6
+	if raw := os.Getenv("MIXED_SOS_WORKERS"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 2 || n > 8 {
+			t.Fatal("invalid MIXED_SOS_WORKERS")
+		}
+		workers = n
+	}
+	const batchSize = 64
+	const requests = 200
+	pool := testDatabase(t)
+	seedDevice(t, pool)
+	for i := 2; i <= workers; i++ {
+		mustExec(t, pool, "INSERT INTO oldperson(old_id,name) VALUES(?,?)", i, fmt.Sprintf("resident-%d", i))
+		mustExec(t, pool, "INSERT INTO device(device_id,device_no,secret,old_id) SELECT ?,?,secret,? FROM device WHERE device_id=1", i, fmt.Sprintf("WATCH%03d", i), i)
+	}
+	h := testHandler(t, pool)
+	warmLatest := os.Getenv("MIXED_SOS_WARM_LATEST") == "1"
+	if warmLatest {
+		for i := 1; i <= workers; i++ {
+			if _, err := health.Latest(t.Context(), pool, int64(i), h.Box); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/batch", h.healthBatch)
+	mux.HandleFunc("/sos", h.deviceSos)
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{MaxIdleConns: 24, MaxIdleConnsPerHost: 24}}
+	defer client.CloseIdleConnections()
+	send := func(path string, payload any) (float64, int, error) {
+		body, err := json.Marshal(payload)
+		if err != nil {
+			return 0, 0, err
+		}
+		start := time.Now()
+		resp, err := client.Post(server.URL+path, "application/json", bytes.NewReader(body))
+		if err != nil {
+			return 0, 0, err
+		}
+		data, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		ms := float64(time.Since(start)) / float64(time.Millisecond)
+		if err != nil {
+			return ms, resp.StatusCode, err
+		}
+		if resp.StatusCode == http.StatusServiceUnavailable {
+			return ms, resp.StatusCode, nil
+		}
+		var out map[string]any
+		if err = json.Unmarshal(data, &out); err != nil || resp.StatusCode != 200 || out["returnCode"] != "1111" {
+			return ms, resp.StatusCode, fmt.Errorf("HTTP %d: %s", resp.StatusCode, data)
+		}
+		if path == "/batch" && (out["accepted"] != float64(batchSize) || out["duplicates"] != float64(0)) {
+			return ms, resp.StatusCode, fmt.Errorf("invalid batch ack: %s", data)
+		}
+		return ms, resp.StatusCode, nil
+	}
+	var mu sync.Mutex
+	var healthMS, sosMS []float64
+	var rejected int
+	var firstErr error
+	fail := func(e error) {
+		mu.Lock()
+		if firstErr == nil {
+			firstErr = e
+		}
+		mu.Unlock()
+	}
+	stop := make(chan struct{})
+	var writers sync.WaitGroup
+	at := time.Date(2026, 10, 23, 0, 0, 0, 0, time.UTC)
+	start := time.Now()
+	for w := 1; w <= workers; w++ {
+		writers.Add(1)
+		go func(w int) {
+			defer writers.Done()
+			device := fmt.Sprintf("WATCH%03d", w)
+			for v := 1; ; {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				samples := make([]health.Sample, batchSize)
+				for i := range samples {
+					samples[i] = health.Sample{RecordID: fmt.Sprintf("mixed-%d-%d", w, i), Source: "synthetic", SourceDevice: device, Metric: "heart_rate", Unit: "count/min", Value: health.Number(72), Start: at, End: at, Version: int64(v)}
+				}
+				ms, status, err := send("/batch", map[string]any{"deviceNo": device, "secret": testSecret, "bindingVersion": 1, "samples": samples})
+				if err != nil {
+					fail(err)
+					return
+				}
+				mu.Lock()
+				if status == 503 {
+					rejected++
+				} else {
+					healthMS = append(healthMS, ms)
+					v++
+				}
+				mu.Unlock()
+				if status == 503 {
+					time.Sleep(10 * time.Millisecond)
+				}
+			}
+		}(w)
+	}
+	time.Sleep(250 * time.Millisecond)
+	var emergency sync.WaitGroup
+	for w := 1; w <= 2; w++ {
+		emergency.Add(1)
+		go func(w int) {
+			defer emergency.Done()
+			for i := 0; i < requests/2; i++ {
+				ms, status, err := send("/sos", map[string]any{"deviceNo": fmt.Sprintf("WATCH%03d", w), "secret": testSecret, "bindingVersion": 1, "requestId": fmt.Sprintf("mixed-sos-%d-%d", w, i)})
+				if err != nil || status != 200 {
+					fail(fmt.Errorf("SOS status=%d: %v", status, err))
+					return
+				}
+				mu.Lock()
+				sosMS = append(sosMS, ms)
+				mu.Unlock()
+				time.Sleep(10 * time.Millisecond)
+			}
+		}(w)
+	}
+	emergency.Wait()
+	close(stop)
+	writers.Wait()
+	elapsed := time.Since(start).Seconds()
+	if firstErr != nil {
+		t.Fatal(firstErr)
+	}
+	if len(sosMS) != requests || len(healthMS) == 0 {
+		t.Fatalf("missing work: SOS=%d health=%d", len(sosMS), len(healthMS))
+	}
+	var incidents, changes int
+	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM care_incident").Scan(&incidents); err != nil || incidents != requests {
+		t.Fatalf("durable incidents=%d err=%v", incidents, err)
+	}
+	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM health_change").Scan(&changes); err != nil || changes != len(healthMS)*batchSize {
+		t.Fatalf("durable changes=%d ack=%d err=%v", changes, len(healthMS)*batchSize, err)
+	}
+	stats := func(v []float64) map[string]float64 {
+		sort.Float64s(v)
+		p := func(n int) float64 { return v[(len(v)*n+99)/100-1] }
+		return map[string]float64{"p50_ms": p(50), "p95_ms": p(95), "p99_ms": p(99), "max_ms": v[len(v)-1]}
+	}
+	out, _ := json.Marshal(map[string]any{"variant": os.Getenv("PERF_AB_VARIANT"), "workers": workers, "warm_latest": warmLatest, "batch_size": batchSize, "sos_count": len(sosMS), "sos": stats(sosMS), "health_count": len(healthMS), "health": stats(healthMS), "health_rejected": rejected, "health_samples_per_second": float64(changes) / elapsed, "elapsed_seconds": elapsed, "pool_wait_count": pool.Stats().WaitCount, "pool_wait_ms": float64(pool.Stats().WaitDuration) / float64(time.Millisecond)})
+	t.Logf("MIXED_SOS_AB %s", out)
+}

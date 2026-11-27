@@ -10,9 +10,9 @@ import (
 	"yihe-care/internal/db/dbtest"
 )
 
-// Existing dirty cache rows require no further physical update. The owner
-// revision lock still guarantees that refresh and invalidation serialize.
-func TestSaveBatchOnlyInvalidatesCleanDailyCacheRows(t *testing.T) {
+// Committed owner revisions invalidate daily projections without modifying
+// the cached rows; rollback cannot invalidate them.
+func TestSaveBatchInvalidatesDailyCacheByRevision(t *testing.T) {
 	p := dbtest.MySQL(t)
 	ctx := context.Background()
 	a := strings.Repeat("a", 64)
@@ -51,7 +51,7 @@ func TestSaveBatchOnlyInvalidatesCleanDailyCacheRows(t *testing.T) {
 	assertDirty := func(key string, want bool) {
 		t.Helper()
 		var dirty bool
-		if err := p.QueryRowContext(ctx, "SELECT dirty FROM metric_daily WHERE cache_key=?", key).Scan(&dirty); err != nil || dirty != want {
+		if err := p.QueryRowContext(ctx, "SELECT (d.dirty OR d.computed_revision<>COALESCE(c.revision,0)) FROM metric_daily d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id WHERE d.cache_key=?", key).Scan(&dirty); err != nil || dirty != want {
 			t.Fatalf("cache %s dirty=%v want=%v err=%v", key[:4], dirty, want, err)
 		}
 	}
@@ -72,4 +72,8 @@ func TestSaveBatchOnlyInvalidatesCleanDailyCacheRows(t *testing.T) {
 	assertDirty(a, true)
 	assertDirty(b, true)
 	assertDirty(c, false)
+	var physical bool
+	if err := p.QueryRowContext(ctx, "SELECT dirty FROM metric_daily WHERE cache_key=?", a).Scan(&physical); err != nil || physical {
+		t.Fatal("upload rewrote the daily cache row", physical, err)
+	}
 }

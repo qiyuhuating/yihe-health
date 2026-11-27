@@ -32,7 +32,7 @@ func (h *Handler) CapabilityTick(ctx context.Context) error {
 			return err
 		}
 	}
-	ids, err := db.QueryList(ctx, h.DB, db.ScanValue[string], "SELECT cache_key FROM metric_daily WHERE dirty=true ORDER BY updated_at LIMIT 16")
+	ids, err := db.QueryList(ctx, h.DB, db.ScanValue[string], "SELECT cache_key FROM metric_daily WHERE dirty=true ORDER BY updated_at,cache_key LIMIT 16")
 	if err != nil {
 		return err
 	}
