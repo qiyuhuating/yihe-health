@@ -67,6 +67,14 @@ func OpenMySQL(ctx context.Context, dsn string) (*Database, error) {
 		return nil, err
 	}
 	formattedDSN := cfg.FormatDSN()
+	openLimit, err := mysqlBusinessConnectionLimit(config.Setting("MYSQL_MAX_OPEN_CONNS"))
+	if err != nil {
+		return nil, err
+	}
+	idleLimit, err := mysqlIdleConnectionLimit(config.Setting("MYSQL_MAX_IDLE_CONNS"), openLimit)
+	if err != nil {
+		return nil, err
+	}
 	cacheLimit, err := mysqlStatementCacheLimit(config.Setting("MYSQL_STMT_CACHE_SIZE"))
 	if err != nil {
 		return nil, err
@@ -81,16 +89,9 @@ func OpenMySQL(ctx context.Context, dsn string) (*Database, error) {
 	} else {
 		pool = sql.OpenDB(statementConnector{Connector: connector, capacity: cacheLimit, sessionIsolation: driver.IsolationLevel(sql.LevelReadCommitted)})
 	}
-	pool.SetMaxOpenConns(20)
-	// Bursty device uploads otherwise repeatedly close and reopen 15 of the
-	// 20 available connections. Preserve a warm pool; operators running many
-	// replicas can cap idle connections to fit their MySQL memory/connection
-	// budget without modifying application code.
-	idleLimit, err := mysqlIdleConnectionLimit(config.Setting("MYSQL_MAX_IDLE_CONNS"))
-	if err != nil {
-		pool.Close()
-		return nil, err
-	}
+	pool.SetMaxOpenConns(openLimit)
+	// Preserve a warm pool without increasing the default idle budget when
+	// operators explicitly raise the maximum number of open connections.
 	pool.SetMaxIdleConns(idleLimit)
 	pool.SetConnMaxLifetime(5 * time.Minute)
 	pool.SetConnMaxIdleTime(2 * time.Minute)
@@ -100,7 +101,7 @@ func OpenMySQL(ctx context.Context, dsn string) (*Database, error) {
 	}
 	// A separate one-connection pool is used ONLY for the periodic liveness
 	// probe. Probing the shared pool during a burst previously timed out while
-	// all 20 connections were in use, withdrawing the entire API with HTTP 503.
+	// all business connections were in use, withdrawing the entire API with HTTP 503.
 	// Do not use the reserved connection for rule or request queries.
 	healthPool, err := sql.Open("mysql", formattedDSN)
 	if err != nil {
@@ -186,16 +187,21 @@ func mysqlOptionalConnectionLimit(raw, name string, maximum int) (int, error) {
 	return n, nil
 }
 
-// mysqlIdleConnectionLimit is bounded by the existing 20-connection primary
-// pool; explicit zero is supported for deployments with a strict connection
-// budget. Reject malformed input instead of silently taking a risky default.
-func mysqlIdleConnectionLimit(raw string) (int, error) {
+func mysqlBusinessConnectionLimit(raw string) (int, error) {
 	if strings.TrimSpace(raw) == "" {
 		return 20, nil
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(raw))
-	if err != nil || n < 0 || n > 20 {
-		return 0, errors.New("MYSQL_MAX_IDLE_CONNS must be an integer from 0 to 20")
+	if err != nil || n < 1 || n > 64 {
+		return 0, errors.New("MYSQL_MAX_OPEN_CONNS must be an integer from 1 to 64")
 	}
 	return n, nil
+}
+
+// Keep the default idle budget at most 20, even when the open budget grows.
+func mysqlIdleConnectionLimit(raw string, openLimit int) (int, error) {
+	if strings.TrimSpace(raw) == "" {
+		return min(20, openLimit), nil
+	}
+	return mysqlOptionalConnectionLimit(raw, "MYSQL_MAX_IDLE_CONNS", openLimit)
 }

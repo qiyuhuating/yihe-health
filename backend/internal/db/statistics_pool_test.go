@@ -8,6 +8,45 @@ import (
 	"yihe-care/internal/db/dbtest"
 )
 
+func TestMySQLBusinessPoolBudget(t *testing.T) {
+	t.Setenv("MYSQL_MAX_OPEN_CONNS", "4")
+	t.Setenv("MYSQL_MAX_IDLE_CONNS", "1")
+	t.Setenv("MYSQL_SOS_MAX_CONNS", "1")
+	d := dbtest.MySQL(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	if got := d.DB.Stats().MaxOpenConnections; got != 4 {
+		t.Fatalf("business pool maximum = %d, want 4", got)
+	}
+	conns := make([]*sql.Conn, 0, 4)
+	for range 4 {
+		conn, err := d.DB.Conn(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close()
+		conns = append(conns, conn)
+	}
+	wait, stop := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer stop()
+	if conn, err := d.DB.Conn(wait); err == nil {
+		conn.Close()
+		t.Fatal("business pool exceeded configured budget")
+	}
+	var n int
+	if err := d.SOSPool().QueryRowContext(ctx, "SELECT 1").Scan(&n); err != nil || n != 1 {
+		t.Fatal("SOS pool blocked by saturated business pool", err)
+	}
+	for _, conn := range conns {
+		if err := conn.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := d.DB.Stats().Idle; got != 1 {
+		t.Fatalf("idle business connections = %d, want 1", got)
+	}
+}
+
 func TestMySQLStatisticsPoolIsolation(t *testing.T) {
 	t.Setenv("MYSQL_STATISTICS_MAX_CONNS", "2")
 	d := dbtest.MySQL(t)
