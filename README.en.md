@@ -138,6 +138,8 @@ Useful change-scoped checks:
 (cd frontend && npm ci && npm run typecheck && npm test && npm run build)
 ```
 
+Production frontend builds generate Brotli-11 `.br` files for compressible text assets. The Go static server serves them to Brotli-capable clients while retaining the original assets and gzip fallback. This slightly increases the build artifact size.
+
 Database integration and race tests need a **disposable test database** configured through `TEST_MYSQL_DSN`; some tests skip without it. Native HarmonyOS builds, real watches, SMS gateways, production migrations, and long-running availability require independent verification. See the [testing guide](docs/TESTING.md).
 
 ## Troubleshooting

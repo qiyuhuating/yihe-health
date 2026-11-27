@@ -72,6 +72,7 @@ jobs:
         run: |
           set -o pipefail
           npm run build 2>&1 | tee ../evidence/ci/frontend/build.txt
+          node scripts/check-precompressed-assets.mjs
 
       - name: Audit frontend dependencies
         run: |
