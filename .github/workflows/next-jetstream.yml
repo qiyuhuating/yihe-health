@@ -1,0 +1,140 @@
+name: Yihe-Next JetStream experiment
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'experiments/jetstream/**'
+      - 'experiments/rust-gateway/**'
+      - 'experiments/device-wire/**'
+      - 'watch-sim/**'
+      - 'yihe-core/**'
+      - 'backend/**'
+      - '.github/workflows/next-jetstream.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'experiments/jetstream/**'
+      - 'experiments/rust-gateway/**'
+      - 'experiments/device-wire/**'
+      - 'watch-sim/**'
+      - 'yihe-core/**'
+      - 'backend/**'
+      - '.github/workflows/next-jetstream.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Verify isolated JetStream experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_only
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: yihe_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -u root -pci_root_only --silent"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TEST_MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+      TEST_S3_ENDPOINT: 127.0.0.1:19000
+      TEST_S3_ACCESS_KEY: yihe-ci-test-only
+      TEST_S3_SECRET_KEY: yihe-ci-disposable-secret-only
+      TEST_VALKEY_ENDPOINT: 127.0.0.1:16379
+      TEST_VALKEY_PASSWORD: yihe-ci-valkey-test-only
+    defaults:
+      run:
+        working-directory: experiments/jetstream
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: |
+            experiments/jetstream/go.sum
+            backend/go.sum
+      - name: Start isolated RustFS 1.0.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/yihe-rustfs"
+          mkdir -p "$dir/volume"
+          curl --fail --location --retry 3 --output "$dir/rustfs.zip" https://github.com/rustfs/rustfs/releases/download/1.0.7/rustfs-linux-x86_64-musl-v1.0.7.zip
+          echo "c90a40ba8cdc1468c71029a4d65fdd13449720183d3a8e00bc61ab09fcd448a5  $dir/rustfs.zip" | sha256sum --check
+          unzip -q "$dir/rustfs.zip" -d "$dir"
+          chmod +x "$dir/rustfs"
+          RUSTFS_ACCESS_KEY="$TEST_S3_ACCESS_KEY" RUSTFS_SECRET_KEY="$TEST_S3_SECRET_KEY" RUSTFS_CONSOLE_ENABLE=false RUSTFS_OBS_LOG_DIRECTORY="$dir/logs" "$dir/rustfs" server --address "$TEST_S3_ENDPOINT" --console-address 127.0.0.1:19001 "$dir/volume" >"$dir/server.log" 2>&1 &
+          echo "$!" > "$dir/pid"
+          for attempt in $(seq 1 60); do
+            kill -0 "$(cat "$dir/pid")"
+            if (echo > /dev/tcp/127.0.0.1/19000) 2>/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Start isolated Valkey 9.0.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --detach --name yihe-next-valkey --publish 127.0.0.1:16379:6379 valkey/valkey:9.0.3@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9 valkey-server --requirepass "$TEST_VALKEY_PASSWORD" --save "" --appendonly no
+          for attempt in $(seq 1 30); do
+            if docker exec -e VALKEYCLI_AUTH="$TEST_VALKEY_PASSWORD" yihe-next-valkey valkey-cli ping | grep -qx PONG; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: go mod verify
+      - run: go vet -mod=readonly ./...
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.100.0 --profile minimal --component rustfmt,clippy
+      - name: Verify native analytics core
+        working-directory: yihe-core
+        run: |
+          cargo +1.100.0 fmt --check
+          cargo +1.100.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.100.0 test --locked --all-targets
+      - name: Verify native Rust gateway
+        working-directory: experiments/rust-gateway
+        run: |
+          cargo +1.100.0 fmt --check
+          cargo +1.100.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.100.0 test --locked --all-targets
+          cargo +1.100.0 build --locked
+      - name: Verify shared binary protocol
+        working-directory: experiments/device-wire
+        run: |
+          cargo +1.100.0 fmt --check
+          cargo +1.100.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.100.0 test --locked
+      - name: Build opt-in watch simulator
+        working-directory: watch-sim
+        run: cargo +1.100.0 build --locked --features next-wire --bin watch-sim-next
+      - name: Verify JetStream and Rust producer end to end
+        env:
+          YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+          YIHE_NEXT_WATCH_BINARY: ${{ github.workspace }}/watch-sim/target/debug/watch-sim-next
+        run: go test -mod=readonly -race -count=1 -v -timeout 360s ./...
+      - name: Compare actual Go handlers with Rust gateway
+        working-directory: backend
+        env:
+          YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+        run: go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential|NativeStep)$' -count=1 -v -timeout 240s ./internal/handlers
+      - name: Compare actual Go analytics and rule persistence with Rust
+        working-directory: backend
+        env:
+          YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+        run: go test -tags yihe_next_gateway -run '^TestNextCore(Differential|Transitions|RulePersistence|RuleAuthority|RuleScheduler)$' -count=1 -v -timeout 180s ./internal/rules
+      - name: Stop isolated Valkey
+        if: always()
+        run: docker rm -f yihe-next-valkey || true
+      - name: Stop isolated RustFS
+        if: always()
+        shell: bash
+        run: |
+          pid="$RUNNER_TEMP/yihe-rustfs/pid"
+          if [ -f "$pid" ]; then kill "$(cat "$pid")" 2>/dev/null || true; fi

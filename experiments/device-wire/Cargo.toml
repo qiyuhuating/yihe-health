@@ -1,0 +1,10 @@
+[package]
+name = "yihe-device-wire"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100.0"
+publish = false
+
+[dependencies]
+prost = "=0.14.6"
+ring = "=0.17.14"
