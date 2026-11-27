@@ -35,23 +35,31 @@ type signedDeviceNonce struct {
 	expiresAt time.Time
 }
 
+type signedDeviceCredentials struct {
+	DeviceNo string `json:"deviceNo"`
+	Secret   string `json:"secret"`
+}
+
 // Existing unsigned firmware continues to work unless
 // YIHE_REQUIRE_SIGNED_DEVICE=1. Signatures that are present must verify.
-func (h *Handler) prepareSignedDeviceRequest(w http.ResponseWriter, r *http.Request) (*http.Request, bool) {
+func (h *Handler) prepareSignedDeviceRequest(w http.ResponseWriter, r *http.Request) (*http.Request, signedDeviceCredentials, bool) {
 	sig := strings.TrimSpace(r.Header.Get("X-Device-Signature"))
 	required := h.Cfg.Requests.RequireSigned
 	if !h.Cfg.Requests.Loaded {
 		required = config.Enabled("YIHE_REQUIRE_SIGNED_DEVICE")
 	}
 	if sig == "" && !required {
-		return r, true
+		return r, signedDeviceCredentials{}, true
 	}
-	fail := func() (*http.Request, bool) {
+	fail := func() (*http.Request, signedDeviceCredentials, bool) {
 		response.JSON(w, http.StatusUnauthorized, map[string]any{"code": "DEVICE_SIGNATURE_INVALID", "message": "设备请求签名无效或已过期"})
-		return r, false
+		return r, signedDeviceCredentials{}, false
 	}
-	sigBytes, err := hex.DecodeString(sig)
-	if err != nil || len(sigBytes) != sha256.Size {
+	var sigBytes [sha256.Size]byte
+	if len(sig) != hex.EncodedLen(len(sigBytes)) {
+		return fail()
+	}
+	if _, err := hex.Decode(sigBytes[:], []byte(sig)); err != nil {
 		return fail()
 	}
 	timestamp := strings.TrimSpace(r.Header.Get("X-Device-Timestamp"))
@@ -71,13 +79,10 @@ func (h *Handler) prepareSignedDeviceRequest(w http.ResponseWriter, r *http.Requ
 	raw, err := io.ReadAll(io.LimitReader(r.Body, signedDeviceMaxBody+1))
 	if err != nil || len(raw) > signedDeviceMaxBody {
 		response.JSON(w, http.StatusRequestEntityTooLarge, map[string]any{"message": "设备请求体过大或无法读取"})
-		return r, false
+		return r, signedDeviceCredentials{}, false
 	}
 	defer r.Body.Close()
-	var auth struct {
-		DeviceNo string `json:"deviceNo"`
-		Secret   string `json:"secret"`
-	}
+	var auth signedDeviceCredentials
 	if err := json.Unmarshal(raw, &auth); err != nil || auth.DeviceNo == "" || auth.Secret == "" {
 		return fail()
 	}
@@ -85,7 +90,7 @@ func (h *Handler) prepareSignedDeviceRequest(w http.ResponseWriter, r *http.Requ
 	bodyHash := sha256.Sum256(raw)
 	mac := hmac.New(sha256.New, []byte(auth.Secret))
 	_, _ = mac.Write([]byte(deviceNo + ":" + timestamp + ":" + nonce + ":" + hex.EncodeToString(bodyHash[:])))
-	if !hmac.Equal(sigBytes, mac.Sum(nil)) {
+	if !hmac.Equal(sigBytes[:], mac.Sum(nil)) {
 		return fail()
 	}
 	// The unique DB key is shared by all replicas; a process-local map is
@@ -93,7 +98,8 @@ func (h *Handler) prepareSignedDeviceRequest(w http.ResponseWriter, r *http.Requ
 	nonceHash := sha256.Sum256([]byte(deviceNo + "\x00" + nonce))
 	signed := signedDeviceNonce{digest: nonceHash, expiresAt: at.Add(signedDeviceWindow)}
 	r.Body = io.NopCloser(bytes.NewReader(raw))
-	return r.WithContext(context.WithValue(r.Context(), signedDeviceContextKey{}, signed)), true
+	auth.DeviceNo = deviceNo
+	return r.WithContext(context.WithValue(r.Context(), signedDeviceContextKey{}, signed)), auth, true
 }
 
 func persistSignedDeviceNonce(ctx context.Context, tx *sql.Tx, deviceID int64) (bool, error) {

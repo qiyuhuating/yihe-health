@@ -21,10 +21,7 @@ const (
 func Middleware(store *session.Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 静态/健康检查放行
-		if r.URL.Path == "/" || r.URL.Path == "/healthz" ||
-			strings.HasPrefix(r.URL.Path, "/assets/") ||
-			strings.HasPrefix(r.URL.Path, "/static/") ||
-			r.URL.Path == "/index.html" || r.URL.Path == "/favicon.ico" {
+		if accesspolicy.PublicAssetPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -29,6 +29,8 @@ type Handler struct {
 	Box          *securestore.Box
 	CookieSecure bool // 非回环监听时会话 Cookie 携带 Secure
 	healthCache  *statisticsCache
+	healthWrites healthWriteAdmission
+	healthHints  *healthDeviceHints
 	imageOnce    sync.Once
 	imageManager *blob.Manager
 	imageError   error
@@ -68,7 +70,7 @@ func NewWithRisk(pool *dbstore.Database, sessions *session.Store, cfg config.Con
 	if mgr == nil {
 		mgr = risk.New()
 	}
-	return &Handler{DB: pool, Sessions: sessions, Cfg: cfg, Box: box, CookieSecure: cfg.SecureCookies(), healthCache: newHealthStatisticsCache(cfg.HealthCacheBytes), clientIP: resolve, Risk: mgr}
+	return &Handler{DB: pool, Sessions: sessions, Cfg: cfg, Box: box, CookieSecure: cfg.SecureCookies(), healthCache: newHealthStatisticsCache(cfg.HealthCacheBytes), healthWrites: newHealthWriteAdmission(), healthHints: newHealthDeviceHints(), clientIP: resolve, Risk: mgr}
 }
 
 // Routes 注册全部路由。各组在自己的文件中通过 h.route 注册。

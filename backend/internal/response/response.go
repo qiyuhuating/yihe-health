@@ -110,6 +110,9 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 		encoded, _ = json.Marshal(BaseResponse{ReturnCode: CodeFail, Code: code, Message: message})
 	}
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	if compressed, ok := w.(*jsonCompressionWriter); ok && compressed.writeCompressed(status, encoded) {
+		return
+	}
 	w.WriteHeader(status)
 	_, _ = w.Write(encoded)
 	_, _ = w.Write([]byte{'\n'})

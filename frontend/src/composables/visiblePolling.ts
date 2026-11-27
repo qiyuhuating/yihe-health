@@ -12,7 +12,7 @@ export function startVisiblePolling(
 ): () => void {
   const minGapMs = options.minGapMs ?? Math.min(intervalMs, 1500)
   let timer: ReturnType<typeof setInterval> | undefined
-  let lastVisibilityAt: number | undefined
+  let lastRefreshAt: number | undefined
 
   function clearTimer() {
     if (timer !== undefined) clearInterval(timer)
@@ -20,6 +20,7 @@ export function startVisiblePolling(
   }
 
   function runRefresh() {
+    lastRefreshAt = Date.now()
     refresh()
   }
 
@@ -31,11 +32,10 @@ export function startVisiblePolling(
     clearTimer()
     if (document.hidden) return
     timer = setInterval(tick, intervalMs)
-    // A first foreground return must refresh even after a hidden mount.
-    // Only later returns within the gap are redundant.
+    // Foreground return refreshes unless a recent dispatch already did so.
+    // A hidden mount has no dispatch to suppress its first refresh.
     const now = Date.now()
-    if (lastVisibilityAt === undefined || now - lastVisibilityAt >= minGapMs) {
-      lastVisibilityAt = now
+    if (lastRefreshAt === undefined || now - lastRefreshAt >= minGapMs) {
       runRefresh()
     }
   }
