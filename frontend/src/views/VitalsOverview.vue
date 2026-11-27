@@ -1,5 +1,5 @@
 <template>
-  <div class="roles">
+  <div class="roles" v-loading="isLoading" element-loading-text="正在加载健康记录…" :aria-busy="isLoading">
 
     <div class="sys-research">
       <form class="row-search" role="search" @submit.prevent="loadVitals()">
@@ -9,6 +9,8 @@
           <el-input id="search-vitals"
             placeholder="按长者姓名查找"
             v-model="searchText"
+            clearable
+            @clear="loadVitals()"
             class="input-with-select">
             <template #append><el-button aria-label="查询长者姓名"
 
@@ -27,9 +29,10 @@
       </form>
     </div>
 
-    <el-table v-if="!mobileLayout" class="adaptive-record-table" :data="displayedVitals"
+    <div v-if="loadError" class="collection-feedback" role="alert"><span>{{ loadError }}</span><el-button plain :loading="isLoading" @click="loadVitals(true)">重新加载</el-button></div>
+    <el-table v-if="!mobileLayout && !loadError" class="adaptive-record-table" :data="displayedVitals"
     style="width: 100%" border>
-    <template #empty><div  class="care-empty-state"><strong>暂无健康记录</strong><span>最新上报的心率与血压数据会显示在这里。</span></div></template>
+    <template #empty><div class="care-empty-state"><strong>{{ loadError ? '健康记录暂时无法加载' : isLoading ? '正在加载健康记录…' : '暂无健康记录' }}</strong><span>{{ loadError || '最新上报的心率与血压数据会显示在这里。' }}</span></div></template>
 
       <el-table-column type="index" width="150" align="center"></el-table-column>
       <el-table-column prop="name" label="姓名" width="180" align="center"></el-table-column>
@@ -64,7 +67,8 @@
         </template>
       </el-table-column>
     </el-table>
-    <record-cards v-if="mobileLayout" :records="displayedVitals" :fields='[{"key":"preState","label":"血压状态","state":"health","handled":"preHandled"},{"key":"rateState","label":"心率状态","state":"health","handled":"rateHandled"},{"key":"oldId","label":"长者编号"},{"key":"sex","label":"性别"}]' label="心率与血压记录" title-key="name" key-field="oldId" time-key="createTime">
+    <div v-if="mobileLayout && isLoading && !displayedVitals.length" class="care-empty-state" role="status">正在加载健康记录…</div>
+    <record-cards v-if="mobileLayout && !loadError && (displayedVitals.length || !isLoading)" :records="displayedVitals" :fields='[{"key":"preState","label":"血压状态","state":"health","handled":"preHandled"},{"key":"rateState","label":"心率状态","state":"health","handled":"rateHandled"},{"key":"oldId","label":"长者编号"},{"key":"sex","label":"性别"}]' label="心率与血压记录" title-key="name" key-field="oldId" time-key="createTime">
       <template #actions="scope"  ><el-button v-if="scope.row.rateState==1 || scope.row.preState==1"
                      size="small" plain type="danger" :icon="WarningFilled"
                      @click="showAlertRow(scope.row)">查看原因</el-button>
@@ -76,7 +80,7 @@
           </el-button></template>
     </record-cards>
 
-    <div style="margin-top: 10px;text-align: center">
+    <div class="care-pagination-bar">
       <el-pagination layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
         @current-change="changePage"
@@ -126,7 +130,7 @@ const {
   primaryChartElement, secondaryChartElement, showRecordDetails, resizeCharts, disposeCharts
 } = useRecordCharts()
 const {
-  records: vitalRecords, total,
+  records: vitalRecords, isLoading, loadError, total,
   pageSize, currentPage, load: loadVitals,
   handleSizeChange, changePage
 } = usePagedRecords<VitalRow, { name: string; timeFirst: string; timeLast: string }>({

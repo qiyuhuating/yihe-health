@@ -9,6 +9,7 @@
           <el-input id="search-step"
             placeholder="按长者姓名查找"
             v-model="searchText"
+            clearable
             class="input-with-select">
             <template #append><el-button aria-label="查询长者姓名"
 
@@ -52,7 +53,7 @@
           </el-button></template>
     </record-cards>
 
-    <div style="margin-top: 10px;text-align: center">
+    <div class="care-pagination-bar">
       <el-pagination layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
         @current-change="changePage"

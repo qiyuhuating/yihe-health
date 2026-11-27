@@ -57,31 +57,33 @@ async function logout() {
 
 <style scoped>
 .care-header {
+  position: relative;
+  z-index: 20;
   height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
+  background: var(--care-surface);
   border-bottom: 1px solid var(--care-border);
   box-shadow: var(--care-shadow-sm);
 }
-.brand { display: inline-flex; align-items: center; gap: 12px; color: var(--care-text); text-decoration: none; }
-.brand:focus-visible { outline: 2px solid var(--care-primary); outline-offset: 5px; border-radius: 4px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; color: var(--care-text); text-decoration: none; min-width: 0; }
+.brand:focus-visible { outline: var(--care-focus-width) solid var(--care-focus-color); outline-offset: 4px; border-radius: 6px; }
 .brand-mark { display: block; width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; border-radius: 50%; box-shadow: 0 0 0 2px var(--care-primary-soft); }
-.brand-copy { display: flex; flex-direction: column; gap: 2px; }
+.brand-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .brand-copy strong { font-size: 21px; font-weight: 600; letter-spacing: .1em; color: var(--care-brand-dark); }
-.brand-copy small { color: var(--care-text-muted); font-size: 12px; letter-spacing: .06em; }
-.header-right { display: flex; align-items: center; gap: 12px; color: var(--care-text-muted); }
-.header-divider { width: 1px; height: 24px; background: #e5ebe7; margin: 0 8px; }
-.user-avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #eaf3ef; color: #28776a; font-weight: 600; }
-.username { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
-.settings-button { min-width: 48px; min-height: 48px; }
-.logout-button { min-width: 48px; min-height: 48px; color: var(--care-text-muted); padding: 8px 4px; }
-.logout-button:hover { color: #28776a; }
-.text-size-button { min-width: 64px; min-height: 48px; padding: 10px; border: 1px solid #d3dfce; border-radius: 8px; color: var(--care-primary); font-weight: 500; }
-.text-size-button:focus-visible { outline: 3px solid var(--care-primary); outline-offset: 2px; }
+.brand-copy small { color: var(--care-text-muted); font-size: 13px; letter-spacing: .04em; }
+.header-right { display: flex; align-items: center; gap: 12px; color: var(--care-text-muted); flex-shrink: 0; }
+.header-divider { width: 1px; height: 24px; background: var(--care-border); margin: 0 6px; }
+.user-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--care-success-bg); border: 1px solid var(--care-success-border); color: var(--care-primary); font-weight: 600; }
+.username { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--care-text-secondary); }
+.settings-button { min-width: var(--care-target-primary); min-height: var(--care-target-primary); }
+.logout-button { min-width: var(--care-target-primary); min-height: var(--care-target-primary); color: var(--care-text-secondary); padding: 8px 6px; }
+.logout-button:hover { color: var(--care-primary); }
+.text-size-button { min-width: 64px; min-height: var(--care-target-primary); padding: 10px 12px; border: 1px solid var(--care-neutral-border); border-radius: var(--care-control-radius); color: var(--care-primary); font-weight: 500; }
+.text-size-button:hover { background: var(--care-surface-hover); border-color: var(--care-primary); }
+.text-size-button:focus-visible { outline: var(--care-focus-width) solid var(--care-focus-color); outline-offset: 2px; }
 @media (max-width: 600px) {
   .care-header { min-height: 72px; height: auto; padding: 10px 16px; gap: 8px; }
   .header-divider, .brand-copy small, .username { display: none; }

@@ -13,11 +13,11 @@
         <section class="workspace-content">
           <database-notice />
           <header v-if="showPageIntro" class="view-intro">
-            <p class="view-breadcrumb">工作台 <el-icon><ArrowRight /></el-icon> {{ route.meta.title }}</p>
+            <nav class="view-breadcrumb" aria-label="当前位置">工作台 <el-icon aria-hidden="true"><ArrowRight /></el-icon> <span aria-current="page">{{ route.meta.title }}</span></nav>
             <h1>{{ route.meta.title }}</h1>
             <p class="view-description">{{ pageDescription }}</p>
           </header>
-          <router-view v-slot="{ Component }"><transition name="care-view" mode="out-in"><ErrorBoundary :key="route.path"><component :is="Component" /></ErrorBoundary></transition></router-view>
+          <router-view v-slot="{ Component }"><ErrorBoundary :key="route.path"><component :is="Component" /></ErrorBoundary></router-view>
         </section>
       </main>
     </div>
@@ -28,15 +28,15 @@
 import { ArrowRight } from '@element-plus/icons-vue'
 import type { TabsPaneContext } from 'element-plus'
 import ErrorBoundary from '@/components/ErrorBoundary.vue'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Slider from '@/components/Slider.vue'
 import NavTop from '@/components/Header.vue'
 import store from '@/store'
+import { useWorkspaceFocus } from '@/composables/useWorkspaceFocus'
 
 const route = useRoute()
 const router = useRouter()
-const workspaceMain = ref<HTMLElement | null>(null)
 const openTab = computed(() => store.state.openTab)
 const activeIndex = computed(() => store.state.activeIndex)
 const noIntro = ['/operations/overview', '/operations/devices', '/operations/invitations']
@@ -57,7 +57,6 @@ const descriptions: Record<string, string> = {
   '/operations/comments': '查看公告评论并处理互动内容。'
 }
 const pageDescription = computed(() => descriptions[route.path] || '在这里查看和管理照护信息。')
-function focusMain() { workspaceMain.value?.focus() }
 function tabClick(tab: TabsPaneContext) {
   if (typeof tab.paneName === 'string' && tab.paneName !== route.path) {
     void router.push({ path: tab.paneName })
@@ -77,41 +76,34 @@ function addCurrentTab(nextRoute: ReturnType<typeof useRoute>) {
   store.addTab({ route: nextRoute.path, name: (typeof nextRoute.meta.title === 'string' && nextRoute.meta.title ? nextRoute.meta.title : '运营总览') })
   store.activate(nextRoute.path)
 }
+const { workspaceMain, focusMain } = useWorkspaceFocus(() => addCurrentTab(route))
 onMounted(() => addCurrentTab(route))
-watch(() => route.path, async () => {
-  addCurrentTab(route)
-  await nextTick()
-  if (workspaceMain.value) {
-    workspaceMain.value.scrollTop = 0
-    workspaceMain.value.focus({ preventScroll: true })
-  }
-})
 </script>
 
 <style scoped>
-.skip-link { position: fixed; top: -80px; left: 16px; z-index: 3000; padding: 14px 20px; border-radius: 8px; background: #fff; color: var(--care-brand-dark); }
+.skip-link { position: fixed; top: -80px; left: 16px; z-index: 3000; padding: 14px 20px; border-radius: var(--care-control-radius); background: var(--care-surface); color: var(--care-brand-dark); box-shadow: var(--care-shadow-card); }
 .skip-link:focus { top: 12px; }
 .care-app { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden; background: var(--care-canvas); }
 .workspace-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 0; overflow: hidden; }
 .workspace-sidebar { min-width: 0; min-height: 0; overflow-y: auto; }
 .workspace-main { min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scroll-padding-block: 20px; padding: clamp(18px, 2vh, 26px) clamp(20px, 2.2vw, 48px) 28px; }
-.workspace-tabs { width: 100%; margin: 0 auto 28px; border-bottom: 1px solid #dce4db; padding: 0; }
+.workspace-tabs { width: 100%; margin: 0 auto 24px; border-bottom: 1px solid var(--care-border); padding: 0; }
 .workspace-tabs :deep(.el-tabs__header) { margin: 0; border: 0; }
 .workspace-tabs :deep(.el-tabs__nav-wrap::after) { display: none; }
-.workspace-tabs :deep(.el-tabs__item) { height: 48px; line-height: 48px; color: var(--care-muted); }
+.workspace-tabs :deep(.el-tabs__item) { height: var(--care-target-primary); line-height: var(--care-target-primary); color: var(--care-text-muted); }
 .workspace-tabs :deep(.el-tabs__item.is-active) { color: var(--care-primary); font-weight: 500; }
 .workspace-tabs :deep(.el-tabs__active-bar) { background: var(--care-primary); }
-.workspace-content :deep(.admin-record-dialog) { display: flex; flex-direction: column; max-width: 640px; max-height: calc(100vh - 48px); margin: 24px auto !important; }
-.workspace-content :deep(.admin-record-dialog .el-dialog__header) , .workspace-content :deep(.admin-record-dialog .el-dialog__footer) { flex-shrink: 0; }
+.workspace-content :deep(.admin-record-dialog) { display: flex; flex-direction: column; max-width: 640px; max-height: calc(100dvh - 48px); margin: 24px auto !important; }
+.workspace-content :deep(.admin-record-dialog .el-dialog__header), .workspace-content :deep(.admin-record-dialog .el-dialog__footer) { flex-shrink: 0; }
 .workspace-content :deep(.admin-record-dialog .el-dialog__header) { padding-right: 76px; }
 .workspace-content :deep(.admin-record-dialog .el-dialog__body) { min-height: 0; overflow-y: auto; }
-.workspace-content :deep(.admin-record-dialog .el-dialog__headerbtn) { top: 8px; right: 12px; display: grid; place-items: center; width: 48px; height: 48px; font-size: 20px; }
+.workspace-content :deep(.admin-record-dialog .el-dialog__headerbtn) { top: 8px; right: 12px; display: grid; place-items: center; width: var(--care-target-primary); height: var(--care-target-primary); font-size: 20px; }
 .workspace-content { min-width: 0; width: 100%; margin-right: auto; margin-left: auto; }
 .view-intro { margin: 0 0 20px; }
-.view-breadcrumb { margin: 0 0 10px; color: var(--care-text-muted); font-size: 13px; }
-.view-breadcrumb i { margin: 0 5px; font-size: 9px; }
-.view-intro h1 { margin: 0; color: var(--care-text); font-size: 28px; line-height: 1.25; font-weight: 500; letter-spacing: -.02em; }
-.view-description { margin: 8px 0 0; color: #64756c; font-size: 14px; line-height: 1.65; }
+.view-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; color: var(--care-text-muted); font-size: 13px; }
+.view-breadcrumb .el-icon { font-size: 12px; }
+.view-intro h1 { margin: 0; color: var(--care-heading); font-size: var(--care-page-title); line-height: 1.35; font-weight: 600; letter-spacing: -.015em; }
+.view-description { margin: 8px 0 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.65; }
 @media (max-width: 900px) {
   .workspace-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   .workspace-sidebar { max-height: 40dvh; }

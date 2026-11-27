@@ -28,7 +28,7 @@
         <el-pagination @size-change="handleSizeChange" @current-change="changePage" v-model:current-page="currentPage" :page-size="pageSize" layout="total, prev, pager, next" :pager-count="5" :total="total"></el-pagination>
       </div>
     </section>
-    <el-dialog title="展示图片预览" v-model="previewVisible"><img class="gallery-preview" :src="previewUrl" alt="选中的展示图片"></el-dialog>
+    <el-dialog title="展示图片预览" v-model="previewVisible"><img class="gallery-preview" :src="previewUrl" alt="选中的展示图片" decoding="async"></el-dialog>
 
     <details class="upload-panel"><summary class="image-maintenance-summary">更多展示图片设置<span>公告附图请在公告编辑中添加</span></summary><div class="image-maintenance-body">
       <div class="upload-heading"><div><h2>公告图片</h2><p>维护独立的展示图片，JPG 格式，单张不超过8MB。</p></div></div>
@@ -42,10 +42,10 @@
 </template>
 <style scoped>
 .announcement-admin { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; color: var(--care-text); }
-.announcement-list-panel, .upload-panel { min-width: 0; max-width: 100%; box-sizing: border-box; padding: 22px; border: 1px solid #e5ebe7; border-radius: 14px; background: #fff; box-shadow: 0 4px 18px rgba(29,63,51,.04); }
+.announcement-list-panel, .upload-panel { min-width: 0; max-width: 100%; box-sizing: border-box; padding: 22px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
 .announcement-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-width: 0; margin-bottom: 18px; }
 .announcement-toolbar h2, .upload-heading h2 { margin: 0; font-size: 18px; font-weight: 600; }
-.announcement-toolbar p, .upload-heading p { margin: 6px 0 0; color: #64756c; font-size: 13px; line-height: 1.6; }
+.announcement-toolbar p, .upload-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.65; }
 .announcement-query { flex: 1; min-width: 0; }
 .announcement-actions { display: flex; align-items: flex-end; gap: 16px; width: min(100%, 540px); min-width: 0; }
 .announcement-actions .el-input { min-width: 0; }

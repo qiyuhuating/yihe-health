@@ -36,6 +36,20 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html[data-care-input="pointer"] :is(button, .el-button, .info-tile):active,
+  html[data-care-input="pointer"] .dialog-fade-enter-from .el-dialog,
+  html[data-care-input="pointer"] .el-popper:is(.el-zoom-in-top-enter-from, .el-zoom-in-top-leave-to) {
+    transform: none !important;
+  }
+}
+
+html.reduce-motion[data-care-input="pointer"] :is(button, .el-button, .info-tile):active,
+html.reduce-motion[data-care-input="pointer"] .dialog-fade-enter-from .el-dialog,
+html.reduce-motion[data-care-input="pointer"] .el-popper:is(.el-zoom-in-top-enter-from, .el-zoom-in-top-leave-to) {
+  transform: none !important;
+}
+
 /* Element Plus input groups expose their own outer focus ring. Avoid a
    second ring inside the compound search control while preserving keyboard
    focus visibility on the group. Standalone fields remain unaffected. */

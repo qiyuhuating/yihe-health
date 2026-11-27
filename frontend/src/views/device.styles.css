@@ -1,67 +1,76 @@
 .device .tip {
-  color: #909399;
-  font-size: 12px;
-  line-height: 24px;
-  padding-top: 6px;
+  color: var(--care-text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  padding-top: 8px;
 }
 .device .created {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f5f7fa;
-  border-radius: 6px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--care-surface-muted);
+  border: 1px solid var(--care-border);
+  border-radius: var(--care-control-radius);
 }
 .device .created-title {
-  font-size: 13px;
-  color: #606266;
-  padding-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--care-heading);
+  padding-bottom: 8px;
 }
 .device .created-line {
-  font-size: 14px;
-  line-height: 28px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--care-text);
 }
 .device .secret {
-  color: #52BAB5;
+  color: var(--care-primary);
+  font-weight: 600;
   word-break: break-all;
 }
 .device .new-code {
-  padding: 10px;
-  background: #f0f9f8;
-  border-radius: 6px;
+  padding: 14px 16px;
+  background: var(--care-success-bg);
+  border: 1px solid var(--care-success-border);
+  border-radius: var(--care-control-radius);
 }
 .device .alert-table {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 14px;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 15px;
 }
 .device .alert-table th {
-  width: 90px;
+  width: 96px;
   text-align: left;
-  color: #909399;
-  font-weight: normal;
-  padding: 6px 8px;
+  color: var(--care-text-secondary);
+  font-weight: 600;
+  padding: 10px 12px;
   vertical-align: top;
-  background: #fafafa;
-  border: 1px solid #ebeef5;
+  background: var(--care-surface-muted);
+  border: 1px solid var(--care-border);
 }
 .device .alert-table td {
-  padding: 6px 8px;
-  color: #303133;
-  border: 1px solid #ebeef5;
-  line-height: 20px;
+  padding: 10px 12px;
+  color: var(--care-text);
+  border: 1px solid var(--care-border);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 .device .alert-actions {
-  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
 }
 .device .no-alert {
   text-align: center;
-  padding: 20px;
-  color: #606266;
+  padding: 24px 16px;
+  color: var(--care-text-secondary);
 }
 .device .code-text {
   font-size: 26px;
   letter-spacing: 4px;
-  color: #52BAB5;
-  font-weight: bold;
-  padding: 4px 0;
+  color: var(--care-primary);
+  font-weight: 700;
+  padding: 6px 0;
 }

@@ -16,6 +16,7 @@ run(async ({ page, context, base, report, setRole, setSignedIn }) => {
   await context.route('**/api/v1/care/diagnostics', route => route.fulfill({ status: 403, json: {returnCode:'0000',code:'INVALID_REQUEST',message:'请求未完成',} }))
   const elder = { oldId: 1, name: '李奶奶', bothdate: '1948-03-01', sex: '女', phone: '13000000000', room: '301', beTime: '2026-10-01', customerName: '张女士', deviceId: 1, familyName: '小明', familySex: '男', familyRelation: '子女', familyPhone: '13900000000', familyAddress: '很长的家属联系地址'.repeat(12), illness: '病史资料'.repeat(30), warn: '青霉素', foodLike: '米饭', foodHate: '花生', drag: '常用药物资料' }
   const lists = [
+    ['/operations/vitals', 'vitals/latest', 'vitalRecords', { oldId: 1, name: '李奶奶', rateState: 0, preState: 0 }],
     ['/operations/residents', 'residents/details', 'oldPersonDetails', elder],
     ['/operations/guardians', 'guardians/list', 'customers', { customerId: 1, customerName: '张女士' }],
     ['/operations/families', 'family/select', 'familyDtos', { familyId: 1, familyName: '小明' }],
@@ -171,6 +172,37 @@ run(async ({ page, context, base, report, setRole, setSignedIn }) => {
   await page.waitForFunction(() => document.querySelectorAll('.metric-error').length === 0)
   check('HTTP failure retry reloads the atomic snapshot',
     (await page.locator('.alert-card strong').first().textContent()) === '4')
+
+  // The security form remains available without consuming dashboard space.
+  check('security form is not in the overview', await page.locator('.workspace-main .security-panel').count() === 0)
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  const settings = page.getByRole('dialog', { name: '常规设置' })
+  const security = settings.locator('.security-panel')
+  await security.waitFor()
+  check('administrator can manage two-factor authentication in settings', await security.locator('#security-password').isEnabled() && await security.locator('#security-otp').isEnabled())
+  await security.locator('#security-password').fill('test-only')
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  await security.waitFor()
+  check('closing settings clears the password input', await security.locator('#security-password').inputValue() === '')
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
+
+  setRole('FAMILY')
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(base + '/?large=0&family=' + width + '#/family-portal/overview')
+    const illustration = page.locator('.welcome-scene img')
+    await illustration.waitFor()
+    await illustration.evaluate(img => img.decode())
+    check('family illustration ' + width + ' loads without overflow', await illustration.evaluate(img => img.naturalWidth > 0 && img.getBoundingClientRect().width <= innerWidth) && await page.locator('.workspace-main').evaluate(el => el.scrollWidth <= el.clientWidth + 1))
+  }
+  await page.getByRole('button', { name: '打开通用设置' }).click()
+  await settings.waitFor()
+  check('family settings does not duplicate account security', await settings.locator('.security-panel').count() === 0)
+  await settings.getByRole('button', { name: '完成', exact: true }).click()
+  await settings.waitFor({ state: 'hidden' })
 
   setSignedIn(false)
   await page.goto(base + '/#/sign-in')

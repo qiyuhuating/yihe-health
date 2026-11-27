@@ -11,7 +11,7 @@
       <p v-if="saveError" class="editor-error" role="alert">{{ saveError }}</p>
       <footer class="editor-actions"><span>确认预览内容后再{{ editing ? '保存' : '发布' }}。</span><el-button type="primary" :loading="saving" :disabled="loading || !!loadError || uploadsPending" @click="submit">{{ editing ? '保存公告' : '发布公告' }}</el-button></footer>
     </section>
-    <aside class="editor-side"><section class="notice-preview collection-panel" aria-label="公告实时预览"><p class="collection-eyebrow">家属阅读预览</p><h2>{{ form.title || '这里显示公告标题' }}</h2><p class="preview-time">{{ editing ? '保存后更新公告内容' : '发布后显示发布时间' }}</p><div class="preview-body">{{ form.textMain || '正文会在这里显示，方便您确认语气与重点。' }}</div><img v-for="file in successfulAttachments" :key="file.uid || file.name" :src="file.url" alt="公告附图预览"></section><section class="editor-guidance"><img src="/static/img/care-courtyard.webp" alt="" width="960" height="411"><div><h3>简洁一点，关怀更清楚</h3><p>先说明事项，再交代家属需要留意的内容。避免模糊时间和未经确认的健康结论。</p></div></section></aside>
+    <aside class="editor-side"><section class="notice-preview collection-panel" aria-label="公告实时预览"><p class="collection-eyebrow">家属阅读预览</p><h2>{{ form.title || '这里显示公告标题' }}</h2><p class="preview-time">{{ editing ? '保存后更新公告内容' : '发布后显示发布时间' }}</p><div class="preview-body">{{ form.textMain || '正文会在这里显示，方便您确认语气与重点。' }}</div><img v-for="file in successfulAttachments" :key="file.uid || file.name" :src="file.url" alt="公告附图预览"></section><section class="editor-guidance"><img src="/static/img/care-courtyard.webp" alt="" width="960" height="411" loading="lazy" decoding="async"><div><h3>简洁一点，关怀更清楚</h3><p>先说明事项，再交代家属需要留意的内容。避免模糊时间和未经确认的健康结论。</p></div></section></aside>
   </div>
 </template>
 <script setup lang="ts">
