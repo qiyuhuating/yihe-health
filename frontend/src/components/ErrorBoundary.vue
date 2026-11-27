@@ -53,7 +53,42 @@ onBeforeUnmount(clearCooldownTimer)
 </script>
 
 <style scoped>
-.view-error { padding: 24px; color: var(--care-text); }
-.view-error button { padding: 12px 18px; cursor: pointer; }
-.view-error button:disabled { opacity: 0.6; cursor: not-allowed; }
+.view-error {
+  max-width: 600px;
+  margin: 24px auto;
+  padding: 28px;
+  border: 1px solid var(--care-danger-border);
+  border-radius: var(--care-panel-radius);
+  background: var(--care-surface);
+  box-shadow: var(--care-shadow-sm);
+  color: var(--care-text);
+}
+.view-error h2 {
+  margin: 0 0 10px;
+  color: var(--care-heading);
+  font-size: 20px;
+}
+.view-error p {
+  margin: 0 0 18px;
+  color: var(--care-text-secondary);
+  line-height: 1.75;
+}
+.view-error button {
+  min-height: var(--care-target-primary);
+  padding: 10px 20px;
+  border: 1px solid var(--care-primary);
+  border-radius: var(--care-control-radius);
+  background: var(--care-primary);
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+}
+.view-error button:hover:not(:disabled) {
+  background: var(--care-primary-hover);
+  border-color: var(--care-primary-hover);
+}
+.view-error button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 </style>

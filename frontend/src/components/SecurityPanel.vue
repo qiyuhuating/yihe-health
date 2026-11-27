@@ -54,5 +54,81 @@ async function send(action: 'setup' | 'confirm' | 'disable') {
 onBeforeUnmount(() => { password.value = ''; otp.value = ''; secret.value = ''; recoveryCodes.value = [] })
 </script>
 <style scoped>
-.security-panel{display:grid;gap:12px;max-width:640px;margin-top:24px;padding:22px;border:1px solid #d8e2da;border-radius:14px;background:#fff;color:var(--care-text)}.security-panel h3,.security-panel p{margin:0;line-height:1.6}.security-panel input,.security-panel textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #bacabc;border-radius:6px;font:inherit}.security-actions{display:flex;flex-wrap:wrap;gap:12px}.security-panel button{padding:10px 16px;border:1px solid #8da58f;border-radius:6px;background:#f5f8f2;color:var(--care-primary);cursor:pointer}.security-panel button:disabled{opacity:.5;cursor:default}.security-panel [role=alert]{color:#a02f2f}.security-panel a{color:var(--care-primary)}
+.security-panel {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--care-border);
+  border-radius: var(--care-card-radius);
+  background: var(--care-surface);
+  box-shadow: var(--care-shadow-sm);
+  color: var(--care-text);
+}
+.security-panel h3 {
+  margin: 0;
+  color: var(--care-heading);
+  font-size: 18px;
+}
+.security-panel p {
+  margin: 0;
+  color: var(--care-text-muted);
+  line-height: 1.65;
+}
+.security-panel label {
+  color: var(--care-text-secondary);
+  font-size: 15px;
+}
+.security-panel input,
+.security-panel textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--care-target-min);
+  padding: 10px 14px;
+  border: 1px solid var(--care-control-border);
+  border-radius: var(--care-control-radius);
+  background: var(--care-surface);
+  color: var(--care-text);
+  font: inherit;
+}
+.security-panel input:focus,
+.security-panel textarea:focus {
+  border-color: var(--care-primary);
+  outline: 2px solid var(--care-primary);
+  outline-offset: -1px;
+}
+.security-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.security-panel button {
+  min-height: var(--care-target-min);
+  padding: 10px 18px;
+  border: 1px solid var(--care-control-border);
+  border-radius: var(--care-control-radius);
+  background: var(--care-success-bg);
+  color: var(--care-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+.security-panel button:hover:not(:disabled) {
+  border-color: var(--care-primary);
+  background: var(--care-surface-hover);
+}
+.security-panel button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.security-panel [role='alert'] {
+  color: var(--care-danger);
+}
+.security-panel a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--care-target-min);
+  color: var(--care-primary);
+  text-underline-offset: 3px;
+}
 </style>

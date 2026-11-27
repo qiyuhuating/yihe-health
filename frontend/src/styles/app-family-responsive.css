@@ -1,4 +1,3 @@
-
 /* Family portal defaults are intentionally larger for older and low-vision users. */
 .care-family {
   --care-control-height: 56px;
@@ -7,14 +6,14 @@
 
 .care-family .el-button,
 .care-family .el-button--small {
-  min-height: 48px;
+  min-height: var(--care-target-primary);
   padding-right: 18px;
   padding-left: 18px;
   font-size: 17px;
 }
 
 .care-family .el-button.is-link {
-  min-height: 48px;
+  min-height: var(--care-target-primary);
   padding: 10px 4px;
 }
 
@@ -56,10 +55,10 @@
 .care-family .record-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
 .care-family .record-heading h2 { margin: 0; color: var(--care-heading); font-size: 22px; }
 .care-family .el-alert { margin-bottom: 16px; }
-.care-family .status-normal { color: #236b3d; font-weight: 600; }
+.care-family .status-normal { color: var(--care-primary); font-weight: 600; }
 .care-family .status-danger { color: var(--care-danger); font-weight: 600; }
-.care-family .el-tag--success { color: #236b3d; background: #edf7f0; border-color: #bad8c2; }
-.care-family .el-tag--danger { color: var(--care-danger); background: #fff1f0; border-color: #e7b9b6; }
+.care-family .el-tag--success { color: var(--care-primary); background: var(--care-success-bg); border-color: var(--care-success-border); }
+.care-family .el-tag--danger { color: var(--care-danger); background: var(--care-danger-bg); border-color: var(--care-danger-border); }
 .care-family .care-empty-state,
 .care-family .position-map-heading p,
 .care-family .position-map-note,
@@ -67,27 +66,27 @@
 .care-family .unknown-state { color: var(--care-text-muted); font-size: 16px; line-height: 1.7; }
 .care-family .position-map { padding: 24px; }
 .care-family .position-map-heading h2 { font-size: 21px; }
-.care-family .el-dialog { display: flex; flex-direction: column; width: 92vw; max-width: 1000px; max-height: calc(100vh - 48px); margin: 24px auto !important; }
+.care-family .el-dialog { display: flex; flex-direction: column; width: 92vw; max-width: 1000px; max-height: calc(100dvh - 48px); margin: 24px auto !important; }
 .care-family .el-dialog__header { flex-shrink: 0; padding-right: 76px; }
-.care-family .el-dialog__body { min-height: 0; overflow-y: auto; }
-.care-family .el-dialog__footer { flex-shrink: 0; padding: 16px 24px; border-top: 1px solid var(--care-line); }
-.care-family .el-dialog__headerbtn { top: 8px; right: 12px; display: grid; place-items: center; width: 48px; height: 48px; font-size: 20px; }
+.care-family .el-dialog__body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.care-family .el-dialog__footer { flex-shrink: 0; padding: 16px 24px; border-top: 1px solid var(--care-border-soft); }
+.care-family .el-dialog__headerbtn { top: 8px; right: 12px; display: grid; place-items: center; width: var(--care-target-primary); height: var(--care-target-primary); font-size: 20px; }
 .care-family .profile-dialog { max-width: 640px; }
-.care-family .profile-dialog .el-input.is-disabled .el-input__inner { color: var(--care-text-muted); -webkit-text-fill-color: var(--care-text-muted); background: #f1f4eb; }
-.profile-sex-options .el-select-dropdown__item { min-height: 48px; height: auto; line-height: 48px; color: var(--care-text); font-size: 18px; }
+.care-family .profile-dialog .el-input.is-disabled .el-input__inner { color: var(--care-text-muted); -webkit-text-fill-color: var(--care-text-muted); background: var(--care-surface-muted); }
+.profile-sex-options .el-select-dropdown__item { min-height: var(--care-target-primary); height: auto; line-height: var(--care-target-primary); color: var(--care-text); font-size: 18px; }
 html.large-text .profile-sex-options .el-select-dropdown__item { font-size: 20px; }
 
 .auth-page { font-size: 18px; }
 .auth-page .story-kicker { font-size: 15px; }
 .auth-page .story-copy p { font-size: 18px; }
-.auth-page .story-caption { color: #fff; font-size: 16px; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.auth-page .story-caption { color: #fff; font-size: 16px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); }
 .auth-page .auth-eyebrow { color: var(--care-text-muted); font-size: 16px; }
 .auth-page .auth-intro { font-size: 17px; line-height: 1.65; }
 .auth-page .login-form .el-input__inner { height: 52px; font-size: 18px; }
 .care-family .el-input__inner::placeholder,
 .care-family .el-textarea__inner::placeholder,
 .auth-page .el-input__inner::placeholder,
-.auth-page .el-textarea__inner::placeholder { color: #59665f; opacity: 1; }
+.auth-page .el-textarea__inner::placeholder { color: var(--care-text-muted); opacity: 1; }
 .auth-page .auth-footnote,
 .auth-page .auth-footer { color: var(--care-text-muted); font-size: 15px; }
 html.large-text .auth-page .story-kicker,
@@ -107,15 +106,14 @@ html.large-text .care-family .unknown-state { font-size: 18px; }
 @media (max-width: 1100px) {
   #app .care-family .roles { padding: 0; border: 0; background: transparent; box-shadow: none; }
   .care-family .family-record-cards { display: grid; gap: 14px; }
-  .care-family .family-record-empty { display: block; padding: 24px 16px; border: 1px solid var(--care-line); border-radius: 12px; background: #fff; color: #33453c; font-size: 17px; line-height: 1.7; text-align: center; }
-  .care-family .family-record-card { padding: 18px; border: 1px solid var(--care-line); border-radius: 12px; background: #fff; }
-  .care-family .family-record-card h2 { margin: 0 0 12px; color: var(--care-ink); font-size: 19px; }
+  .care-family .family-record-empty { display: block; padding: 24px 16px; border: 1px solid var(--care-border); border-radius: 12px; background: var(--care-surface); color: var(--care-text-secondary); font-size: 17px; line-height: 1.7; text-align: center; }
+  .care-family .family-record-card { padding: 18px; border: 1px solid var(--care-border); border-radius: 12px; background: var(--care-surface); box-shadow: var(--care-shadow-sm); }
+  .care-family .family-record-card h2 { margin: 0 0 12px; color: var(--care-heading); font-size: 19px; }
   .care-family .family-record-card dl { display: grid; grid-template-columns: minmax(100px, auto) 1fr; gap: 10px 12px; margin: 0 0 14px; }
-  .care-family .family-record-card dt { color: #59665f; font-size: 15px; }
-  .care-family .family-record-card dd { margin: 0; color: var(--care-text); font-size: 17px; }
-  .care-family .family-record-card dd { min-width: 0; overflow-wrap: anywhere; }
+  .care-family .family-record-card dt { color: var(--care-text-muted); font-size: 15px; }
+  .care-family .family-record-card dd { margin: 0; color: var(--care-text); font-size: 17px; min-width: 0; overflow-wrap: anywhere; }
   .care-family .family-record-card dd.status-danger { color: var(--care-danger); }
-  .care-family .family-record-card dd.status-normal { color: #236b3d; }
+  .care-family .family-record-card dd.status-normal { color: var(--care-primary); }
   .care-family .family-record-card .el-button { width: 100%; }
   .care-family .position-map { padding: 18px 14px; }
 }
@@ -142,19 +140,10 @@ html.large-text .care-header { min-height: 80px; height: auto; }
   html.large-text .care-family .workspace-layout { grid-template-columns: 280px minmax(0, 1fr); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
-}
-
 @media (max-width: 600px) {
   #app .roles { padding: 16px 12px; border-radius: 12px; }
   #app .roles .sys-research { margin-bottom: 14px; }
-    .el-dialog__header { padding: 16px 18px; }
+  .el-dialog__header { padding: 16px 18px; }
   .el-dialog__body { padding: 18px; }
   .el-dialog__footer { padding: 10px 18px 18px; }
   .el-pagination { white-space: normal; }
@@ -163,4 +152,9 @@ html.large-text .care-header { min-height: 80px; height: auto; }
   html.large-text .care-family .workspace-main { padding-right: 12px; padding-left: 12px; }
 }
 
-:root { --el-color-primary:var(--care-primary); --el-color-success:var(--care-primary); --el-font-family:var(--care-font-family); --el-border-radius-base:8px; }
+:root {
+  --el-color-primary: var(--care-primary);
+  --el-color-success: var(--care-primary);
+  --el-font-family: var(--care-font-family);
+  --el-border-radius-base: 8px;
+}

@@ -1,7 +1,7 @@
 <template>
   <main class="setup-page">
     <section class="setup-story" aria-label="颐和">
-      <img src="/static/brand/yihe-logo-512.webp" width="280" height="280" alt="颐和山水标志">
+      <img src="/static/brand/yihe-logo-512.webp" width="280" height="280" alt="颐和山水标志" decoding="async">
       <p>岁月有伴，日常安宁</p>
       <h1>从此刻，<br>安放每一份牵挂。</h1>
     </section>
