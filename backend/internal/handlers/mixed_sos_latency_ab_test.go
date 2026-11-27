@@ -14,7 +14,10 @@ import (
 	"testing"
 	"time"
 
+	"yihe-care/internal/auth"
+	"yihe-care/internal/csrf"
 	"yihe-care/internal/health"
+	"yihe-care/internal/session"
 )
 
 // TestMixedSOSLatencyAB is opt-in. It uses disposable MySQL, real HTTP and
@@ -34,6 +37,7 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	}
 	const batchSize = 64
 	const requests = 200
+	authMix := os.Getenv("MIXED_SOS_AUTH") == "1"
 	pool := testDatabase(t)
 	seedDevice(t, pool)
 	for i := 2; i <= workers; i++ {
@@ -50,9 +54,28 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		}
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/batch", h.healthBatch)
-	mux.HandleFunc("/sos", h.deviceSos)
-	server := httptest.NewServer(mux)
+	var app http.Handler = mux
+	var profile *session.Session
+	const phone, password = "13800000041", "MixedFixturePassword123!"
+	if authMix {
+		seedCareAdminDuty(t, pool, 41, "supervisor")
+		hash, err := auth.Hash(password)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mustExec(t, pool, "UPDATE users SET user_phone=?,password=? WHERE user_id=41", phone, hash)
+		h.Sessions.UseDatabase(pool.DB, h.Box)
+		profile = h.Sessions.Create(session.Principal{Role: auth.RoleAdmin, ID: 41, Phone: phone})
+		if profile == nil {
+			t.Fatal("fixture profile")
+		}
+		h.Routes(mux)
+		app = AuthenticationAdmission(csrf.Middleware(h.Sessions, auth.Middleware(h.Sessions, h.EnforceAdminDuty(h.EnforceDeviceSignatures(mux)))))
+	} else {
+		mux.HandleFunc("/batch", h.healthBatch)
+		mux.HandleFunc("/sos", h.deviceSos)
+	}
+	server := httptest.NewServer(app)
 	defer server.Close()
 	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{MaxIdleConns: 24, MaxIdleConnsPerHost: 24}}
 	defer client.CloseIdleConnections()
@@ -62,7 +85,15 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 			return 0, 0, err
 		}
 		start := time.Now()
-		resp, err := client.Post(server.URL+path, "application/json", bytes.NewReader(body))
+		urlPath := path
+		if authMix {
+			if path == "/batch" {
+				urlPath = "/api/v1/device/healthBatch"
+			} else {
+				urlPath = "/api/v1/device/sos"
+			}
+		}
+		resp, err := client.Post(server.URL+urlPath, "application/json", bytes.NewReader(body))
 		if err != nil {
 			return 0, 0, err
 		}
@@ -85,8 +116,8 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		return ms, resp.StatusCode, nil
 	}
 	var mu sync.Mutex
-	var healthMS, sosMS []float64
-	var rejected int
+	var healthMS, sosMS, profileMS, loginMS []float64
+	var rejected, profileRejected, loginRejected int
 	var firstErr error
 	fail := func(e error) {
 		mu.Lock()
@@ -98,7 +129,105 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	stop := make(chan struct{})
 	var writers sync.WaitGroup
 	at := time.Date(2026, 10, 23, 0, 0, 0, 0, time.UTC)
+	var before, after mixedDBSnapshot
+	if authMix {
+		before = readMixedDBSnapshot(t, pool.DB)
+	}
 	start := time.Now()
+	if authMix {
+		// Fixed closed-loop workload: two continuous authenticated profile
+		// readers and one repeated real password/CSRF/session lifecycle.
+		// The login worker paces successful cycles to stay below the
+		// anonymous creation token rate. No fabricated login results.
+		for range 2 {
+			writers.Go(func() {
+				for {
+					select {
+					case <-stop:
+						return
+					default:
+					}
+					ms, _, _, status, err := mixedAuthRequest(client, server.URL, "GET", "/api/v1/auth/session", profile.ID, "", nil)
+					if err != nil || (status != 200 && status != 429) {
+						fail(fmt.Errorf("profile status=%d: %v", status, err))
+						return
+					}
+					mu.Lock()
+					if status == 429 {
+						profileRejected++
+					} else {
+						profileMS = append(profileMS, ms)
+					}
+					mu.Unlock()
+				}
+			})
+		}
+		writers.Go(func() {
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				_, body, cookie, status, err := mixedAuthRequest(client, server.URL, "GET", "/api/v1/auth/session", "", "", nil)
+				if err != nil {
+					fail(err)
+					return
+				}
+				if status == 429 {
+					mu.Lock()
+					loginRejected++
+					mu.Unlock()
+					time.Sleep(150 * time.Millisecond)
+					continue
+				}
+				if status != 200 || cookie == "" {
+					fail(fmt.Errorf("bootstrap status=%d", status))
+					return
+				}
+				var bootstrap struct{ CSRFToken string }
+				if err = json.Unmarshal(body, &bootstrap); err != nil || bootstrap.CSRFToken == "" {
+					fail(fmt.Errorf("bootstrap token: %v", err))
+					return
+				}
+				ms, body, logged, status, err := mixedAuthRequest(client, server.URL, "POST", "/api/v1/auth/login", cookie, bootstrap.CSRFToken, map[string]any{"phone": phone, "password": password})
+				if err != nil {
+					fail(err)
+					return
+				}
+				if status == 429 {
+					mu.Lock()
+					loginRejected++
+					mu.Unlock()
+					time.Sleep(150 * time.Millisecond)
+					continue
+				}
+				var result struct {
+					Authenticated bool
+					ReturnCode    string
+				}
+				if status != 200 || logged == "" || json.Unmarshal(body, &result) != nil || !result.Authenticated || result.ReturnCode != "1111" {
+					fail(fmt.Errorf("login status=%d: %s", status, body))
+					return
+				}
+				mu.Lock()
+				loginMS = append(loginMS, ms)
+				mu.Unlock()
+				// Fetch the newly rotated token before actual logout.
+				_, body, _, status, err = mixedAuthRequest(client, server.URL, "GET", "/api/v1/auth/session", logged, "", nil)
+				if err != nil || status != 200 || json.Unmarshal(body, &bootstrap) != nil || bootstrap.CSRFToken == "" {
+					fail(fmt.Errorf("login profile status=%d: %v", status, err))
+					return
+				}
+				_, _, _, status, err = mixedAuthRequest(client, server.URL, "POST", "/api/v1/auth/logout", logged, bootstrap.CSRFToken, map[string]any{})
+				if err != nil || status != 200 {
+					fail(fmt.Errorf("logout status=%d: %v", status, err))
+					return
+				}
+				time.Sleep(150 * time.Millisecond)
+			}
+		})
+	}
 	for w := 1; w <= workers; w++ {
 		writers.Add(1)
 		go func(w int) {
@@ -156,6 +285,12 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	close(stop)
 	writers.Wait()
 	elapsed := time.Since(start).Seconds()
+	if authMix {
+		after = readMixedDBSnapshot(t, pool.DB)
+		if after.commits <= before.commits || len(after.buckets) == 0 {
+			t.Fatal("missing Performance Schema COMMIT samples; use an isolated server with digest capacity")
+		}
+	}
 	if firstErr != nil {
 		t.Fatal(firstErr)
 	}
@@ -173,6 +308,13 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		sort.Float64s(v)
 		p := func(n int) float64 { return v[(len(v)*n+99)/100-1] }
 		return map[string]float64{"p50_ms": p(50), "p95_ms": p(95), "p99_ms": p(99), "max_ms": v[len(v)-1]}
+	}
+	if authMix {
+		if len(profileMS) == 0 || len(loginMS) == 0 {
+			t.Fatal("mixed authentication workload did not complete")
+		}
+		authOut, _ := json.Marshal(map[string]any{"profiles": len(profileMS), "profile": stats(profileMS), "profile_rejected": profileRejected, "logins": len(loginMS), "login": stats(loginMS), "login_rejected": loginRejected, "database": after.delta(before)})
+		t.Logf("MIXED_AUTH_DB %s", authOut)
 	}
 	out, _ := json.Marshal(map[string]any{"variant": os.Getenv("PERF_AB_VARIANT"), "workers": workers, "warm_latest": warmLatest, "batch_size": batchSize, "sos_count": len(sosMS), "sos": stats(sosMS), "health_count": len(healthMS), "health": stats(healthMS), "health_rejected": rejected, "health_samples_per_second": float64(changes) / elapsed, "elapsed_seconds": elapsed, "pool_wait_count": pool.Stats().WaitCount, "pool_wait_ms": float64(pool.Stats().WaitDuration) / float64(time.Millisecond)})
 	t.Logf("MIXED_SOS_AB %s", out)

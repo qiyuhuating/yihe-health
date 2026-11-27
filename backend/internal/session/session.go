@@ -83,16 +83,10 @@ func (s *Store) CreateContext(ctx context.Context, p Principal) *Session {
 	if ctx.Err() != nil {
 		return nil
 	}
-	id, err := token(32)
+	sess, err := s.newSession(p)
 	if err != nil {
 		return nil
 	}
-	csrf, err := token(32)
-	if err != nil {
-		return nil
-	}
-	now := time.Now()
-	sess := &Session{ID: id, Principal: p, CSRFToken: csrf, CreatedAt: now, ExpiresAt: now.Add(s.ttl)}
 	if database := s.backend(); database != nil {
 		if !database.create(ctx, sess) {
 			return nil
@@ -106,6 +100,19 @@ func (s *Store) CreateContext(ctx context.Context, p Principal) *Session {
 	}
 	s.sessions[sess.ID] = sess
 	return sess
+}
+
+func (s *Store) newSession(p Principal) (*Session, error) {
+	id, err := token(32)
+	if err != nil {
+		return nil, err
+	}
+	csrf, err := token(32)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	return &Session{ID: id, Principal: p, CSRFToken: csrf, CreatedAt: now, ExpiresAt: now.Add(s.ttl)}, nil
 }
 
 func (s *Store) Get(id string) *Session { return s.GetContext(context.Background(), id) }

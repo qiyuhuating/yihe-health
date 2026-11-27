@@ -4,6 +4,7 @@ package handlers
 import (
 	"context"
 	"crypto/subtle"
+	"database/sql"
 	"errors"
 	"net/http"
 	"os"
@@ -157,22 +158,27 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 // renewSession 登录建会话：销毁请求 cookie 带来的旧会话（防 session fixation），建新会话并写 cookie。
 func (h *Handler) renewSession(w http.ResponseWriter, r *http.Request, p session.Principal) bool {
 	p.FactorGeneration, _ = r.Context().Value(factorGenerationKey{}).(string)
-	if c, err := r.Cookie(session.CookieName); err == nil && c.Value != "" {
-		if !h.Sessions.DestroyContext(r.Context(), c.Value) {
-			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
-			return false
+	var oldID string
+	if c, err := r.Cookie(session.CookieName); err == nil {
+		oldID = c.Value
+	}
+	var auditErr error
+	var audit func(context.Context, *sql.Tx) error
+	if h.DB != nil {
+		audit = func(ctx context.Context, tx *sql.Tx) error {
+			auditErr = h.loginAuditTx(r.WithContext(ctx), p.Phone, p.Role, p.ID, "success", tx)
+			return auditErr
 		}
 	}
-	sess := h.Sessions.CreateContext(r.Context(), p)
-	if sess == nil {
-		response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
-		return false
-	}
-	if h.DB != nil && h.loginAudit(r, p.Phone, p.Role, p.ID, "success") != nil {
-		// The new session has already been persisted. Compensate even if the
-		// request was cancelled; the store still imposes its three-second bound.
-		h.Sessions.DestroyContext(context.WithoutCancel(r.Context()), sess.ID)
-		response.Error500(w, ref())
+	sess, err := h.Sessions.RotateContext(r.Context(), oldID, p, audit)
+	if err != nil {
+		if errors.Is(err, session.ErrSessionChanged) {
+			response.Error(w, http.StatusForbidden, "CSRF_REJECTED", "会话已变化，请刷新页面后重试")
+		} else if auditErr != nil {
+			response.Error500(w, ref())
+		} else {
+			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
+		}
 		return false
 	}
 	session.SetCookie(w, sess.ID, h.CookieSecure)

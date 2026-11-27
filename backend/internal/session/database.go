@@ -22,18 +22,24 @@ type databaseStore struct {
 
 func idHash(id string) string { sum := sha256.Sum256([]byte(id)); return hex.EncodeToString(sum[:]) }
 
-func (d *databaseStore) create(ctx context.Context, sess *Session) bool {
+const insertSessionSQL = "INSERT INTO web_session(id_hash,role,actor_id,payload,expires_at) VALUES(?,?,?,?,?)"
+
+func (d *databaseStore) sealSession(sess *Session) (string, error) {
 	b, err := json.Marshal(sess)
 	if err != nil {
-		return false
+		return "", err
 	}
-	sealed, err := d.box.SealBytes(b, "session")
+	return d.box.SealBytes(b, "session")
+}
+
+func (d *databaseStore) create(ctx context.Context, sess *Session) bool {
+	sealed, err := d.sealSession(sess)
 	if err != nil {
 		return false
 	}
 	ctx, cancel := context.WithTimeout(ctx, operationTimeout)
 	defer cancel()
-	_, err = d.db.ExecContext(ctx, "INSERT INTO web_session(id_hash,role,actor_id,payload,expires_at) VALUES(?,?,?,?,?)", idHash(sess.ID), sess.Principal.Role, sess.Principal.ID, sealed, sess.ExpiresAt.UTC())
+	_, err = d.db.ExecContext(ctx, insertSessionSQL, idHash(sess.ID), sess.Principal.Role, sess.Principal.ID, sealed, sess.ExpiresAt.UTC())
 	return err == nil
 }
 
