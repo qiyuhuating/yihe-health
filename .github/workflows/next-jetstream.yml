@@ -1,0 +1,35 @@
+name: Yihe-Next JetStream experiment
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'experiments/jetstream/**'
+      - '.github/workflows/next-jetstream.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'experiments/jetstream/**'
+      - '.github/workflows/next-jetstream.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Verify isolated JetStream experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: experiments/jetstream
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
+        with:
+          go-version: '1.27.4'
+          cache-dependency-path: experiments/jetstream/go.sum
+      - run: go mod verify
+      - run: go vet -mod=readonly ./...
+      - run: go test -mod=readonly -race -count=1 -v -timeout 120s ./...
