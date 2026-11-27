@@ -53,7 +53,8 @@ const reads = createLatestRead<void, LatestHealthRecord[]>(
   (_, signal) => readLatestHealth(signal),
   records => { items.value = records; error.value = '' },
   cause => { error.value = apiErrorMessage(cause, '健康采样暂时无法加载，请点击刷新采样重试。') },
-  busy => { loading.value = busy }
+  busy => { loading.value = busy },
+  { key: () => 'latest-health' }
 )
 const load = () => {
   stop()

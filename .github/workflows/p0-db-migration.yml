@@ -2,6 +2,12 @@
 name: MySQL migration verification
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/p0-db-migration.yml
+      - deploy/Dockerfile
+      - backend/cmd/migrate/**
+      - backend/migrations/**
 permissions:
   contents: read
 jobs:
@@ -25,18 +31,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
-        with:
-          go-version: '1.27.4'
-          cache-dependency-path: backend/go.sum
-      - name: Apply migrations and prove the second execution is a no-op
-        working-directory: backend
+      - name: Build the release image
         env:
-          MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
-          TEST_MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+          IMAGE: yihe-migration-ci:${{ github.sha }}
+        run: docker build --file deploy/Dockerfile --tag "$IMAGE" .
+      - name: Run the packaged migrator and prove the second execution is a no-op
+        env:
+          IMAGE: yihe-migration-ci:${{ github.sha }}
+          MYSQL_DSN: root:ci_root_only@tcp(host.docker.internal:3306)/yihe_test
         run: |
           set -euo pipefail
-          go run ./cmd/migrate
+          test "$(docker image inspect --format '{{json .Config.Entrypoint}}' "$IMAGE")" = '["/app/yihe"]'
+          migrate() {
+            docker run --rm --add-host=host.docker.internal:host-gateway \
+              --entrypoint /app/migrate --env MYSQL_DSN="$MYSQL_DSN" "$IMAGE"
+          }
+          migrate
           dump() {
             docker exec "${{ job.services.mysql.id }}" mysqldump \
               -u root -pci_root_only --single-transaction --skip-comments \
@@ -44,6 +54,6 @@ jobs:
               --routines --triggers yihe_test
           }
           dump > "$RUNNER_TEMP/migration-first.sql"
-          go run ./cmd/migrate
+          migrate
           dump > "$RUNNER_TEMP/migration-second.sql"
           diff -u "$RUNNER_TEMP/migration-first.sql" "$RUNNER_TEMP/migration-second.sql"

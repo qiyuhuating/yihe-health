@@ -25,7 +25,8 @@ func rejected(w http.ResponseWriter) {
 // Middleware 校验 CSRF token。
 func Middleware(store *session.Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if accesspolicy.CSRFExempt(r.URL.Path) {
+		if accesspolicy.CSRFExempt(r.URL.Path) ||
+			((r.Method == http.MethodGet || r.Method == http.MethodHead) && accesspolicy.PublicAssetPath(r.URL.Path)) {
 			next.ServeHTTP(w, r)
 			return
 		}

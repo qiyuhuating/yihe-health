@@ -87,3 +87,33 @@ func TestMiddlewareAllowsValidTokenAndExemptAndSafeMethods(t *testing.T) {
 		t.Fatalf("expected exempt device route to pass, got %d", rec.Code)
 	}
 }
+
+func TestPublicAssetsDoNotResolveSession(t *testing.T) {
+	store := session.NewStore(time.Hour)
+	defer store.Close()
+	sess := store.Create(session.Principal{Role: "ADMIN", ID: 7})
+	handler := Middleware(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if session.FromContext(r) != nil {
+			t.Fatal("public asset resolved a session")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	for _, path := range []string{"/", "/healthz", "/index.html", "/favicon.ico", "/assets/index.js", "/static/logo.png"} {
+		for _, method := range []string{http.MethodGet, http.MethodHead} {
+			req := httptest.NewRequest(method, path, nil)
+			req.AddCookie(&http.Cookie{Name: session.CookieName, Value: sess.ID})
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+			if rec.Code != 200 {
+				t.Fatal(path, method, rec.Code)
+			}
+		}
+	}
+	req := httptest.NewRequest(http.MethodPost, "/assets/index.js", nil)
+	req.AddCookie(&http.Cookie{Name: session.CookieName, Value: sess.ID})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != 403 {
+		t.Fatal("unsafe method bypassed CSRF", rec.Code)
+	}
+}

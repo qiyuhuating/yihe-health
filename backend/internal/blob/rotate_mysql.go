@@ -109,14 +109,14 @@ func RotateMySQLImages(ctx context.Context, database *sql.DB, box *securestore.B
 			if !replace {
 				return nil
 			}
-			sealed, err := box.Seal(string(plain), "image:"+name)
+			sealed, err := box.SealEncodedBytes(plain, "image:"+name)
 			if err != nil {
 				return err
 			}
 			if len(sealed) > MaxStoredBytes {
 				return ErrIntegrity
 			}
-			if err := replaceImageGeneration(ctx, database, name, snapshot, []byte(sealed)); err != nil {
+			if err := replaceImageGeneration(ctx, database, name, snapshot, sealed); err != nil {
 				return err
 			}
 			report.Rewritten++

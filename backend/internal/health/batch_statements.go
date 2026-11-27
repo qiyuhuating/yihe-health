@@ -11,19 +11,22 @@ const (
 	batchLookup batchSQLKind = iota
 	batchUpsert
 	batchChanges
+	batchLatest
 )
 
-const batchLookupPrefix = `SELECT sample_id,version,revision,CASE WHEN version >= `
-const batchLookupSuffix = ` THEN payload ELSE NULL END,payload_cipher FROM health_sample WHERE sample_id IN `
+const batchLookupPrefix = `SELECT LOWER(HEX(sample_id)),version,revision,CASE WHEN version >= `
+const batchLookupSuffix = ` THEN payload ELSE NULL END,` + SampleCipherSQL + ` FROM health_sample WHERE sample_id IN `
 const batchUpsertPrefix = `INSERT INTO health_sample(sample_id,old_id,device_id,epoch,version,revision,payload,payload_cipher,source,source_device,metric,semantics,sample_start,sample_end,deleted) VALUES `
 const batchUpsertSuffix = `
 	 AS new ON DUPLICATE KEY UPDATE version=new.version,revision=new.revision,payload=new.payload,payload_cipher=new.payload_cipher,source=new.source,source_device=new.source_device,metric=new.metric,semantics=new.semantics,sample_start=new.sample_start,sample_end=new.sample_end,deleted=new.deleted`
 const batchChangesPrefix = `INSERT INTO health_change(revision,old_id,sample_id,payload,payload_cipher) VALUES `
+const batchLatestPrefix = "INSERT INTO health_sample_latest(old_id,series_key,sample_id,device_id,epoch,revision,payload,payload_cipher) VALUES "
+const batchLatestSuffix = " AS new ON DUPLICATE KEY UPDATE sample_id=new.sample_id,device_id=new.device_id,epoch=new.epoch,revision=new.revision,payload=new.payload,payload_cipher=new.payload_cipher"
 
 // Cache complete immutable statements, not just VALUES fragments. This avoids
 // rebuilding/re-hashing multi-kilobyte SQL on every batch. The bounded cache
 // contains no argument values, identifiers or patient data.
-var batchStatements [3][201]atomic.Pointer[string]
+var batchStatements [4][201]atomic.Pointer[string]
 
 func buildBatchSQL(kind batchSQLKind, rows int) string {
 	switch kind {
@@ -44,6 +47,8 @@ func buildBatchSQL(kind batchSQLKind, rows int) string {
 		return batchUpsertPrefix + buildValueRows(rows, 15) + batchUpsertSuffix
 	case batchChanges:
 		return batchChangesPrefix + buildValueRows(rows, 5)
+	case batchLatest:
+		return batchLatestPrefix + buildValueRows(rows, 8) + batchLatestSuffix
 	default:
 		panic("invalid internal batch statement kind")
 	}

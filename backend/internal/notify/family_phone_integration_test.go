@@ -49,13 +49,32 @@ func TestFamilyPhoneRecipientsLegacyAndProtectedMySQL(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := QueueCareSMS(ctx, tx, box, int64(id), int64(id)); err != nil {
+		readSelects := func() int64 {
+			t.Helper()
+			var name string
+			var n int64
+			if err := tx.QueryRowContext(ctx, "SHOW SESSION STATUS LIKE 'Com_select'").Scan(&name, &n); err != nil {
+				t.Fatal(err)
+			}
+			return n
+		}
+		before := readSelects()
+		state, err := EnqueueIncident(ctx, tx, box, int64(id), int64(id))
+		if err != nil {
 			tx.Rollback()
 			t.Fatal(err)
 		}
-		if err := CareInbox(ctx, tx, box, int64(id), int64(id)); err != nil {
+		if delta := readSelects() - before; delta != 1 {
 			tx.Rollback()
-			t.Fatal(err)
+			t.Fatalf("incident recipient SELECTs=%d, want 1", delta)
+		}
+		want := "pending"
+		if id == 2 {
+			want = "no_recipient"
+		}
+		if state != want {
+			tx.Rollback()
+			t.Fatal(state, want)
 		}
 		if err := tx.Commit(); err != nil {
 			t.Fatal(err)

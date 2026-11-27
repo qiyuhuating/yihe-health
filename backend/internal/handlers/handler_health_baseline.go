@@ -18,15 +18,19 @@ func (h *Handler) healthBaseline(w http.ResponseWriter, r *http.Request) {
 	if !decodeHealth(w, r, &req) {
 		return
 	}
-	var requested any
-	if req.OldID != nil {
-		requested = *req.OldID
-	}
-	oldID, ok := h.resolveOldID(w, r, requested)
+	p, ok := principalOr401(w, r)
 	if !ok {
 		return
 	}
+	oldID := p.OldID
+	if req.OldID != nil {
+		oldID = *req.OldID
+	}
 	if oldID < 1 {
+		// Preserve the prior family-denial and invalid-ID precedence.
+		if _, ok := h.resolveOldID(w, r, oldID); !ok {
+			return
+		}
 		write400(w, "请指定有效的老人编号")
 		return
 	}
@@ -42,7 +46,7 @@ func (h *Handler) healthBaseline(w http.ResponseWriter, r *http.Request) {
 	// Downsample to one actual observation per source/device/hour before
 	// decoding JSON. This keeps high-frequency wearable feeds bounded while
 	// retaining representative hourly history across the full 28-day window.
-	rows, err := tx.QueryContext(r.Context(), `SELECT s.sample_id,s.device_id,s.epoch,s.revision,s.payload,s.payload_cipher FROM (
+	rows, err := tx.QueryContext(r.Context(), `SELECT LOWER(HEX(s.sample_id)),s.device_id,s.epoch,s.revision,s.payload,`+health.AliasedSampleCipherSQL+` FROM (
  SELECT sample_id,sample_start,revision FROM (
  SELECT s.sample_id,s.sample_start,s.revision,
  ROW_NUMBER() OVER (PARTITION BY s.device_id,s.epoch,s.source,s.source_device,FLOOR(s.sample_start / 3600000000)

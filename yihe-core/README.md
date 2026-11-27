@@ -54,10 +54,20 @@ provide a durable second store.
 
 `MYSQL_STATISTICS_MAX_CONNS` enables an independent statistics connection pool
 on the same primary (0/default: shared; 1–64: dedicated). The existing business
-pool remains capped at 20 and the liveness pool at 1; budget all pools and
-replicas against MySQL `max_connections`. Database/sql bounds active statistics
-transactions and waits for request-context cancellation. Authorization locks
-and the authoritative commit semantics are unchanged.
+pool remains capped at 20 and the liveness pool at 1. The latest-health
+endpoint reuses its authorized transaction for the ready projection or an
+owner-locked backfill. `MYSQL_SOS_MAX_CONNS` (0/default: shared; 1–8:
+dedicated) reserves connections for the emergency write transaction, on the
+same primary. Budget all pools and replicas against MySQL `max_connections`.
+Connection acquisition remains context-bound; neither pool bypasses row locks,
+live authorization, or durable commit. Session lookup and other middleware
+still use the business pool.
+
+A latest-series refresh fetches only rows tied at the maximum indexed
+microsecond, compares their exact timestamps and revisions, and upserts the
+winner only if its authenticated content, metadata or encryption key changes.
+Historical corrections that leave the winner unchanged need no projection
+write.
 
 The experimental baseline path runs the 28-day daily-median and fixed-anchor
 heart-rate algorithm in Rust after the original authorized MySQL read. It
