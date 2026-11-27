@@ -18,7 +18,7 @@ func marshalSampleFast(s Sample) ([]byte, error) {
 		!safeSampleString(s.RecordID) || !safeSampleString(s.Source) || !safeSampleString(s.SourceDevice) ||
 		!safeSampleString(s.Metric) || !safeSampleString(s.Unit) || !safeSampleString(s.Semantics) ||
 		(s.SourceVersion != "" && !safeSampleString(s.SourceVersion)) || (s.GroupID != "" && !safeSampleString(s.GroupID)) || (s.Stage != "" && !safeSampleString(s.Stage)) || (s.TimeBasis != "" && !safeSampleString(s.TimeBasis)) ||
-		!safeSampleTime(s.Start) || !safeSampleTime(s.End) {
+		!safeSampleTime(s.Start) || (s.Start != s.End && !safeSampleTime(s.End)) {
 		return json.Marshal(s)
 	}
 	var keys [8]string
@@ -71,9 +71,15 @@ func marshalSampleFast(s Sample) ([]byte, error) {
 	b = append(b, `","value":`...)
 	b = appendFloatSample(b, *s.Value)
 	b = append(b, `,"start":"`...)
+	startOffset := len(b)
 	b = s.Start.AppendFormat(b, time.RFC3339Nano)
+	startEnd := len(b)
 	b = append(b, `","end":"`...)
-	b = s.End.AppendFormat(b, time.RFC3339Nano)
+	if s.Start == s.End {
+		b = append(b, b[startOffset:startEnd]...)
+	} else {
+		b = s.End.AppendFormat(b, time.RFC3339Nano)
+	}
 	b = append(b, `","semantics":"`...)
 	b = append(b, s.Semantics...)
 	b = append(b, '"')

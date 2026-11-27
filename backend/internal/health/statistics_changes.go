@@ -16,7 +16,7 @@ const statisticsChangeLimit = 256
 // StatisticsChanges reads a bounded committed owner history. Revision ranges
 // are globally allocated, so gaps in the owner's revisions are legitimate.
 // Every event must match its indexed identity and the final event must reach
-// the caller's observed clock. The caller rechecks that clock before use.
+// the caller's observed clock. Read the clock and changes in one snapshot.
 func StatisticsChanges(ctx context.Context, store db.RowsQuerier, owner, after, through int64, box *securestore.Box) ([]Record, error) {
 	if after <= 0 || through <= after || through > MaxRevision {
 		return nil, ErrInvalidChangeRevision
@@ -45,7 +45,7 @@ func StatisticsChanges(ctx context.Context, store db.RowsQuerier, owner, after, 
 		}
 		records = append(records, record)
 		return nil
-	}, "SELECT revision,sample_id,payload,payload_cipher FROM health_change WHERE old_id=? AND revision>? AND revision<=? ORDER BY revision LIMIT 257",
+	}, "SELECT revision,LOWER(HEX(sample_id)),payload,payload_cipher FROM health_change WHERE old_id=? AND revision>? AND revision<=? ORDER BY revision LIMIT 257",
 		owner, after, through)
 	if err != nil {
 		return nil, err

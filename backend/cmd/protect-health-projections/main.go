@@ -22,16 +22,24 @@ func main() {
 	limit := flag.Int("limit", 100, "maximum total rows per run, 1..1000")
 	samples := flag.Bool("samples", false, "migrate original samples")
 	vitals := flag.Bool("legacy-vitals", false, "migrate legacy heart rate and blood pressure")
+	deduplicate := flag.Bool("deduplicate", false, "authenticate matching current/history copies and replace current ciphertext with references")
+	materialize := flag.Bool("materialize", false, "authenticate and reseal current references for an offline downgrade")
 	flag.Parse()
-	if err := run(*limit, *apply, *samples, *vitals); err != nil {
+	if err := run(*limit, *apply, *samples, *vitals, *deduplicate, *materialize); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(limit int, apply, samples, vitals bool) error {
-	if samples && vitals {
-		return errors.New("select either --samples or --legacy-vitals")
+func run(limit int, apply, samples, vitals, deduplicate, materialize bool) error {
+	modes := 0
+	for _, selected := range []bool{samples, vitals, deduplicate, materialize} {
+		if selected {
+			modes++
+		}
+	}
+	if modes > 1 {
+		return errors.New("select at most one maintenance operation")
 	}
 	if flag.NArg() != 0 || limit < 1 || limit > 1000 {
 		return errors.New("provide a limit between 1 and 1000 without extra arguments")
@@ -53,7 +61,9 @@ func run(limit int, apply, samples, vitals bool) error {
 	}
 	var columns []health.ProjectionBackfillReport
 	var operationErr error
-	if vitals {
+	if deduplicate || materialize {
+		columns, operationErr = health.RewriteHistoryReferences(ctx, pool.DB, box, limit, apply, materialize)
+	} else if vitals {
 		var measurements vitalrepo.MeasurementBackfillReport
 		measurements, operationErr = vitalrepo.BackfillMeasurements(ctx, pool.DB, box, limit, apply)
 		columns = []health.ProjectionBackfillReport{{Table: "ratepre", Before: measurements.Before,

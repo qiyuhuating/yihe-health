@@ -30,7 +30,13 @@ func (h *Handler) readScopedOldID(w http.ResponseWriter, r *http.Request) (int64
 	if !ok {
 		return 0, false
 	}
-	return h.resolveOldID(w, r, body["oldId"])
+	p, ok := principalOr401(w, r)
+	if !ok {
+		return 0, false
+	}
+	// All callers immediately acquire a scoped read transaction. Parsing
+	// the ID here is not authorization; the transaction locks live ownership.
+	return requestedOldID(w, p, body["oldId"])
 }
 
 func (h *Handler) resolveOptionalOldID(w http.ResponseWriter, r *http.Request, id int64) (int64, bool) {
@@ -55,16 +61,16 @@ func (h *Handler) beginScopedLocationRead(w http.ResponseWriter, r *http.Request
 // beginScopedResidentRead holds the actor's duty or family binding through
 // the protected query. Role changes and family unbinding cannot overtake it.
 func (h *Handler) beginScopedResidentRead(w http.ResponseWriter, r *http.Request, oldID int64, action carepolicy.Action) (*sql.Tx, bool) {
-	return beginScopedResidentReadOn(w, r, h.DB.DB, oldID, action)
+	return beginScopedResidentReadOn(w, r, h.DB.DB, oldID, action, sql.LevelReadCommitted, nil)
 }
 
-func beginScopedResidentReadOn(w http.ResponseWriter, r *http.Request, pool *sql.DB, oldID int64, action carepolicy.Action) (*sql.Tx, bool) {
+func beginScopedResidentReadOn(w http.ResponseWriter, r *http.Request, pool *sql.DB, oldID int64, action carepolicy.Action, isolation sql.IsolationLevel, revision *int64) (*sql.Tx, bool) {
 	p, ok := principalOr401(w, r)
 	if !ok {
 		return nil, false
 	}
 	if p.Role == auth.RoleAdmin {
-		tx, _, err := careworkflow.BeginAuthorized(r.Context(), pool, p.ID, action)
+		tx, _, err := careworkflow.BeginAuthorizedWithIsolation(r.Context(), pool, p.ID, action, isolation)
 		if errors.Is(err, careworkflow.ErrCapabilityDenied) {
 			response.JSON(w, http.StatusForbidden, map[string]any{"code": "ACCESS_DENIED", "message": "岗位无此操作权限"})
 			return nil, false
@@ -78,13 +84,20 @@ func beginScopedResidentReadOn(w http.ResponseWriter, r *http.Request, pool *sql
 		response.JSON(w, http.StatusForbidden, map[string]any{"code": "ACCESS_DENIED"})
 		return nil, false
 	}
-	tx, err := pool.BeginTx(r.Context(), &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	tx, err := pool.BeginTx(r.Context(), &sql.TxOptions{Isolation: isolation})
 	if internalError(w, err) {
 		return nil, false
 	}
 	var id int64
-	err = tx.QueryRowContext(r.Context(),
-		"SELECT old_id FROM oldperson WHERE old_id=? AND family_id=? FOR SHARE", oldID, p.ID).Scan(&id)
+	if revision != nil {
+		// Only the outer resident row is locked. The scalar clock subquery
+		// establishes the repeatable-read snapshot for the statistics query.
+		err = tx.QueryRowContext(r.Context(),
+			"SELECT old_id,COALESCE((SELECT revision FROM health_owner_clock WHERE old_id=?),0) FROM oldperson WHERE old_id=? AND family_id=? FOR SHARE", oldID, oldID, p.ID).Scan(&id, revision)
+	} else {
+		err = tx.QueryRowContext(r.Context(),
+			"SELECT old_id FROM oldperson WHERE old_id=? AND family_id=? FOR SHARE", oldID, p.ID).Scan(&id)
+	}
 	if errors.Is(err, sql.ErrNoRows) {
 		tx.Rollback()
 		response.JSON(w, http.StatusForbidden, map[string]any{"message": "无权访问该账户或照护记录"})
@@ -104,20 +117,28 @@ func (h *Handler) resolveOldID(w http.ResponseWriter, r *http.Request, value any
 	if !ok {
 		return 0, false
 	}
-	id := p.OldID
-	if value != nil {
-		var valid bool
-		id, valid = integerParam(value)
-		if !valid {
-			write400(w, "老人编号不正确")
-			return 0, false
-		}
+	id, ok := requestedOldID(w, p, value)
+	if !ok {
+		return 0, false
 	}
 	if p.Role != auth.RoleAdmin {
 		var familyID *int64
 		err := h.DB.QueryRowContext(r.Context(), "SELECT family_id FROM oldperson WHERE old_id=?", id).Scan(&familyID)
 		if err != nil || familyID == nil || *familyID != p.ID {
 			response.JSON(w, http.StatusForbidden, map[string]any{"message": "无权访问该账户或照护记录"})
+			return 0, false
+		}
+	}
+	return id, true
+}
+
+func requestedOldID(w http.ResponseWriter, p *session.Principal, value any) (int64, bool) {
+	id := p.OldID
+	if value != nil {
+		var valid bool
+		id, valid = integerParam(value)
+		if !valid {
+			write400(w, "老人编号不正确")
 			return 0, false
 		}
 	}

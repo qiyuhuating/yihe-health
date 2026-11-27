@@ -11,9 +11,8 @@ import (
 	"yihe-care/internal/config"
 
 	"yihe-care/internal/auth"
-	"yihe-care/internal/db"
+
 	"yihe-care/internal/securestore"
-	"yihe-care/internal/userphone"
 )
 
 const recipientScope = "care-notification-recipient"
@@ -43,48 +42,11 @@ func OpenNotificationRecipient(box *securestore.Box, stored string) (string, err
 // QueueCareSMS 为长者的每个有效家属手机号入队一条 SMS 通知，
 // 返回实际插入的行数（0 表示无可通知的家属）。
 func QueueCareSMS(ctx context.Context, tx *sql.Tx, box *securestore.Box, incidentID, oldID int64) (int64, error) {
-	phones := []string{}
-	err := db.QueryEach(ctx, tx, func(rows *sql.Rows) error {
-		var id int64
-		var record userphone.Record
-		if err := rows.Scan(&id, &record.Legacy, &record.Cipher, &record.Lookup, &record.Protected); err != nil {
-			return err
-		}
-		phone, err := record.OpenFamilyStored(box, id)
-		if err != nil {
-			return err
-		}
-		if phone != nil && auth.ValidPhone(*phone) {
-			phones = append(phones, *phone)
-		}
-		return nil
-	}, `SELECT f.family_id,f.family_phone,f.family_phone_cipher,f.family_phone_lookup,f.family_phone_protected
- FROM oldperson o JOIN family f ON f.family_id=o.family_id WHERE o.old_id=?`, oldID)
-	if err != nil {
+	_, phone, found, err := incidentRecipient(ctx, tx, box, oldID)
+	if err != nil || !found {
 		return 0, err
 	}
-	if len(phones) == 0 {
-		return 0, nil
-	}
-	var values strings.Builder
-	args := make([]any, 0, len(phones)*3)
-	for i, phone := range phones {
-		sealed, key, err := SealNotificationRecipient(box, phone)
-		if err != nil {
-			return 0, err
-		}
-		if i > 0 {
-			values.WriteByte(',')
-		}
-		values.WriteString("(?,'sms',?,?)")
-		args = append(args, incidentID, sealed, key)
-	}
-	ct, err := tx.ExecContext(ctx, `INSERT INTO care_notification_outbox(incident_id,channel,recipient,recipient_key)
-		VALUES `+values.String()+` ON DUPLICATE KEY UPDATE id=id`, args...)
-	if err != nil {
-		return 0, err
-	}
-	return ct.RowsAffected()
+	return queueIncidentPhone(ctx, tx, box, incidentID, phone)
 }
 
 // EscalationPhone returns the configured, valid fallback recipient.

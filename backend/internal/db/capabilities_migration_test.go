@@ -145,8 +145,16 @@ func TestCapabilitiesRollbackAndReapply(t *testing.T) {
 	if err = pool.QueryRowContext(ctx, "SELECT count(*) FROM watch_day_info WHERE old_id IS NULL AND binding_epoch=-1").Scan(&count); err != nil || count != 1 {
 		t.Fatal("replay reassigned unknown legacy owner", count, err)
 	}
-	var revision int64
-	if err = pool.QueryRowContext(ctx, "SELECT revision FROM health_clock WHERE id=1").Scan(&revision); err != nil || revision != 42 {
-		t.Fatal("clock regressed", revision, err)
+	// Migration 0051 reserves a future range without advancing the owner\'s event cursor.
+	const rangeSize int64 = 65536
+	var revision, ownerRevision, rangeStart, rangeEnd int64
+	if err = pool.QueryRowContext(ctx, "SELECT revision FROM health_clock WHERE id=1").Scan(&revision); err != nil || revision != 42+rangeSize {
+		t.Fatal("unexpected global reservation watermark after replay", revision, err)
+	}
+	if err = pool.QueryRowContext(ctx, "SELECT revision,range_start,range_end FROM health_owner_clock WHERE old_id=1").Scan(&ownerRevision, &rangeStart, &rangeEnd); err != nil || ownerRevision != 42 || rangeStart != 42 || rangeEnd != revision {
+		t.Fatal("replay changed owner event cursor or reservation", ownerRevision, rangeStart, rangeEnd, err)
+	}
+	if err = pool.QueryRowContext(ctx, "SELECT count(*) FROM health_change").Scan(&count); err != nil || count != 0 {
+		t.Fatal("range reservation created history events", count, err)
 	}
 }

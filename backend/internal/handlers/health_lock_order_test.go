@@ -392,3 +392,137 @@ func TestBulkPreparationRevalidatesConcurrentDeviceChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestLateLockAllowsSOSBeforeDeviceBoundary(t *testing.T) {
+	t.Setenv("HEALTH_LATE_DEVICE_LOCK", "1")
+	t.Setenv("YIHE_SOS_PRIORITY", "1")
+	t.Setenv("MYSQL_SOS_MAX_CONNS", "2")
+	pool := testDatabase(t)
+	seedDevice(t, pool)
+	h := testHandler(t, pool)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	unlock := holdHealthOwnerClock(t, ctx, pool)
+	defer unlock()
+	upload := make(chan *httptest.ResponseRecorder, 1)
+	go func() { upload <- callAPI(h.healthBatch, healthLockOrderBody("late-sos")) }()
+	if err := waitHealthClockContention(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	emergency := make(chan *httptest.ResponseRecorder, 1)
+	start := time.Now()
+	go func() {
+		data, _ := json.Marshal(map[string]any{"deviceNo": "WATCH001", "secret": testSecret, "bindingVersion": 1, "requestId": "late-health-sos"})
+		w := httptest.NewRecorder()
+		h.deviceSos(w, httptest.NewRequest(http.MethodPost, "/api/v1/device/sos", bytes.NewReader(data)).WithContext(ctx))
+		emergency <- w
+	}()
+	select {
+	case w := <-emergency:
+		var result map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil || w.Code != http.StatusOK || result["returnCode"] != "1111" {
+			t.Fatal(w.Code, w.Body, err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("SOS waited for health transaction that had not acquired the device lock")
+	}
+	t.Logf("SOS persisted before health acquired device lock: %s", time.Since(start))
+	unlock()
+	select {
+	case w := <-upload:
+		if w.Code != http.StatusOK {
+			t.Fatal(w.Code, w.Body)
+		}
+	case <-ctx.Done():
+		t.Fatal("health upload did not resume")
+	}
+	var count int
+	if err := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM health_sample").Scan(&count); err != nil || count != 1 {
+		t.Fatal("durable sample", count, err)
+	}
+	if err := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM alarm_precess").Scan(&count); err != nil || count != 1 {
+		t.Fatal("durable SOS", count, err)
+	}
+}
+
+func TestLateLockDefersHealthWithoutWaitingUnderOwnerClock(t *testing.T) {
+	t.Setenv("HEALTH_LATE_DEVICE_LOCK", "1")
+	t.Setenv("YIHE_SOS_PRIORITY", "1")
+	t.Setenv("MYSQL_SOS_MAX_CONNS", "2")
+	pool := testDatabase(t)
+	seedDevice(t, pool)
+	h := testHandler(t, pool)
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	unlock := holdHealthOwnerClock(t, ctx, pool)
+	defer unlock()
+	resident, err := pool.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resident.Rollback()
+	var id int64
+	if err = resident.QueryRowContext(ctx, "SELECT old_id FROM oldperson WHERE old_id=1 FOR UPDATE").Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	upload := make(chan *httptest.ResponseRecorder, 1)
+	payload := healthLockOrderBody("late-deferred")
+	go func() { upload <- callAPI(h.healthBatch, payload) }()
+	if err := waitHealthClockContention(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
+	emergency := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		data, _ := json.Marshal(map[string]any{"deviceNo": "WATCH001", "secret": testSecret, "bindingVersion": 1, "requestId": "late-health-defer"})
+		w := httptest.NewRecorder()
+		h.deviceSos(w, httptest.NewRequest(http.MethodPost, "/api/v1/device/sos", bytes.NewReader(data)).WithContext(ctx))
+		emergency <- w
+	}()
+	for {
+		h.healthWrites.mu.Lock()
+		pending := h.healthWrites.urgent["WATCH001"] > 0
+		h.healthWrites.mu.Unlock()
+		if pending {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("SOS did not register")
+		case <-time.After(time.Millisecond):
+		}
+	}
+	unlock()
+	select {
+	case w := <-upload:
+		if w.Code != http.StatusServiceUnavailable || w.Header().Get("Retry-After") != "1" {
+			t.Fatal("upload was not deferred", w.Code, w.Body)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("health waited for SOS while holding owner clock")
+	}
+	for _, table := range []string{"health_sample", "health_change"} {
+		var n int
+		if err := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM "+table).Scan(&n); err != nil || n != 0 {
+			t.Fatal("rolled back row", table, n, err)
+		}
+	}
+	if err = resident.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case w := <-emergency:
+		var result map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil || w.Code != http.StatusOK || result["returnCode"] != "1111" {
+			t.Fatal(w.Code, w.Body, err)
+		}
+	case <-ctx.Done():
+		t.Fatal("SOS did not finish")
+	}
+	if w := callAPI(h.healthBatch, payload); w.Code != http.StatusOK {
+		t.Fatal("health retry", w.Code, w.Body)
+	}
+	var count int
+	if err := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM health_sample").Scan(&count); err != nil || count != 1 {
+		t.Fatal("durable retry", count, err)
+	}
+}

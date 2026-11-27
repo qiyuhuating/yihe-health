@@ -10,7 +10,7 @@ func TestDailySQLUsesNativeMySQL(t *testing.T) {
 		t.Fatalf("daily cache query is not native MySQL: %s", dailyCacheSelectSQL)
 	}
 	if !strings.Contains(dailySamplesSQL, "BINARY source=BINARY ?") ||
-		strings.Contains(dailySamplesSQL, "source=?") {
+		!strings.Contains(dailySamplesSQL, "source=?") {
 		t.Fatalf("daily sample identity comparison lost MySQL binary semantics: %s", dailySamplesSQL)
 	}
 }

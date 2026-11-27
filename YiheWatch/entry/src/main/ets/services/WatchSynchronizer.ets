@@ -31,12 +31,16 @@ export class WatchSynchronizer {
   private failures: number = 0;
   private retryAt: number = 0;
   private observedTime: number = 0;
+  // A successful upload has already performed authoritative binding and
+  // credential checks. Reuse that result only within this live session.
+  private lastUploadBinding: Binding | undefined = undefined;
+  private lastUploadAt: number = 0;
 
   constructor(store: WatchStore, api: WatchApi, sensors: HealthSensors, context: common.UIAbilityContext) {
     this.store = store; this.api = api; this.sensors = sensors; this.context = context;
   }
   reset(): void {
-    this.generation++; this.sampling.reset(); this.owner = undefined;
+    this.generation++; this.sampling.reset(); this.owner = undefined; this.lastUploadBinding = undefined;
     this.failures = 0; this.retryAt = 0;
     this.sensors.cancel(); this.api.cancel();
   }
@@ -55,17 +59,21 @@ export class WatchSynchronizer {
   }
   private now(): number {
     const now = Date.now();
-    if (now < this.observedTime) { this.retryAt = 0; this.failures = 0; }
+    if (now < this.observedTime) { this.retryAt = 0; this.failures = 0; this.lastUploadBinding = undefined; }
     this.observedTime = now;
     return now;
   }
   private transient(error: DeviceRequestError): boolean { return error.code === 'NETWORK_ERROR' || error.status >= 500; }
-  private deferNetwork(): void {
+  private deferNetwork(error: DeviceRequestError): void {
     this.failures = Math.min(this.failures + 1, 6);
-    this.retryAt = this.now() + Math.min(5000 * Math.pow(2, this.failures - 1), 300000);
+    const delay = Math.min(5000 * Math.pow(2, this.failures - 1), 300000);
+    // Spread explicitly rejected uploads across the retry window.
+    const jitter = error.code === 'HEALTH_WRITE_BUSY' ? Math.floor(Math.random() * Math.min(delay / 4, 300000 - delay)) : 0;
+    this.retryAt = this.now() + delay + jitter;
   }
   async authenticate(config: WatchConfig, secret: string, clearBackoff: boolean = true): Promise<DeviceReply> {
     const generation = this.validate(secret);
+    this.lastUploadBinding = undefined;
     try {
       const reply = await this.api.login(config, secret);
       this.current(generation);
@@ -100,7 +108,7 @@ export class WatchSynchronizer {
         if (error instanceof Error) { throw error; }
         throw new Error('同步未完成，待上传记录已保留');
       }
-      this.deferNetwork();
+      this.deferNetwork(error as DeviceRequestError);
       return cached;
     }
   }
@@ -137,6 +145,7 @@ export class WatchSynchronizer {
     this.current(generation);
     const batch = this.store.batch();
     if (!batch) { return 0; }
+    this.lastUploadBinding = undefined;
     let reply: DeviceReply;
     try { reply = await this.api.upload(config, batchRequest(batch, binding, secret)); }
     catch (error) {
@@ -151,6 +160,8 @@ export class WatchSynchronizer {
     await this.store.saveBatch(undefined);
     this.current(generation);
     this.failures = 0; this.retryAt = 0;
+    this.lastUploadAt = this.now();
+    this.lastUploadBinding = binding;
     return batch.samples.length;
   }
   async sample(config: WatchConfig, secret: string, permission: boolean = true): Promise<SyncResult> {
@@ -166,33 +177,44 @@ export class WatchSynchronizer {
     const uploaded = await this.send(config, secret, binding, generation);
     return { binding: binding, sampled: 0, uploaded: uploaded, queued: 0, offline: false, note: '' };
   }
+  private async sendWhenReady(config: WatchConfig, secret: string, binding: Binding, generation: number): Promise<number> {
+    if (this.now() < this.retryAt) { return 0; }
+    try { return await this.send(config, secret, binding, generation); }
+    catch (error) {
+      this.current(generation);
+      if (!this.transient(error as DeviceRequestError)) {
+        if (error instanceof Error) { throw error; }
+        throw new Error('同步未完成，待上传记录已保留');
+      }
+      this.deferNetwork(error as DeviceRequestError);
+      return 0;
+    }
+  }
   async cycle(config: WatchConfig, secret: string): Promise<SyncResult> {
     const generation = this.validate(secret);
-    const binding = await this.binding(config, secret, true);
+    const now = this.now();
+    const cached = this.store.credential(config) === secret ? this.store.verifiedBinding(config) : undefined;
+    const warm = cached !== undefined && this.lastUploadBinding !== undefined &&
+      sameBinding(cached, this.lastUploadBinding) && now >= this.retryAt && now - this.lastUploadAt < 120000;
+    // Consume the previous successful upload as a one-cycle hint. A failed
+    // upload, reset or stale hint always forces a new login next time.
+    this.lastUploadBinding = undefined;
+    const binding = warm && cached ? cached : await this.binding(config, secret, true);
     this.current(generation);
     let uploaded = 0;
-    if (this.now() >= this.retryAt) {
-      try { uploaded += await this.send(config, secret, binding, generation); }
-      catch (error) {
-        this.current(generation);
-        if (!this.transient(error as DeviceRequestError)) {
-          if (error instanceof Error) { throw error; }
-          throw new Error('同步未完成，待上传记录已保留');
-        }
-        this.deferNetwork();
-      }
+    // Reserve room for the two sensor observations. Otherwise merge the
+    // durable backlog and new samples into one authenticated upload.
+    const pending = this.store.batch();
+    if (pending && pending.samples.length > 198) {
+      uploaded += await this.sendWhenReady(config, secret, binding, generation);
     }
     const result = await this.capture(binding, false, generation);
-    if (this.now() >= this.retryAt) {
-      try { uploaded += await this.send(config, secret, binding, generation); }
-      catch (error) {
-        this.current(generation);
-        if (!this.transient(error as DeviceRequestError)) {
-          if (error instanceof Error) { throw error; }
-          throw new Error('同步未完成，待上传记录已保留');
-        }
-        this.deferNetwork();
-      }
+    uploaded += await this.sendWhenReady(config, secret, binding, generation);
+    // A cycle without samples must still check credentials and report
+    // liveness. If an upload failed, retain its backoff instead of logging in.
+    if (warm && uploaded === 0 && this.now() >= this.retryAt) {
+      result.binding = await this.binding(config, secret, true);
+      this.current(generation);
     }
     result.uploaded = uploaded;
     const queued = this.store.batch(); result.queued = queued ? queued.samples.length : 0;
