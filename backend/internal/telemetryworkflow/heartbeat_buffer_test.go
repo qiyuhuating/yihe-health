@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -187,5 +188,29 @@ func TestHeartbeatCapacityIncludesInflightBatch(t *testing.T) {
 	buffer.finishDrain(len(batch))
 	if len(buffer.items) != heartbeatBufferCapacity || buffer.inflight != 0 {
 		t.Fatalf("failed batch lost capacity accounting: entries=%d inflight=%d", len(buffer.items), buffer.inflight)
+	}
+}
+
+func TestHeartbeatBatchShape(t *testing.T) {
+	for count := 1; count <= heartbeatFlushBatch; count++ {
+		query := heartbeatBatchSQL(count)
+		if strings.Count(query, "?") != count*5 || strings.Count(query, " UNION ALL SELECT ") != count-1 {
+			t.Fatalf("invalid SQL shape for %d rows", count)
+		}
+		if query != buildHeartbeatBatchSQL(count) {
+			t.Fatalf("cached query changed for %d rows", count)
+		}
+	}
+}
+
+func BenchmarkHeartbeatBatchSQL(b *testing.B) {
+	for _, count := range []int{1, 32, heartbeatFlushBatch} {
+		b.Run(strconv.Itoa(count), func(b *testing.B) {
+			heartbeatBatchSQL(count)
+			b.ReportAllocs()
+			for b.Loop() {
+				_ = heartbeatBatchSQL(count)
+			}
+		})
 	}
 }

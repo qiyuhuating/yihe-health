@@ -60,15 +60,33 @@ func Drain(ctx context.Context, store *db.Database, process Process) (int, error
 	return processed, nil
 }
 
+// A negative indexed probe proves there is no due pending row at this
+// instant. A positive result is only a hint: Drain still elects the worker
+// and checks the oldest pending item under its existing transaction.
+func drainReady(ctx context.Context, store *db.Database, process Process, idle bool) (int, error) {
+	if idle {
+		var ready bool
+		err := store.QueryRowContext(ctx, `SELECT EXISTS(
+ SELECT 1 FROM telemetry_inbox WHERE status='pending' AND next_retry_at<=?)`,
+			time.Now().UTC()).Scan(&ready)
+		if err != nil || !ready {
+			return 0, err
+		}
+	}
+	return Drain(ctx, store, process)
+}
+
 func Run(ctx context.Context, store *db.Database, process Process) {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
+	idle := false
 	for {
 		if ctx.Err() != nil {
 			return
 		}
 		run, cancel := context.WithTimeout(ctx, 10*time.Second)
-		count, err := Drain(run, store, process)
+		count, err := drainReady(run, store, process, idle)
+		idle = err == nil && count == 0
 		cancel()
 		if err != nil && ctx.Err() == nil {
 			log.Printf("durable telemetry batch failed; pending rows retained: %v", err)
