@@ -124,6 +124,15 @@ func (h *Handler) positionSelectFamily(w http.ResponseWriter, r *http.Request) {
 		}
 		positions = append(positions, view)
 	}
+	// This logical resource records the authorized query target, not the
+	// request body or coordinates. The row is durable only if the same
+	// authorized read transaction commits.
+	resource := "resident-location:committed:" + strconv.FormatInt(residentID, 10)
+	if _, err := tx.ExecContext(ctx, `INSERT INTO care_sensitive_access_audit
+		(actor_id,actor_role,resource,method) VALUES(?,?,?,?)`,
+		principal.ID, principal.Role, resource, http.MethodPost); internalError(w, err) {
+		return
+	}
 	if internalError(w, tx.Commit()) {
 		return
 	}
