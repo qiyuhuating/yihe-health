@@ -54,8 +54,23 @@ func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 		defer release()
 	}
 	ctx := r.Context()
-	var hasUsers bool
-	if internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
+	var adminDuty string
+	var adminActive bool
+	if sess != nil && sess.Principal.Role == auth.RoleAdmin {
+		// An active administrator row also proves the installation has
+		// users. Reuse only the profile gate's current-request decision.
+		if access, ok := ctx.Value(sessionProfileAccessKey{h}).(sessionProfileAccess); ok && access.actor == sess.Principal.ID {
+			adminDuty, adminActive = access.duty, true
+		} else {
+			var err error
+			adminDuty, adminActive, err = carerepo.AccountAccess(ctx, h.DB, sess.Principal.ID)
+			if internalError(w, err) {
+				return
+			}
+		}
+	}
+	hasUsers := adminActive
+	if !hasUsers && internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
 		return
 	}
 	if sess == nil {
@@ -75,15 +90,11 @@ func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 			"oldId": p.OldID, "displayName": p.DisplayName,
 		}
 		if p.Role == auth.RoleAdmin {
-			duty, active, err := carerepo.AccountAccess(ctx, h.DB, p.ID)
-			if internalError(w, err) {
-				return
-			}
-			if !active {
+			if !adminActive {
 				authenticated = false
 				account = map[string]any{}
 			} else {
-				account["duty"] = duty
+				account["duty"] = adminDuty
 			}
 		}
 	}

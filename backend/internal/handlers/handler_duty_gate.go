@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -9,6 +10,19 @@ import (
 	"yihe-care/internal/carerepo"
 	"yihe-care/internal/response"
 )
+
+// Only the public session profile may reuse the coarse authorization
+// snapshot. Business reads and writes still take their own live duty locks.
+type sessionProfileAccessKey struct{ handler *Handler }
+
+type sessionProfileAccess struct {
+	actor int64
+	duty  string
+}
+
+func isSessionProfile(r *http.Request) bool {
+	return (r.Method == http.MethodGet || r.Method == http.MethodHead) && r.URL.Path == "/api/v1/auth/session"
+}
 
 // EnforceAdminDuty grants broad admin routes only to explicitly assigned supervisors.
 // Run after authentication so the principal is available in request context.
@@ -48,6 +62,9 @@ func (h *Handler) EnforceAdminDuty(next http.Handler) http.Handler {
 				"message": "当前岗位无后台管理权限",
 			})
 			return
+		}
+		if isSessionProfile(r) {
+			r = r.WithContext(context.WithValue(r.Context(), sessionProfileAccessKey{h}, sessionProfileAccess{principal.ID, duty}))
 		}
 		next.ServeHTTP(w, r)
 	})
