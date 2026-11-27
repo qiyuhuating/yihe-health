@@ -13,7 +13,8 @@ COPY ["backend/", "./"]
 COPY --from=frontend /ui/dist/ internal/handlers/web/
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/yihe ./cmd/server \
  && CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/healthcheck ./cmd/healthcheck \
- && CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/protect-notes ./cmd/protect-notes
+ && CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/protect-notes ./cmd/protect-notes \
+ && CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/migrate ./cmd/migrate
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata \
