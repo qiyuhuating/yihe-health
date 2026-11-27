@@ -13,12 +13,12 @@ import (
 func newTestStatic() (*staticHandler, string) {
 	js := strings.Repeat("console.log('yihe');\n", 200)
 	fsys := fstest.MapFS{
-		"index.html":              {Data: []byte("<!doctype html>" + strings.Repeat("<div>颐和</div>", 200))},
-		"assets/app-abc123.js":    {Data: []byte(js)},
-		"assets/br-asset.js":      {Data: []byte(js)},
-		"assets/br-asset.js.br":   {Data: []byte("fake-brotli-bytes")},
-		"assets/tiny.js":          {Data: []byte("x")},
-		"static/fonts/a.woff2":    {Data: []byte(strings.Repeat("\x00\x01\x02", 800))},
+		"index.html":            {Data: []byte("<!doctype html>" + strings.Repeat("<div>颐和</div>", 200))},
+		"assets/app-abc123.js":  {Data: []byte(js)},
+		"assets/br-asset.js":    {Data: []byte(js)},
+		"assets/br-asset.js.br": {Data: []byte("fake-brotli-bytes")},
+		"assets/tiny.js":        {Data: []byte("x")},
+		"static/fonts/a.woff2":  {Data: []byte(strings.Repeat("\x00\x01\x02", 800))},
 	}
 	return newStaticHandler(fsys).(*staticHandler), js
 }

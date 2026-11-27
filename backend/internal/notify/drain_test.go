@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
-	"yihe-care/internal/db/dbtest"
 	"sync/atomic"
 	"testing"
 	"time"
+	"yihe-care/internal/db/dbtest"
 )
 
 func TestWorkerDrainsReadyBacklogWithoutOneSecondPerMessage(t *testing.T) {
