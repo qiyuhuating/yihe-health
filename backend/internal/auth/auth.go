@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"yihe-care/internal/accesspolicy"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/response"
 	"yihe-care/internal/session"
 )
@@ -46,6 +47,7 @@ func Middleware(store *session.Store, next http.Handler) http.Handler {
 		}
 
 		role := sess.Principal.Role
+		observability.SetAuthenticatedActor(r, sess.Principal.ID, role)
 		if access == accesspolicy.Shared {
 			if role != RoleAdmin && role != RoleFamily {
 				forbidden(w)

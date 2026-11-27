@@ -1,10 +1,8 @@
 package observability
 
 import (
-	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"log/slog"
 	"maps"
 	"net/http"
 	"slices"
@@ -149,6 +147,7 @@ func (r *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 type writer struct {
 	http.ResponseWriter
 	status int
+	bytes  int64
 }
 
 func (w *writer) WriteHeader(code int) {
@@ -161,13 +160,18 @@ func (w *writer) Write(b []byte) (int, error) {
 	if w.status == 0 {
 		w.WriteHeader(200)
 	}
-	return w.ResponseWriter.Write(b)
+	n, err := w.ResponseWriter.Write(b)
+	w.bytes += int64(n)
+	return n, err
 }
 func (w *writer) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 func (r *Registry) HTTP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		id := uuid.NewString()
 		req.Header.Set("X-Request-ID", id)
+		if strings.HasPrefix(req.URL.Path, "/api/v1/") {
+			req = withRequestAudit(req)
+		}
 		w.Header().Set("X-Request-ID", id)
 		start := time.Now()
 		r.Add("yihe_http_in_flight", 1)
@@ -220,8 +224,6 @@ func (r *Registry) HTTP(next http.Handler) http.Handler {
 			method = "TRACE"
 		}
 		r.observeHTTP(httpLabels{route, method, out.status}, seconds)
-		slog.LogAttrs(context.Background(), slog.LevelInfo, "http_request",
-			slog.String("request_id", id), slog.String("route", route), slog.String("method", method),
-			slog.Int("status", out.status), slog.Float64("duration_ms", seconds*1000))
+		logHTTPRequest(req, id, route, method, out.status, seconds*1000, out.bytes)
 	})
 }
