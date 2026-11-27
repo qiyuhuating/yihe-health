@@ -32,6 +32,40 @@ func (d *Worker) tick(ctx context.Context) (bool, error) {
 	return n > 0, err
 }
 
+// Probe only after an idle drain. Each EXISTS uses the same indexed status
+// and time range as the authoritative claim. A positive result is a hint;
+// row locks, leases and commit remain exclusively in Drain.
+func (d *Worker) hasReadyMessages(ctx context.Context) (bool, error) {
+	now := time.Now()
+	var ready bool
+	err := d.DB.QueryRowContext(ctx, `SELECT
+ EXISTS(SELECT 1 FROM message_outbox WHERE status='sending' AND last_attempt_at<=?) OR
+ EXISTS(SELECT 1 FROM message_outbox WHERE status='failed' AND retry_at<=?) OR
+ EXISTS(SELECT 1 FROM message_outbox WHERE status='pending' AND retry_at<=?)`,
+		now.Add(-time.Minute), now, now).Scan(&ready)
+	return ready, err
+}
+
+func (d *Worker) drainCycle(ctx context.Context, idle bool) (bool, error) {
+	if idle {
+		ready, err := d.hasReadyMessages(ctx)
+		if err != nil || !ready {
+			return err == nil, err
+		}
+	}
+	// Busy bursts go straight through the durable claim path.
+	for ctx.Err() == nil {
+		processed, err := d.Drain(ctx, 512)
+		if err != nil {
+			return false, err
+		}
+		if processed == 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // Keep workers below the 20-connection DB pool ceiling. Multiple workers can
 // drain separate SKIP LOCKED batches while slow HTTP requests are in flight.
 // The default preserves the existing single-worker deployment behavior.
@@ -58,23 +92,16 @@ func Run(ctx context.Context, pool *db.Database, box *securestore.Box) {
 		workers.Go(func() {
 			ticker := time.NewTicker(time.Second)
 			defer ticker.Stop()
+			idle := false
 			for {
 				if ctx.Err() != nil {
 					return
 				}
 				cycle, cancel := context.WithTimeout(ctx, 45*time.Second)
-				// Drain a bounded ready burst; the timer is idle polling, not a per-job delay.
-				for cycle.Err() == nil {
-					processed, err := d.Drain(cycle, 512)
-					if err != nil {
-						if cycle.Err() == nil {
-							slog.Warn("message_outbox_cycle_failed", "error", err)
-						}
-						break
-					}
-					if processed == 0 {
-						break
-					}
+				var err error
+				idle, err = d.drainCycle(cycle, idle)
+				if err != nil && cycle.Err() == nil {
+					slog.Warn("message_outbox_cycle_failed", "error", err)
 				}
 				cancel()
 				select {
