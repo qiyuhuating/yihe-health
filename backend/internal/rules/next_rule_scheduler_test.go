@@ -20,6 +20,9 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"yihe-care/internal/devicecredential"
+	"yihe-care/internal/devicerepo"
+	"yihe-care/internal/deviceworkflow"
 	"yihe-care/internal/health"
 	"yihe-care/internal/securestore"
 	"yihe-care/internal/userphone"
@@ -58,7 +61,12 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	}
 	execSQL("INSERT INTO family(family_id,family_name,family_phone_cipher,family_phone_lookup,family_phone_protected) VALUES(1,'synthetic',?,?,true)", phone.Ciphertext, phone.Lookup)
 	execSQL("UPDATE oldperson SET family_id=1 WHERE old_id=1")
-	execSQL("UPDATE device SET status=1,battery=5,last_time=? WHERE device_id=1", now.Add(-10*time.Minute))
+	const sosSecret = "synthetic-sos-secret-123456789012"
+	secretHash, err := devicecredential.Hash(sosSecret)
+	if err != nil {
+		t.Fatal(err)
+	}
+	execSQL("UPDATE device SET secret=?,status=1,battery=5,last_time=? WHERE device_id=1", secretHash, now.Add(-10*time.Minute))
 	execSQL("CREATE TABLE rust_rule_receipt(device_id BIGINT NOT NULL,epoch BIGINT NOT NULL,request_id VARBINARY(64) NOT NULL,payload_digest BINARY(64) NOT NULL,PRIMARY KEY(device_id,epoch,request_id)) ENGINE=InnoDB")
 	p := Default()
 	p.Consecutive = 1
@@ -145,6 +153,7 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 		Committed, Deferred, Fallback int
 	}
 	var last NativeCollectReply
+	var beforeCollect func()
 	tick := func(at time.Time, modify func(*NativeCollectReply), want outcome) {
 		t.Helper()
 		if _, err := fmt.Fprintf(stdin, "%d\n", at.UnixNano()); err != nil {
@@ -168,6 +177,11 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 			var req NativeCollectRequest
 			if err = json.Unmarshal(raw, &req); err != nil || req.State != "collect" {
 				t.Fatalf("collector request invalid: %v", err)
+			}
+			if beforeCollect != nil {
+				f := beforeCollect
+				beforeCollect = nil
+				f()
 			}
 			reply, err := CollectNativeRuleInput(ctx, database, box, req)
 			if err != nil {
@@ -200,7 +214,8 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	}
 	deferOne := outcome{State: "tick", Deferred: 1}
 	// Actual late-lock writer's owner-clock lock. Rust must not wait for it
-	// while owning the device. The task remains due, with no adapter call.
+	// while owning the device. The collector can run without the lock;
+	// the write phase must yield immediately and preserve the task.
 	holder, err := database.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	if err != nil {
 		t.Fatal(err)
@@ -210,7 +225,7 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 		t.Fatal(err)
 	}
 	start := time.Now()
-	tick(now, func(*NativeCollectReply) { t.Fatal("collected while health clock locked") }, deferOne)
+	tick(now, nil, deferOne)
 	if elapsed := time.Since(start); elapsed > 3*time.Second {
 		t.Fatalf("clock conflict blocked: %v", elapsed)
 	}
@@ -228,14 +243,47 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	empty()
 	tick(now, func(r *NativeCollectReply) { r.Challenge = "stale" }, deferOne)
 	empty()
+	// A write between the Rust read snapshot and the Go read snapshot
+	// must produce an ordinary stale reply, not a protocol failure.
+	beforeCollect = func() { execSQL("UPDATE device SET battery=7 WHERE device_id=1") }
+	tick(now, func(r *NativeCollectReply) {
+		if !r.Stale {
+			t.Fatal("collector accepted changed snapshot")
+		}
+	}, deferOne)
+	empty()
+	execSQL("UPDATE device SET battery=5 WHERE device_id=1")
+	// A real writer changing the authoritative state during the IPC
+	// interval invalidates the whole read snapshot, even if due_at is
+	// already overdue and remains unchanged by the writer trigger.
+	tick(now, func(r *NativeCollectReply) {
+		execSQL("UPDATE rule_policy SET revision=8 WHERE device_id=1")
+	}, deferOne)
+	empty()
+	tick(now, func(r *NativeCollectReply) {
+		execSQL("UPDATE device SET battery=6 WHERE device_id=1")
+	}, deferOne)
+	empty()
+	execSQL("UPDATE device SET battery=5 WHERE device_id=1")
+	// Commit a correction after the collector has computed the old value.
+	// Only the owner revision changes, not the selected sample identity.
+	tick(now, func(r *NativeCollectReply) {
+		extra := sample("revision-fence-extra", "heart_rate", "count/min", 80, now.Add(-2*time.Hour))
+		save([]health.Sample{extra})
+	}, deferOne)
+	empty()
+	tick(now, func(r *NativeCollectReply) {
+		execSQL("INSERT INTO ratepre(device_id,old_id,hr,create_time) VALUES(1,1,151,?)", now.Add(-time.Second))
+	}, deferOne)
+	empty()
 	// Roll back at the last SQL operation, after all seven rule states,
 	// incidents, both notifications and the receipt were prepared.
 	execSQL("CREATE TRIGGER rust_fail_schedule BEFORE UPDATE ON rule_task FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected'")
 	tick(now, nil, deferOne)
 	empty()
 	execSQL("DROP TRIGGER rust_fail_schedule")
-	// Verify real competing policy/device/clock locks from separate session
-	// while the trusted collector is executing under the native fence.
+	// All these rows must be acquirable while the Rust process waits for
+	// collector IPC. Actual current data is revalidated after the reply.
 	tick(now, func(r *NativeCollectReply) {
 		for _, q := range []string{"SELECT revision FROM health_owner_clock WHERE old_id=1 FOR UPDATE NOWAIT", "SELECT revision FROM rule_policy WHERE device_id=1 FOR UPDATE NOWAIT", "SELECT health_epoch FROM device WHERE device_id=1 FOR UPDATE NOWAIT", "SELECT epoch FROM rule_task WHERE device_id=1 FOR UPDATE NOWAIT"} {
 			tx, err := database.BeginTx(ctx, nil)
@@ -245,9 +293,8 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 			var value int64
 			err = tx.QueryRowContext(ctx, q).Scan(&value)
 			_ = tx.Rollback()
-			var mysqlErr *mysql.MySQLError
-			if err == nil || !errors.As(err, &mysqlErr) || mysqlErr.Number != 3572 {
-				t.Fatalf("fence not held for %s: %v", q, err)
+			if err != nil {
+				t.Fatalf("collector held a write fence for %s: %v", q, err)
 			}
 		}
 	}, outcome{State: "tick", Committed: 1})
@@ -325,6 +372,11 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	if n := count("SELECT COUNT(*) FROM rule_task WHERE device_id=1 AND due_at IS NULL"); n != 1 {
 		t.Fatal("disabled task not disarmed")
 	}
+	// Start an actual Go SOS business transaction while Rust awaits its
+	// adapter response. The fixture's nonce and no-position persistence
+	// hooks are local; the real SOS locks, authentication, commit and
+	// notification workflow execute against the same MySQL database.
+	// This is not an HTTP or full-service latency benchmark.
 	// Active night SOS upgrade remains on Go, without consuming its task.
 	p.Enabled = true
 	payload, err = json.Marshal(p)
@@ -332,10 +384,38 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 		t.Fatal(err)
 	}
 	execSQL("UPDATE rule_policy SET revision=9,payload=? WHERE device_id=1", payload)
-	execSQL("INSERT INTO care_incident(old_id,device_id,kind,severity) VALUES(1,1,'sos','high')")
 	execSQL("UPDATE rule_task SET due_at=? WHERE device_id=1", next.Add(2*time.Second))
-	tick(next.Add(2*time.Second), nil, outcome{State: "tick", Fallback: 1})
-	if n := count("SELECT COUNT(*) FROM rule_task WHERE device_id=1 AND due_at=?", next.Add(2*time.Second)); n != 1 {
+	sosNow := next.Add(2 * time.Second)
+	// Deliberately withhold the collector response. SOS must finish
+	// without waiting for it; the old implementation times out here.
+	var sosElapsed time.Duration
+	tick(sosNow, func(r *NativeCollectReply) {
+		time.Sleep(250 * time.Millisecond)
+		sosCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		started := time.Now()
+		result, failure, err := deviceworkflow.SOS(sosCtx, database.SOSPool(), box, deviceworkflow.SOSInput{Number: "RULE001", Secret: sosSecret, Epoch: 1, RequestID: "ipc-sos"}, deviceworkflow.SOSHooks{
+			AcceptNonce: func(context.Context, *sql.Tx, int64) bool { return true },
+			Persist: func(ctx context.Context, tx *sql.Tx, device *devicerepo.DeviceRecord) (int64, error) {
+				res, err := tx.ExecContext(ctx, "INSERT INTO care_incident(old_id,device_id,kind,severity,request_id) VALUES(?,?,'sos','high','ipc-sos')", *device.OldID, device.ID)
+				if err != nil {
+					return 0, err
+				}
+				return res.LastInsertId()
+			},
+		})
+		sosElapsed = time.Since(started)
+		if err != nil || failure != "" || result.IncidentID <= 0 {
+			t.Fatalf("SOS blocked during collector IPC: %v %s", err, failure)
+		}
+		time.Sleep(250 * time.Millisecond)
+	}, deferOne)
+	if count("SELECT COUNT(*) FROM care_incident WHERE kind='sos' AND request_id='ipc-sos'") != 1 || count("SELECT COUNT(*) FROM care_notification_outbox n JOIN care_incident i ON i.id=n.incident_id WHERE i.request_id='ipc-sos'") != 1 {
+		t.Fatal("SOS durable incident/outbox missing")
+	}
+	t.Logf("SOS workflow committed during withheld collector reply in %v (500ms deliberate IPC delay)", sosElapsed)
+	tick(sosNow, nil, outcome{State: "tick", Fallback: 1})
+	if n := count("SELECT COUNT(*) FROM rule_task WHERE device_id=1 AND due_at=?", sosNow); n != 1 {
 		t.Fatal("fallback task consumed")
 	}
 	if err = stdin.Close(); err != nil {

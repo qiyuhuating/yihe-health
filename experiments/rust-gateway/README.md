@@ -307,23 +307,33 @@ when idle. Neither mode scans the device inventory or claims tasks in
 memory. A fixed cutoff and (due_at, device_id) keyset pagination prevent
 failed early tasks from starving later candidates within a tick.
 
-For each task, Rust acquires the resident, current device, policy/watch
-threshold rows, exact eligible due task and existing owner clock with
-FOR UPDATE NOWAIT. In particular a clock held by an owner-first writer
-does not block while the native scheduler owns the device. A missing
-owner clock, a mismatched binding or a busy row leaves the task durable.
-The production-format native snapshot is read **inside** these fences.
-Rust sends a challenge-bound request over a trusted local pipe to the
-build-tagged Go CollectNativeRuleInput adapter, which uses one read-only
-REPEATABLE READ snapshot and the actual Go policy, baseline, legacy vital,
-activity-window and IANA-timezone algorithms. The reply is bounded by a
-ten-second read deadline; the collector must not acquire write locks.
+For each task, Rust first reads an authenticated production-format
+snapshot in a short read-only REPEATABLE READ transaction. It computes
+an ephemeral input fingerprint from the shared native_rule_fence.sql.
+The read transaction and pool connection are released before Rust sends
+the challenge-bound request over the trusted local pipe. The build-tagged
+Go CollectNativeRuleInput adapter independently checks that fingerprint
+inside its own read-only REPEATABLE READ snapshot, then uses the actual
+Go policy, baseline, legacy vital, activity-window and IANA-timezone
+algorithms. A mismatched snapshot returns a retryable stale response.
+The ten-second IPC deadline holds no Rust database connection or write
+locks. Rust validates the response and computes candidates with the
+actual policy and authenticated latest HR/BP and battery values before
+opening the write transaction.
 
-Rust checks the challenge, binding, clock revision, policy revision and
-numeric policy equality. Authenticated latest HR/BP and battery values
-from the locked SQL snapshot drive native candidates. Rust computes the
-candidates with the actual policy, cross-checks Go decisions/evidence,
-then reuses the batch writer. Rule state, incident, protected evidence,
+The final short transaction acquires the resident, current device,
+policy/watch thresholds, exact eligible due task and existing owner clock
+with FOR UPDATE NOWAIT. The owner-first writer's clock never blocks while
+the scheduler owns the device. It checks binding, owner revision and the
+same fingerprint again before writing. In addition to health/policy
+revisions, the fingerprint includes heartbeat, battery, legacy latest
+measurement identity/cipher digest, baseline replay keys, active SOS/fence
+presence and task state; this covers changes even when an already-overdue
+due_at stays unchanged. The protocol relies on existing ordinary writer
+locks and revision contracts, not arbitrary out-of-band maintenance.
+A missing clock, mismatched snapshot or busy row leaves the task durable.
+The native decisions are cross-checked with Go evidence. Rule state,
+incident, protected evidence,
 notification outboxes, test receipt and exact due-task advancement commit
 together; disabled policies disarm their due row. No notification sender
 runs. The task remains unchanged on rejection or rollback. Night
@@ -337,8 +347,16 @@ modes are restricted by the existing disposable-schema/loopback gate.
 Production deployment still requires a trusted adapter supervisor,
 explicit fallback handoff, full native window/timezone and night incident
 migration, bounded load and failure drills, and an agreed lock/writer
-ownership plan. Holding the fences across collector IPC may increase
-contention; do not infer mixed-load latency or throughput from correctness.
+ownership plan. The integration test withholds the collector reply for
+500 ms while executing the actual authenticated Go SOS business workflow
+(with synthetic nonce/persistence hooks) and verifies that all relevant
+write fences remain available, SOS commits its incident/outbox, and the
+now-stale rule snapshot cannot commit. In one local MySQL 8.4.13 durable
+test the SOS transaction took 6.86 ms. This is a controlled single
+observation, not a full HTTP or high-concurrency P99 benchmark.
+Sustained conflicting updates may defer optimistic attempts; mixed-load
+starvation, lock hold durations, CPU/RSS and retry budgets still need
+measurement.
 
 ### Rule transaction workload
 

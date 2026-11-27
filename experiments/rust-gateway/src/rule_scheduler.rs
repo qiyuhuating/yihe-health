@@ -10,17 +10,20 @@ use crate::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::Deserialize;
 use serde_json::{Value, json};
-use sqlx::{MySqlPool, Row};
+use sqlx::{Acquire, MySqlPool, Row};
 use std::{io::Write, time::Duration};
 use tokio::io::{AsyncBufReadExt, BufReader, Lines, Stdin};
 use yihe_core::rules;
 type Error = Box<dyn std::error::Error>;
 type Input = Lines<BufReader<Stdin>>;
+const FENCE_SQL: &str = include_str!("../../../backend/internal/rules/native_rule_fence.sql");
 
 #[derive(Deserialize)]
 struct Reply {
     challenge: String,
     fallback: bool,
+    stale: bool,
+    fence: String,
     owner_revision: Option<i64>,
     policy_revision: Option<i64>,
     policy: Option<Value>,
@@ -126,97 +129,53 @@ async fn process_task(
     input: &mut Input,
     out: &mut impl Write,
 ) -> Result<Attempt, Error> {
-    // Candidate query is advisory and has no locks. Every acquired lock in
-    // this path is nonblocking; especially never wait on the owner clock
-    // while holding a device needed by the optional late-lock Go writer.
-    let Some(owner) =
-        sqlx::query_scalar::<_, Option<i64>>("SELECT old_id FROM device WHERE device_id=?")
+    // All potentially slow work runs before opening the write transaction.
+    let now_ns = now.timestamp_nanos_opt().ok_or("invalid evaluation time")?;
+    let lower = (now - chrono::Duration::minutes(5)).naive_utc();
+    let (snapshot, fence) = {
+        let mut conn = pool.acquire().await?;
+        sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            .execute(&mut *conn)
+            .await?;
+        let mut read = conn.begin().await?;
+        let fence: String = sqlx::query_scalar(FENCE_SQL)
+            .bind(lower)
             .bind(device)
-            .fetch_optional(pool)
-            .await?
-            .flatten()
-    else {
-        return Ok(Attempt::Deferred);
+            .fetch_one(&mut *read)
+            .await?;
+        let snapshot = rule_authority::read_snapshot(&mut read, keys, device, now_ns).await?;
+        read.commit().await?;
+        (snapshot, fence)
     };
-    let mut tx = pool.begin().await?;
-    sqlx::query_scalar::<_, i64>("SELECT old_id FROM oldperson WHERE old_id=? FOR UPDATE NOWAIT")
-        .bind(owner)
-        .fetch_one(&mut *tx)
-        .await?;
-    let row = sqlx::query(
-        "SELECT old_id,status,health_epoch FROM device WHERE device_id=? FOR UPDATE NOWAIT",
-    )
-    .bind(device)
-    .fetch_one(&mut *tx)
-    .await?;
-    let current: Option<i64> = row.try_get("old_id")?;
-    let status: Option<i64> = row.try_get("status")?;
-    let epoch: i64 = row.try_get("health_epoch")?;
-    if current != Some(owner) || status.is_none() || status == Some(0) || epoch <= 0 {
+    let owner = snapshot["owner"].as_i64().ok_or("missing owner")?;
+    let epoch = snapshot["epoch"].as_i64().ok_or("missing epoch")?;
+    if snapshot["taskDue"] != true {
         return Ok(Attempt::Deferred);
     }
-    // Policy and watch thresholds are changed under the device lock in Go;
-    // their triggers also take the rule_task row. Lock existing rows
-    // explicitly to reject out-of-order concurrent maintenance.
-    let _ = sqlx::query("SELECT device_id FROM rule_policy WHERE device_id=? FOR UPDATE NOWAIT")
-        .bind(device)
-        .fetch_optional(&mut *tx)
-        .await?;
-    let _ = sqlx::query("SELECT device_id FROM watch_info WHERE device_id=? FOR UPDATE NOWAIT")
-        .bind(device)
-        .fetch_optional(&mut *tx)
-        .await?;
-    let task = sqlx::query(
-        "SELECT epoch,eligible,due_at FROM rule_task WHERE device_id=? FOR UPDATE NOWAIT",
-    )
-    .bind(device)
-    .fetch_one(&mut *tx)
-    .await?;
-    let actual: Option<NaiveDateTime> = task.try_get("due_at")?;
-    if task.try_get::<i64, _>("epoch")? != epoch
-        || !task.try_get::<bool, _>("eligible")?
-        || actual != Some(due)
-        || due > now.naive_utc()
-    {
-        return Ok(Attempt::Deferred);
-    }
-    let Some(revision) = sqlx::query_scalar::<_, i64>(
-        "SELECT revision FROM health_owner_clock WHERE old_id=? FOR UPDATE NOWAIT",
-    )
-    .bind(owner)
-    .fetch_optional(&mut *tx)
-    .await?
-    else {
+    let Some(revision) = snapshot["ownerRevision"].as_i64() else {
         return Ok(Attempt::Fallback);
     };
-    let now_ns = now.timestamp_nanos_opt().ok_or("invalid evaluation time")?;
-    let snapshot = rule_authority::read_snapshot(&mut tx, keys, device, now_ns).await?;
-    if snapshot["owner"].as_i64() != Some(owner)
-        || snapshot["epoch"].as_i64() != Some(epoch)
-        || snapshot["ownerRevision"].as_i64() != Some(revision)
-        || snapshot["taskDue"] != true
-    {
-        return Err("authority fence mismatch".into());
-    }
     let mut nonce = [0u8; 16];
     getrandom::fill(&mut nonce).map_err(|_| "challenge generation failed")?;
     let challenge = hex::encode(nonce);
     emit(
         out,
-        &json!({"state":"collect","device":device,"owner":owner,"epoch":epoch,"now_ns":now_ns,"owner_revision":revision,"policy_revision":snapshot["policyRevision"],"challenge":challenge}),
+        &json!({"state":"collect","device":device,"owner":owner,"epoch":epoch,"now_ns":now_ns,"owner_revision":revision,"policy_revision":snapshot["policyRevision"],"challenge":challenge,"fence":fence}),
     )?;
-    // Bound the lifetime of held locks while reading the trusted local
-    // adapter's response. On transport failure abort the whole session.
+    // Bound the local collection time; no transaction or connection is held.
+    // On transport failure abort the whole session.
     let raw = match tokio::time::timeout(Duration::from_secs(10), input.next_line()).await {
         Ok(Ok(Some(raw))) if raw.len() <= 64 * 1024 => raw,
         _ => {
-            tx.rollback().await?;
             return Err("collector transport failed".into());
         }
     };
     let reply: Reply = serde_json::from_str(&raw)?;
     if reply.challenge != challenge {
         return Err("collector challenge mismatch".into());
+    }
+    if reply.stale || reply.fence != fence {
+        return Ok(Attempt::Deferred);
     }
     if reply.fallback {
         return Ok(Attempt::Fallback);
@@ -257,6 +216,70 @@ async fn process_task(
     let next = reply.next_due_ns.map(DateTime::<Utc>::from_timestamp_nanos);
     if policy.enabled != next.is_some() || next.is_some_and(|n| n <= now) {
         return Err("invalid next due".into());
+    }
+    let mut tx = pool.begin().await?;
+    sqlx::query_scalar::<_, i64>("SELECT old_id FROM oldperson WHERE old_id=? FOR UPDATE NOWAIT")
+        .bind(owner)
+        .fetch_one(&mut *tx)
+        .await?;
+    let row = sqlx::query(
+        "SELECT old_id,status,health_epoch FROM device WHERE device_id=? FOR UPDATE NOWAIT",
+    )
+    .bind(device)
+    .fetch_one(&mut *tx)
+    .await?;
+    let current: Option<i64> = row.try_get("old_id")?;
+    let status: Option<i64> = row.try_get("status")?;
+    let current_epoch: i64 = row.try_get("health_epoch")?;
+    if current != Some(owner) || status.is_none() || status == Some(0) || current_epoch != epoch {
+        return Ok(Attempt::Deferred);
+    }
+    // Policy and watch thresholds are changed under the device lock in Go;
+    // their triggers also take the rule_task row. Lock existing rows
+    // explicitly to reject out-of-order concurrent maintenance.
+    let _ = sqlx::query("SELECT device_id FROM rule_policy WHERE device_id=? FOR UPDATE NOWAIT")
+        .bind(device)
+        .fetch_optional(&mut *tx)
+        .await?;
+    let _ = sqlx::query("SELECT device_id FROM watch_info WHERE device_id=? FOR UPDATE NOWAIT")
+        .bind(device)
+        .fetch_optional(&mut *tx)
+        .await?;
+    let task = sqlx::query(
+        "SELECT epoch,eligible,due_at FROM rule_task WHERE device_id=? FOR UPDATE NOWAIT",
+    )
+    .bind(device)
+    .fetch_one(&mut *tx)
+    .await?;
+    let actual: Option<NaiveDateTime> = task.try_get("due_at")?;
+    if task.try_get::<i64, _>("epoch")? != epoch
+        || !task.try_get::<bool, _>("eligible")?
+        || actual != Some(due)
+        || due > now.naive_utc()
+    {
+        return Ok(Attempt::Deferred);
+    }
+    let Some(current_revision) = sqlx::query_scalar::<_, i64>(
+        "SELECT revision FROM health_owner_clock WHERE old_id=? FOR UPDATE NOWAIT",
+    )
+    .bind(owner)
+    .fetch_optional(&mut *tx)
+    .await?
+    else {
+        return Ok(Attempt::Fallback);
+    };
+    // No IPC, no decrypt/window collection under the write fences.
+    // Every source read by the collector must still match its RR snapshot.
+    if current_revision != revision {
+        return Ok(Attempt::Deferred);
+    }
+    let current_fence: String = sqlx::query_scalar(FENCE_SQL)
+        .bind(lower)
+        .bind(device)
+        .fetch_one(&mut *tx)
+        .await?;
+    if current_fence != fence {
+        return Ok(Attempt::Deferred);
     }
     let digest = keys.digest_scoped(b"yihe-next-scheduled-rule-v1", raw.as_bytes());
     b.request_id = format!("due-{}-{}", due.and_utc().timestamp_micros(), &digest[..32]);

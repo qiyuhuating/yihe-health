@@ -5,6 +5,7 @@ package rules
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,8 +15,11 @@ import (
 	"yihe-care/internal/securestore"
 )
 
-// NativeCollectRequest is an internal pipe message from a Rust scheduler
-// which already holds the resident, device, clock, policy and task fences.
+//go:embed native_rule_fence.sql
+var nativeRuleFenceSQL string
+
+// NativeCollectRequest is an internal pipe message from the Rust scheduler.
+// No writer locks or SQL connection are held while the collector responds.
 type NativeCollectRequest struct {
 	State          string `json:"state"`
 	Device         int64  `json:"device"`
@@ -25,6 +29,7 @@ type NativeCollectRequest struct {
 	OwnerRevision  int64  `json:"owner_revision"`
 	PolicyRevision *int64 `json:"policy_revision"`
 	Challenge      string `json:"challenge"`
+	Fence          string `json:"fence"`
 }
 
 type nativeObservation struct {
@@ -65,6 +70,8 @@ type nativeBatch struct {
 type NativeCollectReply struct {
 	Challenge      string       `json:"challenge"`
 	Fallback       bool         `json:"fallback"`
+	Stale          bool         `json:"stale"`
+	Fence          string       `json:"fence"`
 	OwnerRevision  *int64       `json:"owner_revision"`
 	PolicyRevision *int64       `json:"policy_revision"`
 	Policy         *Policy      `json:"policy"`
@@ -75,10 +82,11 @@ type NativeCollectReply struct {
 // CollectNativeRuleInput preserves the actual Go baseline, legacy vital,
 // activity and timezone algorithms in a nonlocking consistent snapshot.
 // It is a trusted local adapter, not a public API and not a task claimer.
-// The Rust caller holds the corresponding write fences until COMMIT.
+// The collector validates its own snapshot fingerprint; Rust rechecks it
+// under the write fences before committing. A stale result is retryable.
 func CollectNativeRuleInput(ctx context.Context, database *db.Database, box *securestore.Box, req NativeCollectRequest) (NativeCollectReply, error) {
 	reply := NativeCollectReply{Challenge: req.Challenge}
-	if req.State != "collect" || req.Device <= 0 || req.Owner <= 0 || req.Epoch <= 0 || len(req.Challenge) != 32 {
+	if req.State != "collect" || req.Device <= 0 || req.Owner <= 0 || req.Epoch <= 0 || len(req.Challenge) != 32 || len(req.Fence) != 64 {
 		return reply, errors.New("invalid native collect request")
 	}
 	tx, err := database.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true})
@@ -86,6 +94,18 @@ func CollectNativeRuleInput(ctx context.Context, database *db.Database, box *sec
 		return reply, err
 	}
 	defer tx.Rollback()
+	now := time.Unix(0, req.NowNS).UTC()
+	if err = tx.QueryRowContext(ctx, nativeRuleFenceSQL, now.Add(-5*time.Minute), req.Device).Scan(&reply.Fence); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			reply.Stale = true
+			return reply, tx.Commit()
+		}
+		return reply, err
+	}
+	if reply.Fence != req.Fence {
+		reply.Stale = true
+		return reply, tx.Commit()
+	}
 	device := ruleDevice{id: req.Device}
 	if err = tx.QueryRowContext(ctx, "SELECT old_id,health_epoch,device_no,last_time,bind_time,battery FROM device WHERE device_id=? AND old_id IS NOT NULL AND status<>0", req.Device).Scan(&device.oldID, &device.epoch, &device.no, &device.last, &device.bound, &device.battery); err != nil {
 		return reply, err
@@ -109,7 +129,6 @@ func CollectNativeRuleInput(ctx context.Context, database *db.Database, box *sec
 	if err != nil {
 		return reply, err
 	}
-	now := time.Unix(0, req.NowNS).UTC()
 	reply.OwnerRevision = &revision
 	reply.PolicyRevision = policyRevision
 	reply.Policy = &p
