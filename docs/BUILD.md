@@ -19,7 +19,7 @@
 
 Tauri 官方参考：[Windows 前置条件](https://v2.tauri.app/start/prerequisites/)、[Windows 安装包](https://v2.tauri.app/distribute/windows-installer/)、[sidecar](https://v2.tauri.app/develop/sidecar/)。
 
-`package-release.ps1` 可在隔离临时目录检查便携包和安装后启动、内嵌页面、父进程终止清理及卸载保留资料；本地打包产物保存在 `outputs/` 目录下。使用有 WebView2 的 Windows 构建环境。该检查不连接生产数据库，也不代表完整可视验收。
+`package-release.ps1` 可在隔离临时目录检查便携包和安装后启动、内嵌页面、父进程终止清理及卸载保留资料；本地打包产物保存在 `outputs/` 目录下。版本专属发布说明（`docs/releases/<版本>.md`）为可选文件；未提供时，打包脚本自动生成仅包含版本、渠道和源码提交的说明。使用有 WebView2 的 Windows 构建环境。该检查不连接生产数据库，也不代表完整可视验收。
 
 ## 容器构建入口
 
