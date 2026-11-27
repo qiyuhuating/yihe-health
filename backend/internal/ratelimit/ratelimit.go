@@ -2,6 +2,7 @@
 package ratelimit
 
 import (
+	"container/list"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,6 +54,7 @@ type limitKey struct{ ip, path string }
 type limiterShard struct {
 	mu                                            sync.Mutex
 	hits                                          map[limitKey]*hitWindow
+	order                                         list.List
 	maxKeys, maxSlots, slots, highKeys, highSlots int
 	capacityDenied, quotaDenied                   uint64
 }
@@ -63,6 +65,7 @@ type hitWindow struct {
 	times      []time.Time
 	head, size int
 	limit      int
+	entry      *list.Element
 }
 
 func (w *hitWindow) allowBudget(now time.Time, available int) bool {
@@ -188,19 +191,9 @@ func (l *Limiter) Allow(r *http.Request) bool {
 	hits := shard.hits[key]
 	if hits == nil {
 		if len(shard.hits) >= shard.maxKeys || shard.slots >= shard.maxSlots {
-			// Evict expired quotas only. Evicting active clients would allow a
-			// rotating-source attacker to reset quotas. Scan at most 16 entries.
-			checked := 0
-			for k, old := range shard.hits {
-				if expired(old, now) {
-					shard.slots -= len(old.times)
-					delete(shard.hits, k)
-				}
-				checked++
-				if checked == 16 {
-					break
-				}
-			}
+			// Accepted hits keep the oldest expiration at the front. Never
+			// scan active quotas or evict them to admit a new identity.
+			shard.reclaim(now, 16)
 			if len(shard.hits) >= shard.maxKeys || shard.slots >= shard.maxSlots {
 				shard.capacityDenied++
 				return false
@@ -216,7 +209,17 @@ func (l *Limiter) Allow(r *http.Request) bool {
 	shard.slots += len(hits.times) - before
 	shard.highKeys = max(shard.highKeys, len(shard.hits))
 	shard.highSlots = max(shard.highSlots, shard.slots)
-	if !allowed {
+	if allowed {
+		if hits.entry == nil {
+			hits.entry = shard.order.PushBack(key)
+		} else {
+			shard.order.MoveToBack(hits.entry)
+		}
+	} else {
+		// An empty window has no quota to protect and must not retain a key.
+		if hits.size == 0 {
+			shard.remove(key, hits)
+		}
 		if hits.size < hits.limit {
 			shard.capacityDenied++
 		} else {
@@ -258,13 +261,34 @@ func (l *Limiter) sweep(now time.Time) {
 	for i := range l.shards {
 		shard := &l.shards[i]
 		shard.mu.Lock()
-		for key, hits := range shard.hits {
-			if expired(hits, now) {
-				shard.slots = max(0, shard.slots-len(hits.times))
-				delete(shard.hits, key)
-			}
-		}
+		shard.reclaim(now, len(shard.hits))
 		shard.mu.Unlock()
+	}
+}
+
+// remove and reclaim run under the shard lock. Recency order follows
+// successful admissions only, so rejected traffic cannot postpone expiry.
+func (s *limiterShard) remove(key limitKey, hits *hitWindow) {
+	s.slots -= len(hits.times)
+	delete(s.hits, key)
+	if hits.entry != nil {
+		s.order.Remove(hits.entry)
+		hits.entry = nil
+	}
+}
+
+func (s *limiterShard) reclaim(now time.Time, limit int) {
+	for range limit {
+		front := s.order.Front()
+		if front == nil {
+			return
+		}
+		key := front.Value.(limitKey)
+		hits := s.hits[key]
+		if !expired(hits, now) {
+			return
+		}
+		s.remove(key, hits)
 	}
 }
 

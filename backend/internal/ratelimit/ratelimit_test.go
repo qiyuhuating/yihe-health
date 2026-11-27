@@ -134,10 +134,14 @@ func TestLimiterSweepAndClose(t *testing.T) {
 	ip := "192.0.2.1"
 	shard := l.shard(ip)
 	expired, active := limitKey{ip, "expired"}, limitKey{ip, "active"}
-	shard.hits[expired] = &hitWindow{times: []time.Time{now.Add(-window)}, size: 1, limit: 1}
+	shard.hits[expired] = &hitWindow{times: []time.Time{now.Add(-window)}, size: 1, limit: 1, entry: shard.order.PushBack(expired)}
 	// A wrapped FIFO with an old first hit and a recent last hit must survive.
-	shard.hits[active] = &hitWindow{times: []time.Time{now, now.Add(-window)}, head: 1, size: 2, limit: 2}
+	shard.hits[active] = &hitWindow{times: []time.Time{now, now.Add(-window)}, head: 1, size: 2, limit: 2, entry: shard.order.PushBack(active)}
+	shard.slots = 3
 	l.sweep(now)
+	if shard.slots != 2 || shard.order.Len() != 1 {
+		t.Fatal("reclaimed quota accounting mismatch")
+	}
 	if _, ok := shard.hits[expired]; ok {
 		t.Fatal("expired key retained")
 	}
@@ -154,5 +158,80 @@ func TestLimiterSweepAndClose(t *testing.T) {
 	case <-l.done:
 	default:
 		t.Fatal("janitor did not terminate")
+	}
+}
+
+// Capacity cleanup must reclaim the actual oldest expired quota, not a random
+// subset of active keys. Accepted hits move to the back; denials never do.
+func TestLimiterReclaimsOldestAndPreservesActiveQuota(t *testing.T) {
+	l, err := NewWithOptions(Options{MaxKeys: 32, MaxSlots: 64})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(l.Close)
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/setup", nil)
+	r.RemoteAddr = "192.0.2.1:42"
+	if !l.Allow(r) {
+		t.Fatal("initial quota")
+	}
+	s := l.shard("192.0.2.1")
+	key := limitKey{"192.0.2.1", r.URL.Path}
+	s.mu.Lock()
+	s.hits[key].times[0] = time.Now().Add(-window)
+	s.mu.Unlock()
+	r.URL.Path = "/api/v1/auth/login"
+	if !l.Allow(r) {
+		t.Fatal("expired key did not return capacity")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.hits) != 1 || s.order.Len() != 1 || s.slots != 1 {
+		t.Fatalf("inconsistent quota budgets: keys=%d order=%d slots=%d", len(s.hits), s.order.Len(), s.slots)
+	}
+	if _, exists := s.hits[key]; exists {
+		t.Fatal("expired quota retained")
+	}
+}
+
+func TestLimiterExpiryFollowsAcceptedHitsOnly(t *testing.T) {
+	l := New()
+	t.Cleanup(l.Close)
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/setup", nil)
+	r.RemoteAddr = "192.0.2.1:42"
+	if !l.Allow(r) {
+		t.Fatal("first quota")
+	}
+	a := limitKey{"192.0.2.1", r.URL.Path}
+	r.URL.Path = "/api/v1/auth/login"
+	if !l.Allow(r) {
+		t.Fatal("second quota")
+	}
+	b := limitKey{"192.0.2.1", r.URL.Path}
+	r.URL.Path = a.path
+	for range 29 {
+		if !l.Allow(r) {
+			t.Fatal("active quota prematurely denied")
+		}
+	}
+	s := l.shard(a.ip)
+	s.mu.Lock()
+	if s.order.Front().Value.(limitKey) != b || s.order.Back().Value.(limitKey) != a {
+		s.mu.Unlock()
+		t.Fatal("accepted request did not update expiration order")
+	}
+	// Refresh the other key so the saturated quota is the oldest.
+	s.mu.Unlock()
+	r.URL.Path = b.path
+	if !l.Allow(r) {
+		t.Fatal("second quota refresh")
+	}
+	r.URL.Path = a.path
+	if l.Allow(r) {
+		t.Fatal("quota exceeded")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.order.Front().Value.(limitKey) != a || s.order.Back().Value.(limitKey) != b {
+		t.Fatal("denial extended expiration")
 	}
 }
