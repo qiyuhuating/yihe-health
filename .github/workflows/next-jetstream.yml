@@ -33,6 +33,9 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       TEST_MYSQL_DSN: root:ci_root_only@tcp(localhost:3306)/yihe_test
+      TEST_S3_ENDPOINT: 127.0.0.1:19000
+      TEST_S3_ACCESS_KEY: yihe-ci-test-only
+      TEST_S3_SECRET_KEY: yihe-ci-disposable-secret-only
     defaults:
       run:
         working-directory: experiments/jetstream
@@ -47,6 +50,30 @@ jobs:
           cache-dependency-path: |
             experiments/jetstream/go.sum
             backend/go.sum
+      - name: Start isolated RustFS 1.0.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/yihe-rustfs"
+          mkdir -p "$dir/volume"
+          curl --fail --location --retry 3 --output "$dir/rustfs.zip" https://github.com/rustfs/rustfs/releases/download/1.0.7/rustfs-linux-x86_64-musl-v1.0.7.zip
+          echo "c90a40ba8cdc1468c71029a4d65fdd13449720183d3a8e00bc61ab09fcd448a5  $dir/rustfs.zip" | sha256sum --check
+          unzip -q "$dir/rustfs.zip" -d "$dir"
+          chmod +x "$dir/rustfs"
+          RUSTFS_ACCESS_KEY="$TEST_S3_ACCESS_KEY" RUSTFS_SECRET_KEY="$TEST_S3_SECRET_KEY" RUSTFS_CONSOLE_ENABLE=false RUSTFS_OBS_LOG_DIRECTORY="$dir/logs" "$dir/rustfs" server --address "$TEST_S3_ENDPOINT" --console-address 127.0.0.1:19001 "$dir/volume" >"$dir/server.log" 2>&1 &
+          echo "$!" > "$dir/pid"
+          for attempt in $(seq 1 60); do
+            kill -0 "$(cat "$dir/pid")"
+            if (echo > /dev/tcp/127.0.0.1/19000) 2>/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
       - run: go mod verify
       - run: go vet -mod=readonly ./...
-      - run: go test -mod=readonly -race -count=1 -v -timeout 120s ./...
+      - run: go test -mod=readonly -race -count=1 -v -timeout 180s ./...
+      - name: Stop isolated RustFS
+        if: always()
+        shell: bash
+        run: |
+          pid="$RUNNER_TEMP/yihe-rustfs/pid"
+          if [ -f "$pid" ]; then kill "$(cat "$pid")" 2>/dev/null || true; fi

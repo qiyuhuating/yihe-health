@@ -86,6 +86,41 @@ The [isolated CI workflow](../../.github/workflows/next-jetstream.yml) runs
 these tests with the race detector. The NATS server and client are Apache-2.0
 licensed dependencies; this experiment does not vendor or ship their binaries.
 
+## S3 encrypted image shadow migration
+
+The experiment uses an actual S3-compatible client with RustFS. The source
+catalog and active ciphertext are read together and authenticated against the
+existing image-name AAD, plaintext SHA-256 and size. An object key is the SHA-256
+of the exact ciphertext, prefixed with images/. PUT is single-part and uses
+If-None-Match: *; retries verify existing bytes rather than overwrite. The
+download is bounded to the existing 8 MiB encrypted storage limit. No ETag is
+treated as a content digest.
+
+Only after GET and authentication succeed does a short MySQL transaction
+acquire the existing backup guard, catalog and payload locks, recheck the
+source generation and bytes, and commit the shadow reference. Source BLOBs
+are retained. A lost response or ledger failure is restartable; an object
+without a ledger row is retained for future reconciliation, not automatically
+deleted. The test-only ledger is scoped to one dedicated bucket. No online
+GC, dual-write or production read path is installed.
+
+CopyReady checks current source business references and paginates the ready
+catalog with a positive row limit. This is a restartable bounded scan, not a
+consistent whole-inventory cutover: production must quiesce/fence writers and
+reconcile changes and references before switching. Verify compares the current
+source, ledger, and downloaded authenticated bytes; it does not authorize
+serving the shadow object in place of MySQL.
+
+The real integration test requires TEST_MYSQL_DSN plus TEST_S3_ENDPOINT,
+TEST_S3_ACCESS_KEY and TEST_S3_SECRET_KEY, all pointing to disposable test
+services. The endpoint is host:port and plaintext HTTP is restricted to the
+isolated test environment. The fixture creates a random dedicated bucket and
+removes it afterward. CI downloads the pinned RustFS 1.0.7 release, checks its
+SHA-256, runs it on loopback, and executes the integration test. The test covers
+the 5 MiB plaintext limit, failure after upload, retries, key rotation, stale
+source rejection, remote corruption, conditional-write collision and missing
+business references.
+
 Not covered: production producer authentication, vital signs or SOS business
 consumption, shared production receipt namespace/cutover, encryption-key
 migration, abrupt process or power loss, separate availability zones,

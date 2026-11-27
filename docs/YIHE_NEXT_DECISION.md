@@ -51,3 +51,4 @@ RTO < 15 s 必须从故障发生至恢复可用的实际演练测得。双 AZ �
 [JetStream transport experiment](../experiments/jetstream/README.md)：
 使用独立测试模块验证真实 broker 的容量、提交后 ACK 与重投递语义。
 该模块复用真实 MySQL 业务持久化函数，在隔离迁移库中验证加密低风险遥测、原子回执、绑定版本与授权代际检查。它不接入生产 HTTP 路由，不安装生产迁移，也未实现设备接入认证、生命体征及 SOS 业务消费。
+同一实验模块另含 RustFS/S3 加密对象影子复制：原始 BLOB 保留，条件 PUT 和下载认证完成后，以原有锁序复核源版本并发布影子账本。真实 RustFS/MySQL 测试通过，但尚不授权生产存储切换。
