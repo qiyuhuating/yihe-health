@@ -12,12 +12,16 @@ export function applyRecordChartOptions(chart: EChartsType, options: ChartOption
   const bar = options.type === 'bar'
   const color = bar ? '#806025' : '#235442'
   const fontFamily = getComputedStyle(document.body).fontFamily
+  const reducedMotion = document.documentElement.classList.contains('reduce-motion') ||
+    (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const largeText = document.documentElement.classList.contains('large-text')
   const axisFontSize = largeText ? 18 : 16
   const highContrast = document.documentElement.classList.contains('high-contrast')
   const mutedColor = highContrast ? '#111111' : '#53645c'
   chart.setOption({
-    animation: false,
+    animation: !reducedMotion,
+    animationDuration: reducedMotion ? 0 : 240,
+    animationDurationUpdate: reducedMotion ? 0 : 140,
     aria: { enabled: true },
     color: [color],
     textStyle: { fontFamily, fontSize: axisFontSize, color: mutedColor },
