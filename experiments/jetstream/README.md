@@ -121,6 +121,39 @@ the 5 MiB plaintext limit, failure after upload, retries, key rotation, stale
 source rejection, remote corruption, conditional-write collision and missing
 business references.
 
+## Valkey session shadow migration
+
+The experiment preserves the existing encrypted session payload and cookie
+hash, using a dedicated Valkey key namespace and SET NX PXAT with the original
+absolute expiration. A retry verifies the existing ciphertext and expiry.
+MirrorActive performs a keyset-paginated backfill without holding SQL cursors
+across Valkey operations. No plaintext session identifier or CSRF token is
+published outside the original authenticated ciphertext.
+
+The disposable fixture installs a narrow MySQL metadata projection containing
+the cookie hash, role, actor ID, expiration and ciphertext digest. Triggers
+maintain the projection in the same transaction as the real web_session
+insert/update/delete. Backfill is performed on a quiesced fixture; a real
+rollout needs fencing, reconciled backfill and migration review.
+
+Lookup fetches ciphertext from Valkey, then checks the live MySQL metadata
+and enabled two-factor generation before authenticating the payload.
+Authorization is never decided by cache contents or TTL alone. No plaintext
+payload column is read from MySQL on this experimental lookup path, but each
+lookup still performs a SQL round trip. A stale value restored by a cache
+replica cannot bypass a committed SQL revocation. An unavailable cache or
+authority returns no session, and there is no cache-only fallback. No claims
+are made about production performance, cross-AZ availability, or revocation
+of already executing requests.
+
+Set TEST_MYSQL_DSN, TEST_VALKEY_ENDPOINT and TEST_VALKEY_PASSWORD to
+disposable test services. The real Valkey 9.0.3 test covers preexisting and
+new sessions, bounded backfill, repeat migration, production session field
+parity, absence of plaintext tokens, rollback of a revoke transaction,
+single-session and actor-wide revocation while stale ciphertext remains,
+factor-generation change, corruption, SQL expiration, and SQL connection
+closure. CI runs an official digest-pinned Valkey image on loopback.
+
 Not covered: production producer authentication, vital signs or SOS business
 consumption, shared production receipt namespace/cutover, encryption-key
 migration, abrupt process or power loss, separate availability zones,

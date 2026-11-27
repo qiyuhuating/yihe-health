@@ -36,6 +36,8 @@ jobs:
       TEST_S3_ENDPOINT: 127.0.0.1:19000
       TEST_S3_ACCESS_KEY: yihe-ci-test-only
       TEST_S3_SECRET_KEY: yihe-ci-disposable-secret-only
+      TEST_VALKEY_ENDPOINT: 127.0.0.1:16379
+      TEST_VALKEY_PASSWORD: yihe-ci-valkey-test-only
     defaults:
       run:
         working-directory: experiments/jetstream
@@ -68,9 +70,22 @@ jobs:
             sleep 1
           done
           exit 1
+      - name: Start isolated Valkey 9.0.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --detach --name yihe-next-valkey --publish 127.0.0.1:16379:6379 valkey/valkey:9.0.3@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9 valkey-server --requirepass "$TEST_VALKEY_PASSWORD" --save "" --appendonly no
+          for attempt in $(seq 1 30); do
+            if docker exec -e VALKEYCLI_AUTH="$TEST_VALKEY_PASSWORD" yihe-next-valkey valkey-cli ping | grep -qx PONG; then exit 0; fi
+            sleep 1
+          done
+          exit 1
       - run: go mod verify
       - run: go vet -mod=readonly ./...
       - run: go test -mod=readonly -race -count=1 -v -timeout 180s ./...
+      - name: Stop isolated Valkey
+        if: always()
+        run: docker rm -f yihe-next-valkey || true
       - name: Stop isolated RustFS
         if: always()
         shell: bash
