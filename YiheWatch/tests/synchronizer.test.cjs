@@ -26,6 +26,7 @@ async function fixture(context) {
         return reply(200, { returnCode: '1111', bound: 1, residentId: 7, bindingVersion: state.epoch, protocolVersion: 1, maxBatchSize: 200 });
       }
       assert.equal(path, 'healthBatch');
+      if (state.authStatus !== 200 || body.secret !== secret) return reply(401, { returnCode: '0000', code: 'UNAUTHORIZED' });
       if (state.uploadStatus !== 200) return reply(state.uploadStatus, { returnCode: '0000', code: state.uploadStatus === 503 ? 'HEALTH_WRITE_BUSY' : 'DEVICE_AUTH_FAILED' });
       if (state.failUploads) throw new Error('upload connection failure');
       if (body.bindingVersion !== state.epoch) return reply(409, { returnCode: '0000', code: 'EPOCH_EXPIRED' });
@@ -68,6 +69,7 @@ test('automatic cycles sample actual production sensor adapter and upload withou
   f.advance(); const second = await f.sync.cycle(config, secret);
   assert.equal(second.sampled, 2); assert.equal(second.uploaded, 2);
   assert.equal(f.state.records.size, 3); assert.equal(f.state.dialogs, 0);
+  assert.deepEqual(f.state.calls.map(item => item.path), ['login', 'healthBatch', 'healthBatch']);
   const step = [...f.state.records.values()].find(item => item.metric === 'steps');
   assert.equal(step.value, 5); assert.equal(step.semantics, 'interval');
   assert.equal(f.requests.size, 0);
@@ -233,4 +235,42 @@ test('explicit write backpressure preserves record IDs and avoids immediate retr
   f.advance(10);
   assert.equal((await f.sync.cycle(config, secret)).queued, 0);
   assert.ok(f.state.records.has(pending));
+});
+test('warm cycle still uses the authoritative upload for revocation and rebind', async context => {
+  const f = await fixture(context);
+  await f.sync.cycle(config, secret);
+  f.advance();
+  f.state.epoch = 2;
+  await assert.rejects(f.sync.cycle(config, secret), error => error.code === 'EPOCH_EXPIRED');
+  const rejected = f.store.batch().samples.map(item => item.recordId);
+  assert.ok(rejected.every(id => !f.state.records.has(id)));
+  f.advance();
+  const recovered = await f.sync.cycle(config, secret);
+  assert.equal(recovered.binding.version, 2);
+  assert.ok(rejected.every(id => !f.state.records.has(id)));
+  f.state.authStatus = 401; f.advance();
+  await assert.rejects(f.sync.cycle(config, secret), error => error.status === 401);
+  assert.equal(f.store.verifiedBinding(config), undefined);
+  assert.ok(f.store.batch().samples.length > 0);
+  const listeners = f.state.listeners;
+  f.advance();
+  await assert.rejects(f.sync.cycle(config, secret), error => error.status === 401);
+  assert.equal(f.state.listeners, listeners);
+});
+
+test('warm cycle without samples logs in, expired and reset hints require login', async context => {
+  const f = await fixture(context);
+  await f.sync.cycle(config, secret);
+  f.state.permissions = -1; f.advance();
+  assert.equal((await f.sync.cycle(config, secret)).sampled, 0);
+  assert.equal(f.state.calls.at(-1).path, 'login');
+  f.state.permissions = 0; f.advance();
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
+  f.advance(120);
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
+  f.sync.reset(); f.advance();
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
 });

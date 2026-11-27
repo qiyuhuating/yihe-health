@@ -48,6 +48,8 @@ Daily statistics refresh on demand: querying a stale day returns a pending statu
 
 Automatic watch sync combines pending and fresh samples into one upload when queue capacity permits, preserving record IDs and durable acknowledgements.
 
+Consecutive successful monitoring cycles reuse a recent binding hint and submit signed uploads for authoritative server validation. Empty cycles, failures and expired hints require login.
+
 ## First-time setup
 
 ### Windows desktop (built from source)
