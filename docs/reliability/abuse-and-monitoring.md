@@ -56,7 +56,7 @@ python scripts/reliability/watchdog-process-drill.py --prometheus '<本机 prome
 
 正式演练要求干净已提交源码；修改中可使用 `--allow-dirty`，摘要保留 dirty=true。演练先确认两个真实监控进程冷启动就绪、无误报，再终止 Prometheus，令本机受控通知接收端返回 503。它核对 pending 告警实际落盘且不能算已接收；强制停止并重启 Watchdog、重启 Prometheus后，恢复事件必须排在未送达的故障事件之后。接收端恢复才接受两条顺序事件，随后终止/重启 Alertmanager，验证另一组 firing/resolved。最终断言四个稳定事件 ID、无重复业务事件、spool 无积压以及所有自有进程已退出。
 
-Deployment contract CI 复用现有 Prometheus 3.5.0 规则工具版本，并从官方 Prometheus/Alertmanager 0.28.1 容器提取真实 Linux 程序，记录镜像 digest、程序版本及 SHA-256，运行同一脚本并保存摘要。这里验证跨进程故障、接收端失败和 spool 重启恢复，不代表正式告警规则全链路、跨宿主故障、外部网关送达或人工接手；规则仍由独立 promtool 步骤检查。接收端 2xx 仅记 receiver_accepted。
+Deployment contract CI 复用现有 Prometheus 3.13.5 规则工具版本，并从官方 Prometheus/Alertmanager 0.35.1 容器提取真实 Linux 程序，记录镜像 digest、程序版本及 SHA-256，运行同一脚本并保存摘要。这里验证跨进程故障、接收端失败和 spool 重启恢复，不代表正式告警规则全链路、跨宿主故障、外部网关送达或人工接手；规则仍由独立 promtool 步骤检查。接收端 2xx 仅记 receiver_accepted。
 
 ## 心跳缓冲刷盘失败
 

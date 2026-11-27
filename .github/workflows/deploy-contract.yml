@@ -50,11 +50,11 @@ jobs:
         run: |
           docker run --rm --pull=always \
             -v "$PWD/deploy:/etc/prometheus:ro" \
-            --entrypoint promtool prom/prometheus:v3.5.0 \
+            --entrypoint promtool prom/prometheus:v3.13.5 \
             check rules /etc/prometheus/alerts.yml
           docker run --rm --pull=always \
             -v "$PWD/deploy:/etc/prometheus:ro" \
-            --entrypoint promtool prom/prometheus:v3.5.0 \
+            --entrypoint promtool prom/prometheus:v3.13.5 \
             test rules /etc/prometheus/alerts_test.yml
       - name: Verify independent watchdog with real monitoring processes
         shell: bash
@@ -69,12 +69,12 @@ jobs:
             if [ -n "$am_container" ]; then docker rm -f "$am_container" >/dev/null; fi
           }
           trap cleanup EXIT
-          docker pull prom/prometheus:v3.5.0
-          docker pull prom/alertmanager:v0.28.1
+          docker pull prom/prometheus:v3.13.5
+          docker pull prom/alertmanager:v0.35.1
           docker image inspect --format '{{index .RepoDigests 0}}' \
-            prom/prometheus:v3.5.0 prom/alertmanager:v0.28.1 > "$evidence/monitor-images.txt"
-          prom_container="$(docker create prom/prometheus:v3.5.0)"
-          am_container="$(docker create prom/alertmanager:v0.28.1)"
+            prom/prometheus:v3.13.5 prom/alertmanager:v0.35.1 > "$evidence/monitor-images.txt"
+          prom_container="$(docker create prom/prometheus:v3.13.5)"
+          am_container="$(docker create prom/alertmanager:v0.35.1)"
           docker cp "$prom_container:/bin/prometheus" "$RUNNER_TEMP/watchdog-tools/prometheus"
           docker cp "$am_container:/bin/alertmanager" "$RUNNER_TEMP/watchdog-tools/alertmanager"
           chmod +x "$RUNNER_TEMP/watchdog-tools/"*
