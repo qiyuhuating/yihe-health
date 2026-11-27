@@ -26,7 +26,7 @@ Kubernetes Job 应将 `command` 设为 `["/app/migrate"]`，通过 Secret 注入
 
 ## 日统计版本失效与应用回滚
 
-健康上传不再逐行修改 `metric_daily.dirty`。日统计读取与后台刷新同时检查缓存计算版本和 `health_owner_clock.revision`；显式 dirty 标记仍有效。此变更不需要新迁移，但不允许旧版日统计读取者与新版健康写入者混用。
+健康上传不再逐行修改 `metric_daily.dirty`。日统计读取比较缓存计算版本和 `health_owner_clock.revision`。过期日期仅在被查询时进入持久化 dirty 队列；未查询的历史日期不再自动重算。后台仅处理已排队的日期，发布时仍校验权威版本。显式 dirty 标记仍有效。此变更不需要新迁移，但不允许旧版日统计读取者与新版健康写入者混用。
 
 若回退到仅依赖 dirty 标记的旧应用版本，必须先停掉新版所有实例及后台任务，在仍保留该表的数据库中执行：
 

@@ -200,11 +200,27 @@ func TestDailyRebuildCorrectionsDeletionAndIsolation(t *testing.T) {
 	s.Value = nil
 	batch["samples"] = []health.Sample{s}
 	api(t, h.healthBatch, batch)
+	// Unrequested stale days do not enter the background queue.
+	if err := h.CapabilityTick(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	var queued int
+	if err := pool.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM metric_daily WHERE dirty=true").Scan(&queued); err != nil || queued != 0 {
+		t.Fatal("unrequested daily rows were queued", queued, err)
+	}
+	req["day"], req["days"] = "2026-10-21", 1
+	items = api(t, admin, req)["items"].([]any)
+	if items[0].(map[string]any)["status"] != "pending" || items[0].(map[string]any)["statistics"] != nil {
+		t.Fatal("stale daily row was returned", items)
+	}
+	if err := pool.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM metric_daily WHERE dirty=true").Scan(&queued); err != nil || queued != 1 {
+		t.Fatal("only the requested day should be queued", queued, err)
+	}
 	if err := h.CapabilityTick(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	items = api(t, admin, req)["items"].([]any)
-	if items[1].(map[string]any)["statistics"].(map[string]any)["count"] != float64(0) {
+	if items[0].(map[string]any)["statistics"].(map[string]any)["count"] != float64(0) {
 		t.Fatal(items)
 	}
 	mustExec(t, pool, "INSERT INTO family(family_id,family_phone) VALUES(1,'1'),(2,'2')")

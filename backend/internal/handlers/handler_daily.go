@@ -18,6 +18,7 @@ const metricDailyEnsureSQL = metricDailyInsertPrefix + `(?,?,?,?,?,?,?,?) ON DUP
 
 type dailyCacheRow struct {
 	dirty   bool
+	queued  bool
 	rev     int64
 	stored  health.ProjectionPayload
 	message string
@@ -73,8 +74,13 @@ func (h *Handler) healthDaily(w http.ResponseWriter, r *http.Request) {
 	if err := readDailyRows(ctx, tx, keys, cached, false); internalError(w, err) {
 		return
 	}
-	if len(cached) != len(ids) {
-		// Cold creation still takes owner -> daily locks. Re-read all rows
+	needsQueue := len(cached) != len(ids)
+	for _, item := range cached {
+		needsQueue = needsQueue || (item.dirty && !item.queued)
+	}
+	if needsQueue {
+		// Cold creation and demand-driven refresh take owner -> daily locks.
+		// Re-read all rows
 		// after acquiring the clock; a writer may have invalidated the first
 		// snapshot, or another reader may have inserted the missing days.
 		if _, err := health.LockOwner(ctx, tx, oldID); internalError(w, err) {
@@ -100,6 +106,21 @@ func (h *Handler) healthDaily(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if err := readDailyRows(ctx, tx, missing, cached, true); internalError(w, err) {
+				return
+			}
+		}
+		// A stale cached day is queued only when requested. The durable dirty
+		// bit is already indexed by the worker; unrelated history stays idle.
+		stale := make([]any, 0, req.Days)
+		for _, id := range ids {
+			if item := cached[id]; item.dirty && !item.queued {
+				stale = append(stale, id)
+			}
+		}
+		if len(stale) != 0 {
+			placeholders := strings.TrimSuffix(strings.Repeat("?,", len(stale)), ",")
+			_, err = tx.ExecContext(ctx, "UPDATE metric_daily SET dirty=true WHERE dirty=false AND cache_key IN ("+placeholders+")", stale...)
+			if internalError(w, err) {
 				return
 			}
 		}
@@ -132,7 +153,7 @@ func (h *Handler) healthDaily(w http.ResponseWriter, r *http.Request) {
 }
 
 func readDailyRows(ctx context.Context, tx *sql.Tx, keys []any, cached map[string]dailyCacheRow, locked bool) error {
-	query := "SELECT d.cache_key,(d.dirty OR d.computed_revision<>COALESCE(c.revision,0)),d.computed_revision,d.result,d.result_cipher,d.error_text,d.updated_at FROM metric_daily d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id WHERE d.cache_key IN (" +
+	query := "SELECT d.cache_key,d.dirty,(d.dirty OR d.computed_revision<>COALESCE(c.revision,0)),d.computed_revision,d.result,d.result_cipher,d.error_text,d.updated_at FROM metric_daily d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id WHERE d.cache_key IN (" +
 		strings.TrimSuffix(strings.Repeat("?,", len(keys)), ",") + ")"
 	if locked {
 		query += " FOR SHARE"
@@ -145,7 +166,7 @@ func readDailyRows(ctx context.Context, tx *sql.Tx, keys []any, cached map[strin
 	for rows.Next() {
 		var id string
 		var item dailyCacheRow
-		if err := rows.Scan(&id, &item.dirty, &item.rev, &item.stored.JSON, &item.stored.Cipher, &item.message, &item.updated); err != nil {
+		if err := rows.Scan(&id, &item.queued, &item.dirty, &item.rev, &item.stored.JSON, &item.stored.Cipher, &item.message, &item.updated); err != nil {
 			return err
 		}
 		cached[id] = item

@@ -44,6 +44,8 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 
 **Operational limits:** missing readings are not evidence of normal health. A notification gateway accepting a request does not prove message delivery or that staff responded. Unattended SOS handling needs an independent, always-on service, reliable notification channels, and staffed procedures.
 
+Daily statistics refresh on demand: querying a stale day returns a pending status until background recomputation finishes. Unrequested historical days are not continuously recomputed.
+
 ## First-time setup
 
 ### Windows desktop (built from source)
