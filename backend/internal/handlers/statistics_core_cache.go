@@ -45,6 +45,7 @@ type coreCache struct {
 	seed     maphash.Seed
 	shards   [coreShardCount]coreShard
 	perShard int64
+	advance  coreAdvanceQueue
 }
 
 func newCoreCache(budget int64) *coreCache {
@@ -228,8 +229,22 @@ func (c *coreCache) atRevision(key coreKey, revision int64, now time.Time) *core
 	return s
 }
 
-// advanceCoreAfterCommit is a best-effort local optimization, never a write
-// acknowledgement or an authority. Readers still validate the MySQL clock.
+// mayAdvance accepts an older local revision because an earlier queued
+// commit may still be processing. The worker requires the exact predecessor.
+func (c *coreCache) mayAdvance(key coreKey, before int64, now time.Time) bool {
+	shard := c.shard(key)
+	shard.mu.Lock()
+	defer shard.mu.Unlock()
+	e := shard.entries[key]
+	if e == nil {
+		return false
+	}
+	s := e.Value.(*coreSeries)
+	return s.revision <= before && now.Before(s.expires) && s.exactInteger && len(s.ids) == len(s.values)
+}
+
+// advanceCoreAfterCommit transfers an immutable normalized batch to a bounded
+// best-effort queue. The caller enqueues before releasing the owner domain.
 func (h *Handler) advanceCoreAfterCommit(o health.Owner, batch *health.PreparedBatch, samples []health.Sample) {
 	if h.healthCache == nil || h.healthCache.core == nil {
 		return
@@ -241,29 +256,43 @@ func (h *Handler) advanceCoreAfterCommit(o health.Owner, batch *health.PreparedB
 	cache := h.healthCache.core
 	now := time.Now()
 	seen := make(map[coreKey]struct{}, 1)
-	var candidates []*coreSeries
+	var keys []coreKey
 	for _, sample := range samples {
 		key := coreKey{o.OldID, sample.Source, sample.SourceDevice}
 		if _, ok := seen[key]; ok {
 			continue
 		}
 		seen[key] = struct{}{}
-		if s := cache.atRevision(key, before, now); s != nil {
-			candidates = append(candidates, s)
+		if cache.mayAdvance(key, before, now) {
+			keys = append(keys, key)
 		}
 	}
-	if len(candidates) == 0 {
+	if len(keys) == 0 {
 		return
 	}
-	changes, err := batch.StatisticsProjectionChanges(o)
-	if err != nil {
-		return
-	}
-	for _, s := range candidates {
-		if next := applyCoreChanges(s, through, changes, now); next != nil {
-			cache.put(next)
-			observability.Default.Add("yihe_health_core_commit_advances_total", 1)
+	if !cache.advance.submit(func() {
+		now := time.Now()
+		var candidates []*coreSeries
+		for _, key := range keys {
+			if s := cache.atRevision(key, before, now); s != nil {
+				candidates = append(candidates, s)
+			}
 		}
+		if len(candidates) == 0 {
+			return
+		}
+		changes, err := batch.StatisticsProjectionChanges(o)
+		if err != nil {
+			return
+		}
+		for _, s := range candidates {
+			if next := applyCoreChanges(s, through, changes, now); next != nil {
+				cache.put(next)
+				observability.Default.Add("yihe_health_core_commit_advances_total", 1)
+			}
+		}
+	}) {
+		observability.Default.Add("yihe_health_core_commit_advance_dropped_total", 1)
 	}
 }
 

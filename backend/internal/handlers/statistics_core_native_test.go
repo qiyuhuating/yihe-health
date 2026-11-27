@@ -179,8 +179,15 @@ func TestCoreStatisticsMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := h.healthCache.core.get(key, revision, query.From.UnixNano(), query.To.UnixNano(), time.Now()); !ok {
-		t.Fatal("committed local correction did not advance the projection")
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		if _, ok := h.healthCache.core.get(key, revision, query.From.UnixNano(), query.To.UnixNano(), time.Now()); ok {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("committed local correction did not advance the projection")
+		}
+		time.Sleep(time.Millisecond)
 	}
 	check()
 	samples[4].Version, samples[4].Value = 2, health.Number(103)

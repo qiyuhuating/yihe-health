@@ -74,13 +74,28 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// This read is advisory: the locked device row still authorizes every
 	// write. Resolve the owner before BEGIN so conflicting devices can queue
 	// without holding transaction connections.
-	d, code, msg, err := h.healthDeviceAuth(ctx, h.DB, req.DeviceNo, req.Secret, "设备已停用")
-	if internalError(w, err) {
-		return
+	var d *healthDevice
+	if !lateDeviceLock {
+		d = h.healthHints.get(req.DeviceNo, req.Secret, req.BindingVersion, time.Now())
 	}
+	hinted := d != nil
+	committed := false
+	defer func() {
+		if hinted && !committed {
+			h.healthHints.remove(req.DeviceNo)
+		}
+	}()
+	var err error
 	if d == nil {
-		hwFail(w, code, msg)
-		return
+		var code, msg string
+		d, code, msg, err = h.healthDeviceAuth(ctx, h.DB, req.DeviceNo, req.Secret, "设备已停用")
+		if internalError(w, err) {
+			return
+		}
+		if d == nil {
+			hwFail(w, code, msg)
+			return
+		}
 	}
 	if d.No != req.DeviceNo {
 		hwFail(w, "DEVICE_AUTH_FAILED", "设备号或密钥不正确，或设备已停用")
@@ -94,7 +109,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusConflict, string(deviceworkflow.BindingChanged), "绑定已变化，请重新登录；旧绑定数据不能归入新老人")
 		return
 	}
-	expectedOwner := *d.OldID
+	expectedOwner, expectedDevice := *d.OldID, d.ID
 	batch.PrepareOwner(health.Owner{OldID: expectedOwner, DeviceID: &d.ID, Epoch: d.HealthEpoch})
 	admitted = h.healthWrites.claimOwner(ctx, req.DeviceNo, expectedOwner)
 	if !admitted {
@@ -124,11 +139,19 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// under the owner-clock lock before locking the device row. Revalidate the
 	// full device binding under FOR UPDATE before committing anything.
 	if !lateDeviceLock {
-		d, err = scanHealthDevice(tx.QueryRowContext(ctx, `SELECT `+healthDeviceCols+` FROM device WHERE device_id=? FOR UPDATE`, d.ID))
+		if hinted {
+			// Resolve by the current natural key, not a potentially recycled ID.
+			d, err = scanHealthDevice(tx.QueryRowContext(ctx, `SELECT `+healthDeviceCols+` FROM device WHERE device_no=? FOR UPDATE`, req.DeviceNo))
+		} else {
+			d, err = scanHealthDevice(tx.QueryRowContext(ctx, `SELECT `+healthDeviceCols+` FROM device WHERE device_id=? FOR UPDATE`, d.ID))
+		}
+		if errors.Is(err, sql.ErrNoRows) {
+			hwFail(w, "DEVICE_AUTH_FAILED", "设备号或密钥不正确")
+			return
+		}
 		if internalError(w, err) {
 			return
 		}
-
 	}
 	if d.No != req.DeviceNo {
 		hwFail(w, "DEVICE_AUTH_FAILED", "设备号或密钥不正确，或设备已停用")
@@ -141,7 +164,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusConflict, string(deviceworkflow.EpochExpired), "绑定纪元已过期，请重新登录并清理旧纪元采样")
 		return
 	}
-	if d.OldID == nil || *d.OldID != expectedOwner || d.HealthEpoch != req.BindingVersion {
+	if d.ID != expectedDevice || d.OldID == nil || *d.OldID != expectedOwner || d.HealthEpoch != req.BindingVersion {
 		response.Error(w, http.StatusConflict, string(deviceworkflow.BindingChanged), "绑定已变化，请重新登录；旧绑定数据不能归入新老人")
 		return
 	}
@@ -203,10 +226,15 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 		// Return the explicit connection before advancing the derived projection.
 		conn.Close()
 	}
-	// The committed transaction no longer owns a write conflict domain.
+	committed = true
+	if !lateDeviceLock {
+		h.healthHints.put(d, time.Now())
+	}
+	// Enqueue derived work before releasing the owner domain so local commits
+	// preserve order. The worker never holds a DB connection or a write slot.
+	h.advanceCoreAfterCommit(owner, &batch, req.Samples)
 	h.healthWrites.release(req.DeviceNo)
 	admitted = false
-	h.advanceCoreAfterCommit(owner, &batch, req.Samples)
 	// This is a write acknowledgement, not the client's read cursor.
 	response.OK(w, map[string]any{"writeRevision": cursor, "accepted": len(req.Samples), "duplicates": duplicates})
 }
