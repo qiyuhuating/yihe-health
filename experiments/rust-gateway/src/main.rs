@@ -19,6 +19,9 @@ fn dispatch_lane(mode: &str) -> yihe_next_gateway::consumer::Lane {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
+        [_, mode] if mode == "--rule-authority-test" => {
+            yihe_next_gateway::rule_authority::run().await
+        }
         [_, mode] if mode == "--rule-commit-test" => yihe_next_gateway::rule_tx::run().await,
         [_, mode] if mode == "--oracle" => {
             // Local differential test transport, not a public HTTP API.

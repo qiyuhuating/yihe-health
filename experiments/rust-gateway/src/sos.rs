@@ -6,7 +6,7 @@ use crate::{
     outbox::Keys,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{MySql, MySqlPool, Row, Transaction};
+use sqlx::{MySql, MySqlPool, QueryBuilder, Row, Transaction};
 use subtle::ConstantTimeEq;
 
 #[derive(Serialize, Deserialize)]
@@ -41,6 +41,20 @@ pub(crate) async fn notify(
     incident: i64,
     owner: i64,
 ) -> Result<(), Error> {
+    notify_batch(tx, keys, &[incident], owner).await
+}
+
+/// One coherent recipient snapshot per batch. Each recipient envelope still
+/// receives its own random nonce; no plaintext recipient is persisted.
+pub(crate) async fn notify_batch(
+    tx: &mut Transaction<'_, MySql>,
+    keys: &Keys,
+    incidents: &[i64],
+    owner: i64,
+) -> Result<(), Error> {
+    if incidents.is_empty() {
+        return Ok(());
+    }
     let Some(row)=sqlx::query("SELECT f.family_id,f.family_phone,f.family_phone_cipher,f.family_phone_lookup,f.family_phone_protected FROM oldperson o JOIN family f ON f.family_id=o.family_id WHERE o.old_id=?").bind(owner).fetch_optional(&mut **tx).await? else{return Ok(())};
     let id: i64 = row.try_get("family_id")?;
     let legacy: Option<String> = row.try_get("family_phone")?;
@@ -80,20 +94,49 @@ pub(crate) async fn notify(
         }
         legacy.unwrap_or_default()
     };
-    if valid_phone(&phone) {
-        let scope = b"care-notification-recipient";
-        let recipient = keys
+    let seal = |scope: &[u8]| -> Result<String, Error> {
+        let cipher = keys
             .seal_scoped(phone.as_bytes(), scope)
             .map_err(|_| "recipient encryption failed")?;
+        Ok(String::from_utf8(cipher)?)
+    };
+    if valid_phone(&phone) {
+        let scope = b"care-notification-recipient";
         let index = keys.digest_scoped(scope, phone.as_bytes());
-        sqlx::query("INSERT INTO care_notification_outbox(incident_id,channel,recipient,recipient_key) VALUES(?,'sms',?,?) ON DUPLICATE KEY UPDATE id=id")
-            .bind(incident).bind(String::from_utf8(recipient)?).bind(index).execute(&mut **tx).await?;
+        let mut recipients = Vec::with_capacity(incidents.len());
+        for incident in incidents {
+            recipients.push((*incident, seal(scope)?));
+        }
+        let mut sql = QueryBuilder::<MySql>::new(
+            "INSERT INTO care_notification_outbox(incident_id,channel,recipient,recipient_key) ",
+        );
+        sql.push_values(&recipients, |mut row, (incident, cipher)| {
+            row.push_bind(*incident)
+                .push("'sms'")
+                .push_bind(cipher)
+                .push_bind(&index);
+        });
+        sql.push(" ON DUPLICATE KEY UPDATE id=id");
+        sql.build().execute(&mut **tx).await?;
     }
-    let inbox = keys
-        .seal_scoped(phone.as_bytes(), b"notification-recipient")
-        .map_err(|_| "recipient encryption failed")?;
-    sqlx::query("INSERT INTO message_outbox(topic,source_key,family_id,channel,recipient,status,delivered_at) VALUES('care',?,?,'in_app',?,'delivered',CURRENT_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE id=id")
-        .bind(incident.to_string()).bind(id).bind(String::from_utf8(inbox)?).execute(&mut **tx).await?;
+    let mut recipients = Vec::with_capacity(incidents.len());
+    for incident in incidents {
+        recipients.push((incident.to_string(), seal(b"notification-recipient")?));
+    }
+    let mut sql = QueryBuilder::<MySql>::new(
+        "INSERT INTO message_outbox(topic,source_key,family_id,channel,recipient,status,delivered_at) ",
+    );
+    sql.push_values(&recipients, |mut row, (incident, cipher)| {
+        row.push("'care'")
+            .push_bind(incident)
+            .push_bind(id)
+            .push("'in_app'")
+            .push_bind(cipher)
+            .push("'delivered'")
+            .push("CURRENT_TIMESTAMP(6)");
+    });
+    sql.push(" ON DUPLICATE KEY UPDATE id=id");
+    sql.build().execute(&mut **tx).await?;
     Ok(())
 }
 

@@ -3,7 +3,7 @@
 use crate::{analytics, native, outbox::Keys, sos};
 use serde::Deserialize;
 use serde_json::{Value, json};
-use sqlx::{MySql, MySqlPool, Row, Transaction};
+use sqlx::{MySql, MySqlPool, QueryBuilder, Row, Transaction, mysql::MySqlRow};
 use std::io::{BufRead, Write};
 use yihe_core::rules::{Candidate, State, Transition};
 type Error = Box<dyn std::error::Error>;
@@ -26,22 +26,31 @@ struct Batch {
     evidence: Vec<Evidence>,
 }
 
-async fn persist(
+struct PendingState<'a> {
+    kind: &'static str,
+    key: &'a str,
+    streak: i64,
+    active: bool,
+    incident: Option<i64>,
+    evidence: String,
+    activation: Option<(i64, String)>,
+}
+
+async fn prepare_state<'a>(
     tx: &mut Transaction<'_, MySql>,
     keys: &Keys,
     b: &Batch,
     c: Candidate,
-    e: &Evidence,
-    now: chrono::DateTime<chrono::Utc>,
-) -> Result<(), Error> {
-    let prior=sqlx::query("SELECT observation_key,streak,active,incident_id,CAST(evidence AS CHAR) AS evidence FROM rule_state WHERE device_id=? AND epoch=? AND kind=? FOR UPDATE")
-        .bind(b.device).bind(b.epoch).bind(c.kind.name()).fetch_optional(&mut **tx).await?;
+    e: &'a Evidence,
+    prior: Option<&MySqlRow>,
+    canonical: &str,
+) -> Result<Option<PendingState<'a>>, Error> {
     let mut state = State::default();
     let mut incident: Option<i64> = None;
     if let Some(row) = prior {
         let previous: String = row.try_get("observation_key")?;
         if previous == e.key {
-            return Ok(());
+            return Ok(None);
         }
         let streak: i64 = row.try_get("streak")?;
         let active: bool = row.try_get("active")?;
@@ -72,6 +81,7 @@ async fn persist(
     }
     let source = e.data.get("source").and_then(Value::as_str);
     let change = state.apply(c, &e.key, source);
+    let mut activation = None;
     if change == Transition::Activate {
         let id = i64::try_from(
             sqlx::query(
@@ -91,10 +101,7 @@ async fn persist(
                 b"care-text",
             )
             .map_err(|_| "rule note encryption failed")?;
-        sqlx::query("INSERT INTO care_incident_event(incident_id,actor,action,note) VALUES(?,'rule','received',?)").bind(id).bind(String::from_utf8(note)?).execute(&mut **tx).await?;
-        sos::notify(tx, keys, id, b.owner)
-            .await
-            .map_err(|_| "rule notification failed")?;
+        activation = Some((id, String::from_utf8(note)?));
         incident = Some(id);
     }
     let mut data = e.data.clone();
@@ -102,17 +109,76 @@ async fn persist(
     data.insert("streak".into(), json!(state.streak));
     data.insert("required".into(), json!(c.required));
     data.insert("ownerId".into(), json!(b.owner));
-    let canonical =
-        crate::consumer::go_time(&now.to_rfc3339_opts(chrono::SecondsFormat::Nanos, true))
-            .map_err(|_| "invalid observation clock")?
-            .1;
     data.insert("at".into(), json!(canonical));
     let cipher = keys
         .seal_scoped(&serde_json::to_vec(&data)?, b"rule-evidence")
         .map_err(|_| "rule evidence encryption failed")?;
     let wrapped = json!({"encrypted":String::from_utf8(cipher)?}).to_string();
-    sqlx::query("INSERT INTO rule_state(device_id,epoch,kind,observation_key,streak,active,incident_id,evidence,updated_at) VALUES(?,?,?,?,?,?,?,?,?) AS new ON DUPLICATE KEY UPDATE observation_key=new.observation_key,streak=new.streak,active=new.active,incident_id=new.incident_id,evidence=new.evidence,updated_at=new.updated_at")
-        .bind(b.device).bind(b.epoch).bind(c.kind.name()).bind(&e.key).bind(i64::try_from(state.streak)?).bind(state.active).bind(incident).bind(wrapped).bind(now.naive_utc()).execute(&mut **tx).await?;
+    Ok(Some(PendingState {
+        kind: c.kind.name(),
+        key: &e.key,
+        streak: i64::try_from(state.streak)?,
+        active: state.active,
+        incident,
+        evidence: wrapped,
+        activation,
+    }))
+}
+
+async fn write_activations(
+    tx: &mut Transaction<'_, MySql>,
+    keys: &Keys,
+    b: &Batch,
+    pending: &[PendingState<'_>],
+) -> Result<(), Error> {
+    let activations: Vec<_> = pending
+        .iter()
+        .filter_map(|p| p.activation.as_ref())
+        .collect();
+    if activations.is_empty() {
+        return Ok(());
+    }
+    let mut sql = QueryBuilder::<MySql>::new(
+        "INSERT INTO care_incident_event(incident_id,actor,action,note) ",
+    );
+    sql.push_values(&activations, |mut row, (incident, note)| {
+        row.push_bind(*incident)
+            .push("'rule'")
+            .push("'received'")
+            .push_bind(note);
+    });
+    sql.build().execute(&mut **tx).await?;
+    let incidents: Vec<_> = activations.iter().map(|(id, _)| *id).collect();
+    sos::notify_batch(tx, keys, &incidents, b.owner)
+        .await
+        .map_err(|_| "rule notification failed")?;
+    Ok(())
+}
+async fn write_states(
+    tx: &mut Transaction<'_, MySql>,
+    b: &Batch,
+    pending: &[PendingState<'_>],
+    now: chrono::DateTime<chrono::Utc>,
+) -> Result<(), Error> {
+    if pending.is_empty() {
+        return Ok(());
+    }
+    let mut query = QueryBuilder::<MySql>::new(
+        "INSERT INTO rule_state(device_id,epoch,kind,observation_key,streak,active,incident_id,evidence,updated_at) ",
+    );
+    query.push_values(pending, |mut row, p| {
+        row.push_bind(b.device)
+            .push_bind(b.epoch)
+            .push_bind(p.kind)
+            .push_bind(p.key)
+            .push_bind(p.streak)
+            .push_bind(p.active)
+            .push_bind(p.incident)
+            .push_bind(&p.evidence)
+            .push_bind(now.naive_utc());
+    });
+    query.push(" AS new ON DUPLICATE KEY UPDATE observation_key=new.observation_key,streak=new.streak,active=new.active,incident_id=new.incident_id,evidence=new.evidence,updated_at=new.updated_at");
+    query.build().execute(&mut **tx).await?;
     Ok(())
 }
 async fn commit(pool: &MySqlPool, keys: &Keys, raw: &str) -> Result<(), Error> {
@@ -165,8 +231,32 @@ async fn commit(pool: &MySqlPool, keys: &Keys, raw: &str) -> Result<(), Error> {
         if prior!=digest.as_bytes(){return Err("rule batch conflict".into())}
         tx.commit().await?;return Ok(())
     }
-    for (c, e) in candidates.as_slice().iter().zip(&b.evidence) {
-        persist(&mut tx, keys, &b, *c, e, now).await?;
+    if !candidates.as_slice().is_empty() {
+        // The resident/device fence serializes the whole epoch. Lock existing
+        // states in primary-key order once; no per-candidate round trips.
+        let prior=sqlx::query("SELECT kind,observation_key,streak,active,incident_id,CAST(evidence AS CHAR) AS evidence FROM rule_state WHERE device_id=? AND epoch=? ORDER BY kind FOR UPDATE")
+            .bind(b.device).bind(b.epoch).fetch_all(&mut *tx).await?;
+        let canonical =
+            crate::consumer::go_time(&now.to_rfc3339_opts(chrono::SecondsFormat::Nanos, true))
+                .map_err(|_| "invalid observation clock")?
+                .1;
+        let mut pending = Vec::with_capacity(candidates.as_slice().len());
+        for (c, e) in candidates.as_slice().iter().zip(&b.evidence) {
+            let mut previous = None;
+            for row in &prior {
+                if row.try_get::<&str, _>("kind")? == c.kind.name() {
+                    previous = Some(row);
+                    break;
+                }
+            }
+            if let Some(update) =
+                prepare_state(&mut tx, keys, &b, *c, e, previous, &canonical).await?
+            {
+                pending.push(update);
+            }
+        }
+        write_activations(&mut tx, keys, &b, &pending).await?;
+        write_states(&mut tx, &b, &pending, now).await?;
     }
     sqlx::query(
         "INSERT INTO rust_rule_receipt(device_id,epoch,request_id,payload_digest) VALUES(?,?,?,?)",

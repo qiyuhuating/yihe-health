@@ -266,10 +266,39 @@ Incident, encrypted evidence, event note, both original notification
 outboxes and an experimental keyed batch receipt share one SQL commit.
 Actual Go persistence is compared on an equivalent device for all
 seven rules, including recovery, source change, duplicate and receipt
-failure rollback. Production policy loading, observation acquisition,
-sample revision fencing, scheduler and broker integration are not
-implemented by this command. Trusted fixtures may not substitute for
-authoritative observations in a production deployment.
+failure rollback. Existing states for one device/epoch are locked in
+primary-key order with one SELECT and changed states use one multi-row
+UPSERT. Newly activated incidents keep their individual database-issued
+IDs, while event notes and notification outboxes are batched. The
+family recipient is authenticated once per batch; each outbox row
+uses a fresh encrypted envelope. All writes remain in one transaction.
+Trusted fixtures may not substitute for authoritative observations.
+
+### Native authority snapshot
+
+--rule-authority-test reads local JSON lines [device_id, now_ns] only
+in a disposable schema. It loads current binding, the actual
+health_owner_clock revision (not the global allocation high-water
+mark), rule_policy revision/payload or watch_info defaults, and
+rule_task eligibility/due time. Latest heart-rate, systolic pressure
+and raw steps observations use the three indexed Go selection ranges.
+It resolves the real health_sample history reference through
+health_change, authenticates the revision/owner/sample/device/epoch
+identity, and also supports the inline protected sample format.
+All reads share a REPEATABLE READ, READ ONLY transaction; a missing
+or inconsistent protected observation makes the snapshot unavailable.
+The actual Go differential includes rollback, corrected samples,
+custom policy and due-task state, and missing-history rejection.
+
+This is a snapshot reader, not a clinical decision engine or task
+claimer. It does not resolve timezones, collect baseline/activity
+windows or legacy vital fallbacks, upgrade night incidents, fence a
+subsequent mutating rule transaction, or reschedule rule_task.
+Production writers can use either device-first or experimental
+owner-clock-first locking; do not add a blocking clock lock after
+the device lock without an agreed migration strategy.
+
+### Rule transaction workload
 
 The optional YIHE_NEXT_RULE_BENCH=1 tagged Go integration test
 TestNextCoreRulePersistence runs three alternating trials of 128
@@ -281,7 +310,7 @@ and commit a test receipt. Go is in-process and Rust includes the local
 JSON pipe, so the comparison is not a pure language or full-backend
 benchmark. The test reports committed batches/s, P50 and P99.
 
-Measured on Ryzen AI 9 H 365, Go 1.27.4, release Rust 1.100.0,
+Historical baseline (86f13ed), measured on Ryzen AI 9 H 365, Go 1.27.4, release Rust 1.100.0,
 MySQL 8.4.13 with innodb_flush_log_at_trx_commit=1 and sync_binlog=1.
 One serial request at a time; 384 committed batches per runtime,
 seven candidates per batch. Median of the three per-trial results:
@@ -291,11 +320,36 @@ seven candidates per batch. Median of the three per-trial results:
 | Go | 128.08 | 7.6023 | 14.9434 |
 | Rust | 120.19 | 7.6604 | 20.4964 |
 
-The Rust fixture includes pipe/JSON overhead; the measured transaction
-path is not faster than the Go control. Do not extrapolate to full
-backend performance. No CPU, RSS or mixed-load latency measurements
-were collected. Next profile connection, locks, queries, commit and
-IPC separately before optimizing the transaction path.
+The historical Rust fixture includes pipe/JSON overhead and was not
+faster than the Go control.
+
+First ABBA rerun: A was the frozen 86f13ed release, B batched only
+rule-state reads/writes. Six trials of 128 batches per variant.
+Medians were 121.345 vs 119.585 batches/s and 18.8271 vs 26.94375 ms
+P99. The state-only change did not demonstrate a stable speedup.
+
+Final ACCA rerun: A was the same frozen release, C also batched event
+and notification writes. Same workload and durable MySQL settings,
+fresh migrated schema per group, six trials of 128 batches per
+variant. The per-trial medians were:
+
+| Runtime/group | Batches/s | P50 (ms) | P99 (ms) |
+| --- | ---: | ---: | ---: |
+| Go control (A group) | 100.105 | 9.4922 | 19.8745 |
+| Rust A | 97.17 | 9.45365 | 26.10265 |
+| Go control (C group) | 100.10 | 9.4894 | 19.4436 |
+| Rust C | 118.69 | 8.158 | 14.08855 |
+
+C improved the median throughput 22.15% and P99 46.03% versus A;
+relative to the contemporaneous Go control, C throughput was 18.57%
+higher and P99 27.54% lower. All groups passed persisted-state,
+notification and receipt checks. Individual C P99 trials ranged
+from 12.849 to 31.6315 ms; this is a bounded serial transaction
+comparison, not proof of stable production or mixed-load tail
+latency. The median paired C/Go throughput ratio was 1.1851,
+compared with 0.9173 in the A groups. No full-service CPU/RSS data.
+Next isolate connection acquisition, lock wait, query execution,
+COMMIT and IPC under equivalent concurrent loads.
 
 ## Native analytics core
 
