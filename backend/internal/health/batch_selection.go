@@ -13,6 +13,7 @@ import (
 // These indices must never escape into a different batch or a reusable pool.
 type preparedSample struct {
 	id       string
+	key      [32]byte
 	payload  []byte
 	sample   Sample
 	revision int64

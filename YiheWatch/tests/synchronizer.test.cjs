@@ -26,7 +26,8 @@ async function fixture(context) {
         return reply(200, { returnCode: '1111', bound: 1, residentId: 7, bindingVersion: state.epoch, protocolVersion: 1, maxBatchSize: 200 });
       }
       assert.equal(path, 'healthBatch');
-      if (state.uploadStatus !== 200) return reply(state.uploadStatus, { returnCode: '0000', code: 'DEVICE_AUTH_FAILED' });
+      if (state.authStatus !== 200 || body.secret !== secret) return reply(401, { returnCode: '0000', code: 'UNAUTHORIZED' });
+      if (state.uploadStatus !== 200) return reply(state.uploadStatus, { returnCode: '0000', code: state.uploadStatus === 503 ? 'HEALTH_WRITE_BUSY' : 'DEVICE_AUTH_FAILED' });
       if (state.failUploads) throw new Error('upload connection failure');
       if (body.bindingVersion !== state.epoch) return reply(409, { returnCode: '0000', code: 'EPOCH_EXPIRED' });
       let duplicates = 0;
@@ -68,6 +69,7 @@ test('automatic cycles sample actual production sensor adapter and upload withou
   f.advance(); const second = await f.sync.cycle(config, secret);
   assert.equal(second.sampled, 2); assert.equal(second.uploaded, 2);
   assert.equal(f.state.records.size, 3); assert.equal(f.state.dialogs, 0);
+  assert.deepEqual(f.state.calls.map(item => item.path), ['login', 'healthBatch', 'healthBatch']);
   const step = [...f.state.records.values()].find(item => item.metric === 'steps');
   assert.equal(step.value, 5); assert.equal(step.semantics, 'interval');
   assert.equal(f.requests.size, 0);
@@ -152,6 +154,7 @@ test('full offline queue pauses sensors and reconnect uploads original records b
   assert.equal(full.queued, 200); assert.equal(f.state.listeners, 0); assert.deepEqual(f.store.batch().samples, samples);
   f.state.offline = false; f.advance(); const result = await f.sync.cycle(config, secret);
   assert.equal(result.uploaded, 201); assert.equal(f.state.records.size, 201);
+  assert.deepEqual(f.state.calls.filter(item => item.path === 'healthBatch').map(item => item.body.samples.length), [200, 1]);
   for (const sample of samples) assert.ok(f.state.records.has(sample.recordId));
 });
 
@@ -161,7 +164,11 @@ test('lost acknowledgement retains original IDs and only later retry replays the
   assert.equal(result.offline, true); assert.equal(result.queued, 1);
   assert.equal(f.state.calls.filter(item => item.path === 'healthBatch').length, 1);
   const id = f.store.batch().samples[0].recordId;
-  f.advance(); await f.sync.cycle(config, secret);
+  f.advance(); const recovered = await f.sync.cycle(config, secret);
+  const uploads = f.state.calls.filter(item => item.path === 'healthBatch');
+  assert.equal(uploads.length, 2, 'retry and new samples share one upload');
+  assert.equal(uploads[1].body.samples.length, recovered.uploaded);
+  assert.ok(uploads[1].body.samples.some(item => item.recordId === id));
   assert.ok(f.state.records.has(id)); assert.equal(f.state.duplicates, 1); assert.equal(f.store.batch(), undefined);
 });
 
@@ -211,4 +218,59 @@ test('repeated upload failures back off despite successful login, while sampling
   assert.equal(skipped.sampled, 2); assert.equal(skipped.queued, queued + 2);
   f.state.failUploads = false; f.advance(300);
   assert.equal((await f.sync.cycle(config, secret)).queued, 0);
+});
+
+test('explicit write backpressure preserves record IDs and avoids immediate retry', async context => {
+  const f = await fixture(context); f.state.uploadStatus = 503;
+  const blocked = await f.sync.cycle(config, secret);
+  assert.equal(blocked.offline, true);
+  assert.equal(blocked.queued, 1);
+  const pending = f.store.batch().samples[0].recordId;
+  const calls = f.state.calls.length;
+  f.advance(1);
+  await f.sync.cycle(config, secret);
+  assert.equal(f.state.calls.length, calls);
+  assert.equal(f.store.batch().samples[0].recordId, pending);
+  f.state.uploadStatus = 200;
+  f.advance(10);
+  assert.equal((await f.sync.cycle(config, secret)).queued, 0);
+  assert.ok(f.state.records.has(pending));
+});
+test('warm cycle still uses the authoritative upload for revocation and rebind', async context => {
+  const f = await fixture(context);
+  await f.sync.cycle(config, secret);
+  f.advance();
+  f.state.epoch = 2;
+  await assert.rejects(f.sync.cycle(config, secret), error => error.code === 'EPOCH_EXPIRED');
+  const rejected = f.store.batch().samples.map(item => item.recordId);
+  assert.ok(rejected.every(id => !f.state.records.has(id)));
+  f.advance();
+  const recovered = await f.sync.cycle(config, secret);
+  assert.equal(recovered.binding.version, 2);
+  assert.ok(rejected.every(id => !f.state.records.has(id)));
+  f.state.authStatus = 401; f.advance();
+  await assert.rejects(f.sync.cycle(config, secret), error => error.status === 401);
+  assert.equal(f.store.verifiedBinding(config), undefined);
+  assert.ok(f.store.batch().samples.length > 0);
+  const listeners = f.state.listeners;
+  f.advance();
+  await assert.rejects(f.sync.cycle(config, secret), error => error.status === 401);
+  assert.equal(f.state.listeners, listeners);
+});
+
+test('warm cycle without samples logs in, expired and reset hints require login', async context => {
+  const f = await fixture(context);
+  await f.sync.cycle(config, secret);
+  f.state.permissions = -1; f.advance();
+  assert.equal((await f.sync.cycle(config, secret)).sampled, 0);
+  assert.equal(f.state.calls.at(-1).path, 'login');
+  f.state.permissions = 0; f.advance();
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
+  f.advance(120);
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
+  f.sync.reset(); f.advance();
+  await f.sync.cycle(config, secret);
+  assert.deepEqual(f.state.calls.slice(-2).map(item => item.path), ['login', 'healthBatch']);
 });

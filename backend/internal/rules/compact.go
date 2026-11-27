@@ -151,9 +151,11 @@ func EvaluateCompactInto(dst []CompactCandidate, p Policy, in Input) []CompactCa
 		var keyBuffer [48]byte
 		keyBytes := strconv.AppendInt(keyBuffer[:0], in.LastReport.UnixMicro(), 10)
 		keyBytes = append(keyBytes, ':')
-		keyBytes = strconv.AppendInt(keyBytes, in.Now.UTC().Truncate(time.Minute).Unix(), 10)
-		key := string(keyBytes)
-		result = append(result, CompactCandidate{"no_report", key, severity, in.Now.Sub(in.LastReport) > time.Duration(p.OfflineSeconds)*time.Second, 1, evidenceValue{kind: evidenceOffline, lastReport: in.LastReport, offlineSeconds: p.OfflineSeconds}})
+		keyBytes = strconv.AppendInt(keyBytes, int64(p.OfflineSeconds), 10)
+		keyBytes = append(keyBytes, ':')
+		breach := in.Now.Sub(in.LastReport) > time.Duration(p.OfflineSeconds)*time.Second
+		keyBytes = strconv.AppendBool(keyBytes, breach)
+		result = append(result, CompactCandidate{"no_report", string(keyBytes), severity, breach, 1, evidenceValue{kind: evidenceOffline, lastReport: in.LastReport, offlineSeconds: p.OfflineSeconds}})
 	}
 	if v := in.Activity; v != nil && night && p.Night(v.At) {
 		result = append(result, CompactCandidate{"night_activity", v.Key, "high", v.Value >= p.NightSteps, 1, evidenceValue{kind: evidenceActivity, value: v.Value, threshold: p.NightSteps, windowMinutes: p.ActivityMinutes, source: v.Source, device: v.Device}})

@@ -26,7 +26,14 @@ func TestCompactHistogramMatchesReference(t *testing.T) {
 	// including exact boundaries, adjacent floats and overflow observations.
 	bounds := [...]float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 15, 20, 30, 60}
 	r := New()
-	for _, labels := range []string{`route="a",method="GET",status="200"`, `route="b",method="POST",status="500"`} {
+	for _, tc := range []struct {
+		labels string
+		key    httpLabels
+	}{
+		{`route="a",method="GET",status="200"`, httpLabels{"a", "GET", 200}},
+		{`route="b",method="POST",status="500"`, httpLabels{"b", "POST", 500}},
+	} {
+		labels := tc.labels
 		observations := []float64{-1, 0, 61, math.Inf(1), math.NaN()}
 		for _, bound := range bounds {
 			observations = append(observations, math.Nextafter(bound, 0), bound, math.Nextafter(bound, math.Inf(1)))
@@ -34,7 +41,7 @@ func TestCompactHistogramMatchesReference(t *testing.T) {
 		var counts [15]int
 		var sum float64
 		for _, value := range observations {
-			r.observeHTTP(labels, value)
+			r.observeHTTP(tc.key, value)
 			sum += value
 			for i, bound := range bounds {
 				if value <= bound {
@@ -63,13 +70,13 @@ func TestCompactHistogramMatchesReference(t *testing.T) {
 func TestCompactHistogramConcurrentScrapeSnapshot(t *testing.T) {
 	r := New()
 	labels := `route="a",method="GET",status="200"`
-	r.observeHTTP(labels, .125)
+	r.observeHTTP(httpLabels{"a", "GET", 200}, .125)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for range 10000 {
-			r.observeHTTP(labels, .125)
+			r.observeHTTP(httpLabels{"a", "GET", 200}, .125)
 		}
 	}()
 	for range 50 {
@@ -84,4 +91,41 @@ func TestCompactHistogramConcurrentScrapeSnapshot(t *testing.T) {
 		}
 	}
 	wg.Wait()
+}
+
+func TestHistogramNamesOverrideManualValuesAndStaySorted(t *testing.T) {
+	r := New()
+	key := httpLabels{"quoted\"\\route", "GET", 200}
+	labels := `route="quoted\"\\route",method="GET",status="200"`
+	name := "yihe_http_requests_total{" + labels + "}"
+	r.Set(name, 999)
+	r.Set(strings.Repeat("z", 512), 42)
+	r.observeHTTP(key, .125)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest("GET", "/metrics", nil))
+	var previous string
+	count := 0
+	for _, line := range strings.Split(w.Body.String(), "\n") {
+		if line == "" || line[0] == '#' {
+			continue
+		}
+		i := strings.LastIndexByte(line, ' ')
+		if i < 0 {
+			t.Fatal("invalid metric line")
+		}
+		current := line[:i]
+		if previous != "" && current <= previous {
+			t.Fatalf("unsorted or duplicated %q", current)
+		}
+		previous = current
+		if current == name {
+			count++
+			if line[i+1:] != "1" {
+				t.Fatal("histogram lost precedence")
+			}
+		}
+	}
+	if count != 1 || !strings.Contains(w.Body.String(), strings.Repeat("z", 512)+" 42\n") {
+		t.Fatal("missing metric")
+	}
 }
