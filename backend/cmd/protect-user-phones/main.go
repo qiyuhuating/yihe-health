@@ -10,8 +10,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"yihe-care/internal/config"
 	"time"
+	"yihe-care/internal/config"
 
 	_ "github.com/go-sql-driver/mysql"
 	"yihe-care/internal/securestore"

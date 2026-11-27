@@ -10,9 +10,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"yihe-care/internal/config"
 	"sync/atomic"
 	"time"
+	"yihe-care/internal/config"
 )
 
 // mysqlAudit is one asynchronous writer for authentication observations. The

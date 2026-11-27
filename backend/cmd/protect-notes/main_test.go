@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/base64"
 	"strings"
+	"testing"
 	"yihe-care/internal/db/dbtest"
 	"yihe-care/internal/securestore"
-	"testing"
 )
 
 func TestProtectNotesRejectsUnboundedOrUnknownOptionsBeforeConnecting(t *testing.T) {
