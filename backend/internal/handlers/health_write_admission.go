@@ -19,6 +19,15 @@ const healthWriteConcurrency = 8
 const healthWriteUrgentConcurrency = 6
 const healthWriteQueueWait = 200 * time.Millisecond
 
+type healthWriteWaiter struct {
+	device   string
+	owner    []int64
+	ctx      context.Context
+	deadline time.Time
+	ready    chan struct{}
+	granted  bool
+}
+
 type healthWriteAdmission struct {
 	mu              sync.Mutex
 	active          map[string]bool
@@ -29,6 +38,7 @@ type healthWriteAdmission struct {
 	activeSOSOwners map[int64]struct{}
 	urgentCount     int
 	waiting         chan struct{}
+	waiters         []*healthWriteWaiter
 	changed         chan struct{}
 }
 
@@ -69,11 +79,32 @@ func (a *healthWriteAdmission) tryAcquire(device string, owner ...int64) bool {
 	return true
 }
 
+// Dispatch oldest eligible requests under the lock. A blocked device or owner
+// cannot block unrelated work, and new arrivals cannot steal a released slot.
+func (a *healthWriteAdmission) dispatchLocked() {
+	pending := a.waiters[:0]
+	for _, w := range a.waiters {
+		if w.ctx.Err() != nil || !time.Now().Before(w.deadline) {
+			close(w.ready)
+			continue
+		}
+		if a.tryAcquire(w.device, w.owner...) {
+			w.granted = true
+			close(w.ready)
+			continue
+		}
+		pending = append(pending, w)
+	}
+	clear(a.waiters[len(pending):])
+	a.waiters = pending
+}
+
 func (a *healthWriteAdmission) acquire(ctx context.Context, device string, owner ...int64) bool {
 	if ctx.Err() != nil {
 		return false
 	}
 	a.mu.Lock()
+	a.dispatchLocked()
 	if a.tryAcquire(device, owner...) {
 		a.mu.Unlock()
 		return true
@@ -85,37 +116,40 @@ func (a *healthWriteAdmission) acquire(ctx context.Context, device string, owner
 		a.mu.Unlock()
 		return false
 	}
-	timer := time.NewTimer(healthWriteQueueWait)
+	w := &healthWriteWaiter{
+		device: device, owner: owner, ctx: ctx,
+		deadline: time.Now().Add(healthWriteQueueWait),
+		ready:    make(chan struct{}),
+	}
+	a.waiters = append(a.waiters, w)
+	a.mu.Unlock()
+	timer := time.NewTimer(time.Until(w.deadline))
 	defer timer.Stop()
-	for {
-		if a.changed == nil {
-			a.changed = make(chan struct{})
-		}
-		changed := a.changed
-		a.mu.Unlock()
-		select {
-		case <-ctx.Done():
-			return false
-		case <-timer.C:
-			return false
-		case <-changed:
-		}
-		a.mu.Lock()
-		if ctx.Err() != nil {
-			a.mu.Unlock()
-			return false
-		}
-		select {
-		case <-timer.C:
-			a.mu.Unlock()
-			return false
-		default:
-		}
-		if a.tryAcquire(device, owner...) {
+	select {
+	case <-ctx.Done():
+	case <-timer.C:
+	case <-w.ready:
+	}
+	a.mu.Lock()
+	if w.granted {
+		if ctx.Err() == nil {
 			a.mu.Unlock()
 			return true
 		}
+		a.releaseLocked(device)
+		a.signalLocked()
+	} else {
+		for i, pending := range a.waiters {
+			if pending == w {
+				copy(a.waiters[i:], a.waiters[i+1:])
+				a.waiters[len(a.waiters)-1] = nil
+				a.waiters = a.waiters[:len(a.waiters)-1]
+				break
+			}
+		}
 	}
+	a.mu.Unlock()
+	return false
 }
 
 // claimOwner upgrades a device preflight slot before opening a transaction.
@@ -238,16 +272,21 @@ func (a *healthWriteAdmission) releaseSOS(device string, owner int64, active boo
 
 func (a *healthWriteAdmission) release(device string) {
 	a.mu.Lock()
+	a.releaseLocked(device)
+	a.signalLocked()
+	a.mu.Unlock()
+}
+
+func (a *healthWriteAdmission) releaseLocked(device string) {
 	delete(a.active, device)
 	if owner, ok := a.domains[device]; ok {
 		delete(a.owners, owner)
 		delete(a.domains, device)
 	}
-	a.signalLocked()
-	a.mu.Unlock()
 }
 
 func (a *healthWriteAdmission) signalLocked() {
+	a.dispatchLocked()
 	if a.changed != nil {
 		close(a.changed)
 		a.changed = nil

@@ -75,12 +75,26 @@ func TestLatestForwardBatchAvoidsRescan(t *testing.T) {
 	}
 	assertWinner(b.RecordID)
 
-	// Same indexed microsecond is deliberately not eligible for the fast path.
+	// Exact time and revision beat the authenticated prior, without a tie scan.
 	c := samples[4]
 	c.Start = b.Start.Add(100 * time.Nanosecond)
 	c.End = c.Start
-	if n = write([]Sample{c}); n != 4 {
-		t.Errorf("same-microsecond SELECTs=%d want 4", n)
+	if n = write([]Sample{c}); n != 3 {
+		t.Errorf("same-microsecond SELECTs=%d want 3", n)
+	}
+	assertWinner(c.RecordID)
+	d := samples[5]
+	d.Start, d.End = c.Start, c.Start
+	if n = write([]Sample{d}); n != 3 {
+		t.Errorf("equal timestamp SELECTs=%d want 3", n)
+	}
+	assertWinner(d.RecordID)
+	// A correction that moves the winner backward cannot use the bound.
+	d.Version++
+	d.Start = c.Start.Add(-50 * time.Nanosecond)
+	d.End = d.Start
+	if n = write([]Sample{d}); n != 4 {
+		t.Errorf("backward correction SELECTs=%d want 4", n)
 	}
 	assertWinner(c.RecordID)
 
@@ -92,7 +106,7 @@ func TestLatestForwardBatchAvoidsRescan(t *testing.T) {
 	if err := p.QueryRowContext(ctx, "SELECT COUNT(*) FROM health_change").Scan(&before); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := saveProtectedFixture(ctx, p, box, samples[5:6]); err == nil {
+	if _, err := saveProtectedFixture(ctx, p, box, samples[6:7]); err == nil {
 		t.Fatal("corrupt latest envelope accepted")
 	}
 	if err := p.QueryRowContext(ctx, "SELECT COUNT(*) FROM health_change").Scan(&after); err != nil || before != after {

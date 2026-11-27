@@ -58,6 +58,7 @@ type PreparedBatch struct {
 	input                               []preparedSample
 	minimumVersion                      int64
 	projectionBefore, projectionThrough int64
+	prepared                            ownerPreparation
 }
 
 // PrepareBatch performs owner-independent work before acquiring database locks.
@@ -99,6 +100,40 @@ func prepareBatch(samples []Sample, device *string) (PreparedBatch, error) {
 	return PreparedBatch{input: input, minimumVersion: minimumVersion}, nil
 }
 
+// ownerPreparation is a one-shot, nonauthoritative identity plan. It does not
+// reserve revisions or authorize a write. Compare owner fields by value, not
+// pointer identity, before consuming the plan inside the transaction.
+type ownerPreparation struct {
+	oldID, deviceID, epoch int64
+	hasDevice              bool
+	ids                    []any
+	seen                   map[string]uint8
+}
+
+func (p *ownerPreparation) matches(o Owner) bool {
+	return p.ids != nil && p.oldID == o.OldID && p.epoch == o.Epoch &&
+		p.hasDevice == (o.DeviceID != nil) && (!p.hasDevice || p.deviceID == *o.DeviceID)
+}
+
+// PrepareOwner moves hashing and lookup argument construction outside BEGIN.
+// SaveProtected must still receive the authoritative, revalidated owner.
+func (batch *PreparedBatch) PrepareOwner(o Owner) {
+	p := ownerPreparation{oldID: o.OldID, epoch: o.Epoch,
+		ids: make([]any, 1, len(batch.input)+1), seen: make(map[string]uint8, len(batch.input))}
+	if o.DeviceID != nil {
+		p.hasDevice, p.deviceID = true, *o.DeviceID
+	}
+	assignBatchIdentities(o, batch.input)
+	for i := range batch.input {
+		item := &batch.input[i]
+		if _, exists := p.seen[item.id]; !exists {
+			p.ids = append(p.ids, item.key[:])
+			p.seen[item.id] = 0
+		}
+	}
+	batch.prepared = p
+}
+
 // Save derives identity from the caller's locked owner and preserves the same
 // version/conflict/history transaction as SaveBatch.
 func (batch *PreparedBatch) Save(ctx context.Context, tx *sql.Tx, o Owner) (int64, int, error) {
@@ -113,16 +148,12 @@ func (batch *PreparedBatch) SaveProtected(ctx context.Context, tx *sql.Tx, o Own
 	}
 	batch.projectionBefore, batch.projectionThrough = 0, 0
 	input := batch.input
-	assignBatchIdentities(o, input)
-	ids := make([]any, 1, len(input)+1)
-	seen := make(map[string]uint8, len(input))
-	for i := range input {
-		id := input[i].id
-		if _, exists := seen[id]; !exists {
-			ids = append(ids, input[i].key[:])
-			seen[id] = 0
-		}
+	if !batch.prepared.matches(o) {
+		batch.PrepareOwner(o)
 	}
+	ids, seen := batch.prepared.ids, batch.prepared.seen
+	// Selection mutates the map, and even a rolled-back save consumes its plan.
+	batch.prepared = ownerPreparation{}
 	clock, err := lockOwner(ctx, tx, o.OldID)
 	if err != nil {
 		return 0, 0, err

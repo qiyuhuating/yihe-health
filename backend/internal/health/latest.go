@@ -309,14 +309,15 @@ func refreshLatestSeries(ctx context.Context, tx *sql.Tx, owner Owner, item *pre
 		return latestChange{}, err
 	}
 	// A ready, authenticated prior winner bounds every unchanged row in this
-	// series. Only a strictly later indexed microsecond can bypass the query:
-	// equal microseconds, corrections moving backwards and deletions still
-	// authenticate and compare the actual stored candidates. The winning new
-	// row has just been sealed and written in this very transaction.
+	// series. The best newly written candidate can replace that bound when
+	// its exact timestamp/revision wins, even within the same SQL microsecond.
+	// Backward corrections and deletions still scan the stored candidates.
+	// The winning new row was sealed and written in this transaction.
 	if found && old.Cipher != nil && box != nil && !s.Deleted {
 		var previousSample Sample
 		if json.Unmarshal(oldPayload, &previousSample) == nil && !previousSample.Deleted &&
-			latestKey(previousSample) == key && s.Start.UnixMicro() > previousSample.Start.UnixMicro() {
+			latestKey(previousSample) == key && safeSampleTime(s.Start) &&
+			(s.Start.After(previousSample.Start) || (s.Start.Equal(previousSample.Start) && item.revision > prior.Revision)) {
 			stored, err := protectProjection(box, item.payload, latestPayloadScope(oldID, key[:], item.revision))
 			if err != nil {
 				return latestChange{}, err

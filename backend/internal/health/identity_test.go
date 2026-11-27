@@ -93,3 +93,34 @@ func BenchmarkIdentityOptimizedUnicode(b *testing.B) {
 		identitySink = identityDigest(o, s)
 	}
 }
+
+func TestPreparedOwnerSnapshotCannotSurviveBindingChange(t *testing.T) {
+	device := int64(3)
+	owner := Owner{OldID: 1, DeviceID: &device, Epoch: 2}
+	batch := PreparedBatch{input: []preparedSample{
+		{sample: Sample{Source: "watch", SourceDevice: "A", RecordID: "one", Metric: "heart_rate"}},
+		{sample: Sample{Source: "watch", SourceDevice: "A", RecordID: "one", Metric: "heart_rate"}},
+	}}
+	batch.PrepareOwner(owner)
+	if !batch.prepared.matches(owner) || len(batch.prepared.ids) != 2 {
+		t.Fatal("incorrect owner plan")
+	}
+	first := batch.input[0].id
+	device = 4
+	if batch.prepared.matches(owner) {
+		t.Fatal("changed device matched cached owner")
+	}
+	batch.PrepareOwner(owner)
+	if batch.input[0].id == first || batch.input[0].id != referenceIdentity(owner, batch.input[0].sample) {
+		t.Fatal("identity did not change with binding")
+	}
+	owner.Epoch++
+	if batch.prepared.matches(owner) {
+		t.Fatal("changed epoch matched cached owner")
+	}
+	owner.Epoch--
+	owner.OldID++
+	if batch.prepared.matches(owner) {
+		t.Fatal("changed resident matched cached owner")
+	}
+}

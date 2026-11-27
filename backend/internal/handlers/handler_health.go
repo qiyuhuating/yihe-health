@@ -95,6 +95,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	expectedOwner := *d.OldID
+	batch.PrepareOwner(health.Owner{OldID: expectedOwner, DeviceID: &d.ID, Epoch: d.HealthEpoch})
 	admitted = h.healthWrites.claimOwner(ctx, req.DeviceNo, expectedOwner)
 	if !admitted {
 		healthWriteBusy(w)

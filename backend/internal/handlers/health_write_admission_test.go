@@ -547,3 +547,88 @@ func TestSOSPriorityCanClaimBetweenBeginRetries(t *testing.T) {
 		t.Fatalf("SOS lost retry boundary: begins=%d err=%v", c.begins, err)
 	}
 }
+
+func TestHealthAdmissionHandsOffToOldestEligibleWaiter(t *testing.T) {
+	a := newHealthWriteAdmission()
+	if !a.acquire(t.Context(), "hot", 1) {
+		t.Fatal("initial admission")
+	}
+	first, second := make(chan bool, 1), make(chan bool, 1)
+	waitFor := func(count int) {
+		t.Helper()
+		deadline := time.Now().Add(time.Second)
+		for {
+			a.mu.Lock()
+			n := len(a.waiters)
+			a.mu.Unlock()
+			if n == count {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("waiter did not enter queue")
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}
+	go func() { first <- a.acquire(t.Context(), "hot", 1) }()
+	waitFor(1)
+	go func() { second <- a.acquire(t.Context(), "hot", 1) }()
+	waitFor(2)
+	// An unrelated domain must not be blocked by the hot device.
+	if !a.acquire(t.Context(), "cold", 2) {
+		t.Fatal("unrelated device blocked")
+	}
+	a.release("cold")
+	a.release("hot")
+	// The first waiter owns the slot already, even before its goroutine runs.
+	a.mu.Lock()
+	_, reserved := a.active["hot"]
+	pending := len(a.waiters)
+	a.mu.Unlock()
+	if !reserved || pending != 1 {
+		t.Fatalf("slot not handed off: reserved=%t pending=%d", reserved, pending)
+	}
+	if !<-first {
+		t.Fatal("first waiter rejected")
+	}
+	select {
+	case <-second:
+		t.Fatal("second waiter bypassed first")
+	default:
+	}
+	a.release("hot")
+	if !<-second {
+		t.Fatal("second waiter rejected")
+	}
+	a.release("hot")
+	if len(a.waiting) != 0 || len(a.active) != 0 || len(a.owners) != 0 {
+		t.Fatal("admission leaked capacity")
+	}
+}
+
+func TestHealthAdmissionCanceledWaiterDoesNotConsumeHandoff(t *testing.T) {
+	a := newHealthWriteAdmission()
+	if !a.acquire(t.Context(), "hot", 1) {
+		t.Fatal("initial admission")
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan bool, 1)
+	go func() { done <- a.acquire(ctx, "hot", 1) }()
+	deadline := time.Now().Add(time.Second)
+	for len(a.waiting) != 1 {
+		if time.Now().After(deadline) {
+			t.Fatal("waiter did not enter queue")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	cancel()
+	a.release("hot")
+	if <-done {
+		t.Fatal("canceled waiter acquired")
+	}
+	if !a.acquire(t.Context(), "hot", 1) {
+		t.Fatal("cancellation leaked domain")
+	}
+	a.release("hot")
+}
