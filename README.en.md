@@ -46,6 +46,8 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 
 Daily statistics refresh on demand: querying a stale day returns a pending status until background recomputation finishes. Unrequested historical days are not continuously recomputed.
 
+Automatic watch sync combines pending and fresh samples into one upload when queue capacity permits, preserving record IDs and durable acknowledgements.
+
 ## First-time setup
 
 ### Windows desktop (built from source)

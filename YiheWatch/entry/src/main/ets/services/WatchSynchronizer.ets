@@ -169,34 +169,32 @@ export class WatchSynchronizer {
     const uploaded = await this.send(config, secret, binding, generation);
     return { binding: binding, sampled: 0, uploaded: uploaded, queued: 0, offline: false, note: '' };
   }
+  private async sendWhenReady(config: WatchConfig, secret: string, binding: Binding, generation: number): Promise<number> {
+    if (this.now() < this.retryAt) { return 0; }
+    try { return await this.send(config, secret, binding, generation); }
+    catch (error) {
+      this.current(generation);
+      if (!this.transient(error as DeviceRequestError)) {
+        if (error instanceof Error) { throw error; }
+        throw new Error('同步未完成，待上传记录已保留');
+      }
+      this.deferNetwork(error as DeviceRequestError);
+      return 0;
+    }
+  }
   async cycle(config: WatchConfig, secret: string): Promise<SyncResult> {
     const generation = this.validate(secret);
     const binding = await this.binding(config, secret, true);
     this.current(generation);
     let uploaded = 0;
-    if (this.now() >= this.retryAt) {
-      try { uploaded += await this.send(config, secret, binding, generation); }
-      catch (error) {
-        this.current(generation);
-        if (!this.transient(error as DeviceRequestError)) {
-          if (error instanceof Error) { throw error; }
-          throw new Error('同步未完成，待上传记录已保留');
-        }
-        this.deferNetwork(error as DeviceRequestError);
-      }
+    // Reserve room for the two sensor observations. Otherwise merge the
+    // durable backlog and new samples into one authenticated upload.
+    const pending = this.store.batch();
+    if (pending && pending.samples.length > 198) {
+      uploaded += await this.sendWhenReady(config, secret, binding, generation);
     }
     const result = await this.capture(binding, false, generation);
-    if (this.now() >= this.retryAt) {
-      try { uploaded += await this.send(config, secret, binding, generation); }
-      catch (error) {
-        this.current(generation);
-        if (!this.transient(error as DeviceRequestError)) {
-          if (error instanceof Error) { throw error; }
-          throw new Error('同步未完成，待上传记录已保留');
-        }
-        this.deferNetwork(error as DeviceRequestError);
-      }
-    }
+    uploaded += await this.sendWhenReady(config, secret, binding, generation);
     result.uploaded = uploaded;
     const queued = this.store.batch(); result.queued = queued ? queued.samples.length : 0;
     result.offline = this.now() < this.retryAt;

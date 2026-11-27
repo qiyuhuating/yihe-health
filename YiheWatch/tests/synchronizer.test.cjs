@@ -152,6 +152,7 @@ test('full offline queue pauses sensors and reconnect uploads original records b
   assert.equal(full.queued, 200); assert.equal(f.state.listeners, 0); assert.deepEqual(f.store.batch().samples, samples);
   f.state.offline = false; f.advance(); const result = await f.sync.cycle(config, secret);
   assert.equal(result.uploaded, 201); assert.equal(f.state.records.size, 201);
+  assert.deepEqual(f.state.calls.filter(item => item.path === 'healthBatch').map(item => item.body.samples.length), [200, 1]);
   for (const sample of samples) assert.ok(f.state.records.has(sample.recordId));
 });
 
@@ -161,7 +162,11 @@ test('lost acknowledgement retains original IDs and only later retry replays the
   assert.equal(result.offline, true); assert.equal(result.queued, 1);
   assert.equal(f.state.calls.filter(item => item.path === 'healthBatch').length, 1);
   const id = f.store.batch().samples[0].recordId;
-  f.advance(); await f.sync.cycle(config, secret);
+  f.advance(); const recovered = await f.sync.cycle(config, secret);
+  const uploads = f.state.calls.filter(item => item.path === 'healthBatch');
+  assert.equal(uploads.length, 2, 'retry and new samples share one upload');
+  assert.equal(uploads[1].body.samples.length, recovered.uploaded);
+  assert.ok(uploads[1].body.samples.some(item => item.recordId === id));
   assert.ok(f.state.records.has(id)); assert.equal(f.state.duplicates, 1); assert.equal(f.store.batch(), undefined);
 });
 
