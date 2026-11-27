@@ -3,11 +3,11 @@ package rules
 import (
 	"context"
 	"log/slog"
+	"sync"
+	"time"
 	"yihe-care/internal/config"
 	"yihe-care/internal/db"
 	"yihe-care/internal/securestore"
-	"sync"
-	"time"
 )
 
 func (e *Engine) Tick(ctx context.Context) error {

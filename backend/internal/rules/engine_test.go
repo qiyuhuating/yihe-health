@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"yihe-care/internal/db"
-	"yihe-care/internal/db/dbtest"
-	"yihe-care/internal/health"
 	"sync"
 	"testing"
 	"time"
+	"yihe-care/internal/db"
+	"yihe-care/internal/db/dbtest"
+	"yihe-care/internal/health"
 )
 
 func seed(t *testing.T) (*db.Database, time.Time) {

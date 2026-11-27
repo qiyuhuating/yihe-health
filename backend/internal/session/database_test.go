@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"strings"
+	"testing"
+	"time"
 	"yihe-care/internal/db/dbtest"
 	"yihe-care/internal/securestore"
 	"yihe-care/internal/session"
-	"testing"
-	"time"
 )
 
 func TestDatabaseSessionsShareRevokeAndFactorGeneration(t *testing.T) {
