@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"math"
@@ -15,27 +16,39 @@ const baselineLegacyValue = "CAST(JSON_UNQUOTE(JSON_EXTRACT(payload,'$.value')) 
 
 const baselineLegacyLongSQL = `SELECT count(*) AS sample_count,count(` + baselineLegacyValue + `) AS value_count,
  COALESCE(avg(` + baselineLegacyValue + `),0) AS mean,COALESCE(stddev_pop(` + baselineLegacyValue + `),0) AS deviation
- FROM health_sample WHERE old_id=? AND device_id=? AND metric=? AND deleted=false AND payload_encrypted=false
- AND source=? AND source_device=? AND BINARY source=BINARY ? AND BINARY source_device=BINARY ?
+ FROM health_sample FORCE INDEX (idx_health_rule_cover) WHERE old_id=? AND device_id=? AND metric=? AND deleted=false AND payload_encrypted=false
+ AND source=? AND rule_identity_key=? AND BINARY source=BINARY ? AND BINARY source_device=BINARY ?
  AND sample_start>=? AND sample_start<? AND (JSON_UNQUOTE(JSON_EXTRACT(payload,'$.timeBasis')) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(payload,'$.timeBasis'))<>'legacy-unzoned')`
 
-const baselineProtectedShortSQL = `SELECT sample_id,revision,payload_cipher,0,0,0,0 FROM health_sample FORCE INDEX (idx_health_rule_cover)
+const baselineProtectedShortSQL = `SELECT LOWER(HEX(sample_id)),revision,` + health.SampleCipherSQL + `,0,0,0,0 FROM health_sample FORCE INDEX (idx_health_rule_cover)
  WHERE old_id=? AND device_id=? AND metric=? AND deleted=false AND payload_encrypted=true
- AND source=? AND rule_source_device=? AND BINARY source=BINARY ? AND BINARY rule_source_device=BINARY ?
+ AND source=? AND rule_identity_key=? AND BINARY source=BINARY ?
  AND sample_start>=? AND sample_start<?`
 
-const baselineProtectedLongSQL = `SELECT sample_id,revision,payload_cipher,0,0,0,0 FROM health_sample
+const baselineProtectedLongSQL = `SELECT LOWER(HEX(sample_id)),revision,` + health.SampleCipherSQL + `,0,0,0,0 FROM health_sample FORCE INDEX (idx_health_rule_cover)
  WHERE old_id=? AND device_id=? AND metric=? AND deleted=false AND payload_encrypted=true
- AND source=? AND source_device=? AND BINARY source=BINARY ? AND BINARY source_device=BINARY ?
+ AND source=? AND rule_identity_key=? AND BINARY source=BINARY ? AND BINARY source_device=BINARY ?
  AND sample_start>=? AND sample_start<?`
+
+// baselineSourceKey matches the generated binary index column exactly, including
+// Unicode bytes and trailing spaces. The tag separates exact short identities
+// from long hashed candidates, which always require full binary comparison.
+func baselineSourceKey(device string) []byte {
+	if len(device) > 64 {
+		digest := sha256.Sum256([]byte(device))
+		return append([]byte{1}, digest[:]...)
+	}
+	return append([]byte{0}, device...)
+}
 
 func readRuleBaseline(ctx context.Context, tx *sql.Tx, device ruleDevice, metric string, value Value, now time.Time, days int, box *securestore.Box) (Baseline, error) {
-	args := []any{device.oldID, device.id, metric, value.Source, value.Device, value.Source, value.Device,
-		now.AddDate(0, 0, -days).UnixMicro(), now.Add(-15 * time.Minute).UnixMicro()}
+	args := []any{device.oldID, device.id, metric, value.Source, baselineSourceKey(value.Device), value.Source}
 	legacyQuery, protectedQuery := baselineCoverSQL, baselineProtectedShortSQL
 	if len(value.Device) > 64 {
 		legacyQuery, protectedQuery = baselineLegacyLongSQL, baselineProtectedLongSQL
+		args = append(args, value.Device)
 	}
+	args = append(args, now.AddDate(0, 0, -days).UnixMicro(), now.Add(-15*time.Minute).UnixMicro())
 	// One statement gives both storage formats the same snapshot, including
 	// when a backfill moves a sample from the legacy result to ciphertext.
 	query := "SELECT NULL,0,NULL, legacy.* FROM (" + legacyQuery + ") AS legacy UNION ALL " + protectedQuery

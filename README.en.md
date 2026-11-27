@@ -45,6 +45,12 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 
 **Operational limits:** missing readings are not evidence of normal health. A notification gateway accepting a request does not prove message delivery or that staff responded. Unattended SOS handling needs an independent, always-on service, reliable notification channels, and staffed procedures.
 
+Daily statistics refresh on demand: querying a stale day returns a pending status until background recomputation finishes. Unrequested historical days are not continuously recomputed.
+
+Automatic watch sync combines pending and fresh samples into one upload when queue capacity permits, preserving record IDs and durable acknowledgements.
+
+Consecutive successful monitoring cycles reuse a recent binding hint and submit signed uploads for authoritative server validation. Empty cycles, failures and expired hints require login.
+
 ## First-time setup
 
 ### Windows desktop (built from source)
@@ -69,7 +75,9 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 
 The interface may open when MySQL is unreachable, but login and data writes require a ready database. Backups must include stored image/health data, BLOB columns, and recoverable encryption keys. Migrating from an earlier PostgreSQL/S3 deployment requires stopping writers, backing up, and following the [MySQL-only migration guide](docs/MYSQL_ONLY_MIGRATION.md); the application does not migrate data automatically.
 
-Set `MYSQL_STATISTICS_MAX_CONNS` (0–64, default 0) to enable a dedicated health statistics pool on the same MySQL primary. Budget 20 business connections, one liveness connection, and the configured statistics connections per instance.
+Set `MYSQL_STATISTICS_MAX_CONNS` (0–64, default 0) to enable a dedicated health statistics pool on the same MySQL primary. Budget 20 business connections, one liveness connection, the configured statistics connections, and `MYSQL_SOS_MAX_CONNS` (0–8, default 0) reserved SOS connections per instance. Each service instance admits at most eight concurrent health uploads and eight waiting requests outside the connection pool for up to 200 ms. Overload returns HTTP 503 with Retry-After; clients must retain unacknowledged records. Compose accepts `MYSQL_REDO_LOG_CAPACITY` (default 1 GiB); evaluate 4 GiB against storage and recovery requirements for sustained writes, without relaxing synchronous durability.
+
+Health uploads are admitted serially per device, with eight active slots and eight waiting slots per service instance. Optional YIHE_SOS_PRIORITY=1 pauses new uploads from the authenticated SOS device and temporarily reduces the global upload budget to six. Waiting does not hold a SQL connection. It defaults to off; enable only after validating local workload latency.
 
 ### Always-on deployments and local Compose
 

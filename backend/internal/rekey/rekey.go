@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"yihe-care/internal/health"
 	"yihe-care/internal/securestore"
 )
 
@@ -135,6 +136,9 @@ func clean(columns []Column) bool {
 }
 
 func walkAll(ctx context.Context, pool *sql.DB, box *securestore.Box, options Options, apply bool) ([]Column, error) {
+	if err := health.VerifySampleReferenceIntegrity(ctx, pool); err != nil {
+		return nil, err
+	}
 	columns := make([]Column, 0, len(targets()))
 	for _, t := range targets() {
 		column, err := walk(ctx, pool, box, t, options, apply)
@@ -196,10 +200,10 @@ func walk(ctx context.Context, pool *sql.DB, box *securestore.Box, t target, opt
 	var cursor []any
 	for {
 		query := "SELECT " + strings.Join(t.keys, ",") + ",CASE WHEN OCTET_LENGTH(" + t.column + ")<=? THEN " + t.column + " ELSE NULL END,COALESCE(OCTET_LENGTH(" + t.column + ")>?,false) FROM " + t.table + " WHERE " + t.condition() + " AND " + keyTuple(t.keys) + "<=" + placeholders(len(upper))
-		args := append([]any{maxFieldBytes, maxFieldBytes}, upper...)
+		args := append([]any{maxFieldBytes, maxFieldBytes}, t.keyArgs(upper)...)
 		if cursor != nil {
 			query += " AND " + keyTuple(t.keys) + ">" + placeholders(len(cursor))
-			args = append(args, cursor...)
+			args = append(args, t.keyArgs(cursor)...)
 		}
 		query += " ORDER BY " + strings.Join(t.keys, ",") + " LIMIT ?"
 		args = append(args, options.BatchSize)
@@ -285,7 +289,7 @@ func readPage(ctx context.Context, pool *sql.DB, query string, args []any, keyCo
 // even if an old deployment uses a case-insensitive or PAD SPACE collation.
 func compareSwap(ctx context.Context, pool *sql.DB, t target, keys []any, old, replacement string) (bool, error) {
 	query := "UPDATE " + t.table + " SET " + t.column + "=? WHERE " + t.condition() + " AND " + keyTuple(t.keys) + "=" + placeholders(len(keys)) + " AND CAST(" + t.column + " AS BINARY)=CAST(? AS BINARY)"
-	args := append([]any{replacement}, keys...)
+	args := append([]any{replacement}, t.keyArgs(keys)...)
 	args = append(args, old)
 	result, err := pool.ExecContext(ctx, query, args...)
 	if err != nil {

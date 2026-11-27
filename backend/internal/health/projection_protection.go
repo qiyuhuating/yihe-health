@@ -25,7 +25,14 @@ func SamplePayloadScope(id, owner, revision string) string {
 }
 
 func samplePayloadScope(id string, owner, revision int64) string {
-	return SamplePayloadScope(id, strconv.FormatInt(owner, 10), strconv.FormatInt(revision, 10))
+	var buf [128]byte
+	b := append(buf[:0], "health-sample:"...)
+	b = append(b, id...)
+	b = append(b, ':')
+	b = strconv.AppendInt(b, owner, 10)
+	b = append(b, ':')
+	b = strconv.AppendInt(b, revision, 10)
+	return string(b)
 }
 
 func changePayloadScope(revision, owner int64, id string) string {
@@ -59,15 +66,25 @@ func protectProjection(box *securestore.Box, raw json.RawMessage, scope string) 
 	return ProjectionPayload{Cipher: &cipher}, nil
 }
 
+// jsonArgument preserves the driver's JSON-specific text encoding, including
+// SQL NULL for protected payloads. A slice conversion avoids copying plaintext.
+func (p ProjectionPayload) jsonArgument() json.RawMessage {
+	return json.RawMessage(p.JSON)
+}
+
 func (p ProjectionPayload) Open(box *securestore.Box, scope string) (json.RawMessage, error) {
+	return p.open(box, scope, nil)
+}
+
+func (p ProjectionPayload) open(box *securestore.Box, scope string, scratch *[]byte) (json.RawMessage, error) {
 	if p.Cipher == nil {
 		return p.JSON, nil
 	}
 	if p.JSON != nil || len(*p.Cipher) > maxProjectionCipherBytes {
 		return nil, errors.New("invalid protected health projection payload")
 	}
-	plain, err := box.Open(*p.Cipher, scope)
-	if err != nil || !json.Valid([]byte(plain)) {
+	plain, err := box.OpenBytesReuse(*p.Cipher, scope, scratch)
+	if err != nil || !json.Valid(plain) {
 		return nil, errors.New("health projection payload authentication failed")
 	}
 	return json.RawMessage(plain), nil
@@ -78,8 +95,15 @@ func (p ProjectionPayload) OpenDailyResult(box *securestore.Box, id string, revi
 }
 
 func (p ProjectionPayload) OpenSample(box *securestore.Box, id string, owner, revision int64) (json.RawMessage, error) {
+	return p.openSample(box, id, owner, revision, nil)
+}
+
+func (p ProjectionPayload) openSample(box *securestore.Box, id string, owner, revision int64, scratch *[]byte) (json.RawMessage, error) {
 	if p.JSON == nil && p.Cipher == nil {
 		return nil, errors.New("health sample payload is missing")
 	}
-	return p.Open(box, samplePayloadScope(id, owner, revision))
+	if p.Cipher != nil && len(*p.Cipher) > 0 && (*p.Cipher)[0] == sampleHistoryReference[0] {
+		return openHistorySample(p, box, id, owner, revision, scratch)
+	}
+	return p.open(box, samplePayloadScope(id, owner, revision), scratch)
 }
