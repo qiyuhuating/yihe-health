@@ -7,20 +7,23 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net/netip"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
 const (
-	window          = 10 * time.Minute
-	accountLimit    = 5
-	accountCooldown = 5 * time.Minute
-	ipLimit         = 30
-	ipCooldown      = 2 * time.Minute
-	inviteLimit     = 12
-	inviteCooldown  = 2 * time.Minute
-	maxEntries      = 16384
+	window             = 10 * time.Minute
+	accountLimit       = 5
+	accountCooldown    = 5 * time.Minute
+	ipLimit            = 30
+	ipCooldown         = 2 * time.Minute
+	inviteLimit        = 12
+	inviteCooldown     = 2 * time.Minute
+	loginNetworkLimit  = 120
+	inviteNetworkLimit = 48
+	maxEntries         = 16384
 )
 
 type entry struct {
@@ -71,6 +74,28 @@ func key(kind, value string) string {
 	return kind + ":" + hex.EncodeToString(hash[:])
 }
 
+// Normalize alternate representations of the same address. IPv6 privacy
+// addresses also share an optional, deliberately wider /64 failure budget.
+// IPv4-mapped IPv6 uses the existing IPv4 budget; IPv4 subnets are not grouped.
+func networkIdentity(ip string) (string, string) {
+	a, err := netip.ParseAddr(ip)
+	if err != nil {
+		return ip, ""
+	}
+	a = a.Unmap().WithZone("")
+	if a.Is4() {
+		return a.String(), ""
+	}
+	return a.String(), netip.PrefixFrom(a, 64).Masked().String()
+}
+
+func networkKey(kind, network string) string {
+	if network == "" {
+		return ""
+	}
+	return key(kind, network)
+}
+
 func remaining(e entry, now time.Time) int {
 	if !now.Before(e.blockedUntil) {
 		return 0
@@ -102,7 +127,8 @@ func (m *Manager) BeforeLogin(ip, account string) Decision {
 	if m.shouldBlockNetworkLocked(ip) {
 		return Decision{RetryAfter: 60, RiskLevel: "proxy"}
 	}
-	return m.checkLocked(key("login-account-ip", ip+"\x00"+account), key("login-ip", ip))
+	ip, network := networkIdentity(ip)
+	return m.checkLocked(key("login-account-ip", ip+"\x00"+account), key("login-ip", ip), networkKey("login-network", network))
 }
 
 func (m *Manager) BeforeInvite(ip string) Decision {
@@ -117,10 +143,14 @@ func (m *Manager) BeforeInvite(ip string) Decision {
 	if m.shouldBlockNetworkLocked(ip) {
 		return Decision{RetryAfter: 60, RiskLevel: "proxy"}
 	}
-	return m.checkLocked(key("invite-ip", ip))
+	ip, network := networkIdentity(ip)
+	return m.checkLocked(key("invite-ip", ip), networkKey("invite-network", network))
 }
 
 func (m *Manager) recordLocked(k string, threshold int, cooldown time.Duration) Decision {
+	if k == "" {
+		return Decision{RiskLevel: "low"}
+	}
 	now := m.now()
 	e := m.entries[k]
 	if n := remaining(e, now); n > 0 {
@@ -156,10 +186,15 @@ func (m *Manager) FailedLogin(ip, account string, signals ...string) Decision {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.recordEventLocked(ip, account, "login_failed", "invalid_credentials", signals...)
+	ip, network := networkIdentity(ip)
 	a := m.recordLocked(key("login-account-ip", ip+"\x00"+account), accountLimit, accountCooldown)
 	b := m.recordLocked(key("login-ip", ip), ipLimit, ipCooldown)
+	c := m.recordLocked(networkKey("login-network", network), loginNetworkLimit, ipCooldown)
 	if b.RetryAfter > a.RetryAfter {
-		return b
+		a = b
+	}
+	if c.RetryAfter > a.RetryAfter {
+		a = c
 	}
 	return a
 }
@@ -167,7 +202,8 @@ func (m *Manager) FailedLogin(ip, account string, signals ...string) Decision {
 func (m *Manager) SuccessfulLogin(ip, account string, signals ...string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	delete(m.entries, key("login-account-ip", ip+"\x00"+account))
+	normalized, _ := networkIdentity(ip)
+	delete(m.entries, key("login-account-ip", normalized+"\x00"+account))
 	m.recordEventLocked(ip, account, "login_success", "authenticated", signals...)
 	// Keep IP-wide failure evidence; a single valid account must not erase stuffing signals.
 }
@@ -176,5 +212,11 @@ func (m *Manager) InvalidInvite(ip string, signals ...string) Decision {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.recordEventLocked(ip, "", "invite_failed", "invalid_code", signals...)
-	return m.recordLocked(key("invite-ip", ip), inviteLimit, inviteCooldown)
+	ip, network := networkIdentity(ip)
+	a := m.recordLocked(key("invite-ip", ip), inviteLimit, inviteCooldown)
+	b := m.recordLocked(networkKey("invite-network", network), inviteNetworkLimit, inviteCooldown)
+	if b.RetryAfter > a.RetryAfter {
+		return b
+	}
+	return a
 }
