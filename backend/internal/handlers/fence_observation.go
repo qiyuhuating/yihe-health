@@ -32,7 +32,7 @@ func advanceFenceObservation(f *fencerepo.Config, state *fence.State, req *fence
 	direction := ""
 	if !fence.Active(second, f.TimeBegin, f.TimeEnd) {
 		*state = fence.State{Last: at}
-	} else if req.Accuracy > f.MaxAccuracy || fence.BoundaryDistance(f.Coordinates, *req.Point) <= req.Accuracy {
+	} else if req.Accuracy > f.MaxAccuracy || fence.WithinBoundary(f.Coordinates, *req.Point, req.Accuracy) {
 		state.Count = 0
 		state.Since = time.Time{}
 		state.Last = at

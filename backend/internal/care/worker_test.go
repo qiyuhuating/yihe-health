@@ -251,3 +251,29 @@ func TestRetryDelayIsCapped(t *testing.T) {
 		}
 	}
 }
+
+func TestOfflineDueRevalidatesAfterHeartbeat(t *testing.T) {
+	pool := testCareDB(t)
+	ctx := context.Background()
+	if _, err := pool.ExecContext(ctx, "UPDATE device SET last_time=CURRENT_TIMESTAMP(6)-INTERVAL 5 MINUTE,last_online_at=CURRENT_TIMESTAMP(6) WHERE device_id=1"); err != nil {
+		t.Fatal(err)
+	}
+	var cutoff time.Time
+	if err := pool.QueryRowContext(ctx, "SELECT CURRENT_TIMESTAMP(6)").Scan(&cutoff); err != nil {
+		t.Fatal(err)
+	}
+	var id int64
+	if err := pool.QueryRowContext(ctx, "SELECT device_id FROM device FORCE INDEX(idx_device_offline_due) WHERE offline_due_at<?", cutoff).Scan(&id); err != nil || id != 1 {
+		t.Fatal("due row not indexed", id, err)
+	}
+	if _, err := pool.ExecContext(ctx, "UPDATE device SET last_time=CURRENT_TIMESTAMP(6),last_online_at=CURRENT_TIMESTAMP(6) WHERE device_id=1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := resetOfflinePage(ctx, pool, cutoff, []any{id}); err != nil {
+		t.Fatal(err)
+	}
+	var online *time.Time
+	if err := pool.QueryRowContext(ctx, "SELECT last_online_at FROM device WHERE device_id=1").Scan(&online); err != nil || online == nil {
+		t.Fatal("fresh heartbeat was reset", online, err)
+	}
+}

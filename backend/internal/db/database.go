@@ -12,6 +12,7 @@ type Database struct {
 	*sql.DB
 	healthPool     *sql.DB
 	statisticsPool *sql.DB
+	sosPool        *sql.DB
 }
 
 func (d *Database) Close() error {
@@ -19,7 +20,11 @@ func (d *Database) Close() error {
 	if d.statisticsPool != nil {
 		statisticsErr = d.statisticsPool.Close()
 	}
-	return errors.Join(statisticsErr, d.healthPool.Close(), d.DB.Close())
+	var sosErr error
+	if d.sosPool != nil {
+		sosErr = d.sosPool.Close()
+	}
+	return errors.Join(statisticsErr, sosErr, d.healthPool.Close(), d.DB.Close())
 }
 
 // StatisticsPool uses the same primary MySQL server, with an independent
@@ -27,6 +32,15 @@ func (d *Database) Close() error {
 func (d *Database) StatisticsPool() *sql.DB {
 	if d.statisticsPool != nil {
 		return d.statisticsPool
+	}
+	return d.DB
+}
+
+// SOSPool reserves connections for authenticated emergency writes on the
+// same MySQL primary. Row locks and durable commits are unchanged.
+func (d *Database) SOSPool() *sql.DB {
+	if d.sosPool != nil {
+		return d.sosPool
 	}
 	return d.DB
 }

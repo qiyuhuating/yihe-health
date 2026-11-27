@@ -45,6 +45,23 @@ type Result struct {
 // days, taking a median for each day so high-frequency sampling cannot dominate.
 // Historical samples from a different owner or binding epoch are excluded.
 func Evaluate(current Observation, history []Observation) (Result, error) {
+	if len(history) <= HistoryDays {
+		var sparse [HistoryDays]float64
+		return evaluateBuckets(current, history, sparse[:], 1)
+	}
+	return evaluateDense(current, history)
+}
+
+func evaluateDense(current Observation, history []Observation) (Result, error) {
+	perDay := min(len(history)/HistoryDays, 2048)
+	if perDay <= 32 {
+		var small [HistoryDays * 32]float64
+		return evaluateBuckets(current, history, small[:], 32)
+	}
+	return evaluateBuckets(current, history, nil, perDay)
+}
+
+func evaluateBuckets(current Observation, history []Observation, scratch []float64, perDay int) (Result, error) {
 	if current.OwnerID <= 0 || current.BindingVersion <= 0 || current.Metric == "" ||
 		current.At.IsZero() || !current.Valid || math.IsNaN(current.Value) || math.IsInf(current.Value, 0) {
 		return Result{}, errors.New("invalid current health observation")
@@ -55,7 +72,7 @@ func Evaluate(current Observation, history []Observation) (Result, error) {
 
 	// The window has a fixed number of UTC calendar days, already in time order.
 	var days [HistoryDays][]float64
-	var firstValues [HistoryDays]float64
+
 	sampleDays := 0
 	for _, sample := range history {
 		if sample.OwnerID != current.OwnerID || sample.DeviceID != current.DeviceID || sample.BindingVersion != current.BindingVersion ||
@@ -69,8 +86,12 @@ func Evaluate(current Observation, history []Observation) (Result, error) {
 		i := int(sample.At.Sub(firstDay) / dayDuration)
 		if len(days[i]) == 0 {
 			sampleDays++
-			firstValues[i] = sample.Value
-			days[i] = firstValues[i : i+1 : i+1]
+			if scratch == nil {
+				scratch = make([]float64, HistoryDays*perDay)
+			}
+			begin := i * perDay
+			scratch[begin] = sample.Value
+			days[i] = scratch[begin : begin+1 : begin+perDay]
 		} else {
 			days[i] = append(days[i], sample.Value)
 		}

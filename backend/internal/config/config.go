@@ -29,6 +29,7 @@ type RequestConfig struct {
 	RequireSigned     bool
 	DurableTelemetry  bool
 	HealthLateLock    bool
+	SOSPriority       bool
 	CareReceiptSecret string
 }
 
@@ -200,6 +201,7 @@ func Load() Config {
 			RequireSigned:     Enabled("YIHE_REQUIRE_SIGNED_DEVICE"),
 			DurableTelemetry:  Enabled("YIHE_DURABLE_TELEMETRY"),
 			HealthLateLock:    Enabled("HEALTH_LATE_DEVICE_LOCK"),
+			SOSPriority:       Enabled("YIHE_SOS_PRIORITY"),
 			CareReceiptSecret: Secret("CARE_RECEIPT_SECRET"),
 		},
 		Risk: RiskConfig{

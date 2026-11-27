@@ -2,7 +2,16 @@
 // Authentication and CSRF middleware consume this same registry.
 package accesspolicy
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
+
+// PublicAssetPath is the unconditional static/health-check path set.
+func PublicAssetPath(path string) bool {
+	return path == "/" || path == "/healthz" || path == "/index.html" || path == "/favicon.ico" ||
+		strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/static/")
+}
 
 type Access uint8
 

@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: yihe
       MYSQL_USER: yihe
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?}
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_bin", "--log-bin-trust-function-creators=1"]
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_bin", "--log-bin-trust-function-creators=1", "--innodb-redo-log-capacity=${MYSQL_REDO_LOG_CAPACITY:-1073741824}"]
     volumes: ["mysql:/var/lib/mysql"]
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
@@ -25,6 +25,8 @@ services:
       YIHE_RISK_AUDIT_SPOOL_PATH: /tmp/yihe-risk-audit.jsonl
       SESSION_BACKEND: database
       HEALTH_HOT_CACHE_MIB: ${HEALTH_HOT_CACHE_MIB:-16}
+      MYSQL_STATISTICS_MAX_CONNS: ${MYSQL_STATISTICS_MAX_CONNS:-0}
+      MYSQL_SOS_MAX_CONNS: ${MYSQL_SOS_MAX_CONNS:-0}
       RATE_LIMIT_MAX_KEYS: ${RATE_LIMIT_MAX_KEYS:-8192}
       RATE_LIMIT_MAX_SLOTS: ${RATE_LIMIT_MAX_SLOTS:-262144}
       TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-${GATEWAY_IPV4:-172.30.73.10}/32}

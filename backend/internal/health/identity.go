@@ -15,6 +15,11 @@ import (
 // boxes, reflection, and the intermediate JSON allocation. JSON encoding is
 // still used for Unicode and escaped strings, preserving IDs byte-for-byte.
 func identityDigest(o Owner, s Sample) string {
+	hash := identityHash(o, s)
+	return hex.EncodeToString(hash[:])
+}
+
+func identityHash(o Owner, s Sample) [32]byte {
 	var stack [512]byte
 	b := stack[:0]
 	b = append(b, '[')
@@ -32,17 +37,15 @@ func identityDigest(o Owner, s Sample) string {
 	b = appendJSONStringIdentity(b, s.RecordID)
 	b = appendJSONStringIdentity(b, s.Metric)
 	b = append(b, ']')
-	hash := sha256.Sum256(b)
-	var encoded [64]byte
-	hex.Encode(encoded[:], hash[:])
-	return string(encoded[:])
+	return sha256.Sum256(b)
 }
 
 // Keep the owner and consecutive equal source fields encoded in a request-local
 // buffer. Only record ID and metric must be appended again for every sample.
 func assignBatchIdentities(o Owner, input []preparedSample) {
 	if len(input) == 1 {
-		input[0].id, input[0].revision = identityDigest(o, input[0].sample), 0
+		input[0].key = identityHash(o, input[0].sample)
+		input[0].id, input[0].revision = hex.EncodeToString(input[0].key[:]), 0
 		return
 	}
 	var stack [512]byte
@@ -73,6 +76,7 @@ func assignBatchIdentities(o Owner, input []preparedSample) {
 		b = append(b, ']')
 		hash := sha256.Sum256(b)
 		hex.Encode(encoded[:], hash[:])
+		input[i].key = hash
 		input[i].id, input[i].revision = string(encoded[:]), 0
 	}
 }

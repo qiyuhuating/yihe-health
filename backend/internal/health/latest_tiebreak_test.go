@@ -11,7 +11,7 @@ import (
 )
 
 func TestLatestBackfillMatchesIncrementalTieBreak(t *testing.T) {
-	database := dbtest.MySQL(t)
+	database := dbtest.Fixture(t)
 	ctx := context.Background()
 	if _, err := database.ExecContext(ctx, "INSERT INTO oldperson(old_id,name) VALUES(1,'tie-break')"); err != nil {
 		t.Fatal(err)
@@ -56,7 +56,7 @@ func TestLatestBackfillMatchesIncrementalTieBreak(t *testing.T) {
 }
 
 func TestLatestBackfillCapsDistinctSeriesRatherThanTiedSamples(t *testing.T) {
-	database := dbtest.MySQL(t)
+	database := dbtest.Fixture(t)
 	ctx := context.Background()
 	if _, err := database.ExecContext(ctx, "INSERT INTO oldperson(old_id,name) VALUES(1,'latest-tie-cap')"); err != nil {
 		t.Fatal(err)
@@ -85,7 +85,7 @@ func TestLatestBackfillCapsDistinctSeriesRatherThanTiedSamples(t *testing.T) {
 	digits := "(SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9)"
 	query := fmt.Sprintf(`INSERT INTO health_sample
 		(sample_id,old_id,device_id,epoch,version,revision,payload,payload_cipher,source,source_device,metric,semantics,sample_start,sample_end,deleted)
-		SELECT SHA2(CONCAT('latest-tie:',a.n,b.n,c.n,d.n),256),
+		SELECT UNHEX(SHA2(CONCAT('latest-tie:',a.n,b.n,c.n,d.n),256)),
 		h.old_id,h.device_id,h.epoch,h.version,
 		h.revision + 1 + a.n * 1000 + b.n * 100 + c.n * 10 + d.n,
 		h.payload,h.payload_cipher,

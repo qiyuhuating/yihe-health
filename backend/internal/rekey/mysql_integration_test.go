@@ -104,12 +104,12 @@ func TestRekeyMySQL(t *testing.T) {
 	sampleID := strings.Repeat("a", 64)
 	seriesKey := strings.Repeat("\x00\xff", 16)
 	dailyKey := strings.Repeat("b", 64)
-	exec("INSERT INTO health_change(revision,old_id,sample_id,payload_cipher) VALUES(8,7,?,?)",
+	exec("INSERT INTO health_change(revision,old_id,sample_id,payload_cipher) VALUES(8,7,UNHEX(?),?)",
 		sampleID, sealed(t, old, "{}", health.ChangePayloadScope("8", "7", sampleID)))
 	exec(`INSERT INTO health_sample(sample_id,old_id,epoch,version,revision,payload_cipher,source,source_device,metric,semantics,sample_start,sample_end,deleted)
- VALUES(?,7,1,1,8,?,'watch','device','heart_rate','instant',1,1,false)`,
+ VALUES(UNHEX(?),7,1,1,8,?,'watch','device','heart_rate','instant',1,1,false)`,
 		sampleID, sealed(t, old, "{}", health.SamplePayloadScope(sampleID, "7", "8")))
-	exec("INSERT INTO health_sample_latest(old_id,series_key,sample_id,epoch,revision,payload_cipher) VALUES(7,?,?,1,8,?)",
+	exec("INSERT INTO health_sample_latest(old_id,series_key,sample_id,epoch,revision,payload_cipher) VALUES(7,?,UNHEX(?),1,8,?)",
 		[]byte(seriesKey), sampleID, sealed(t, old, "{}", health.LatestPayloadScope("7", seriesKey, "8")))
 	exec("INSERT INTO metric_daily(cache_key,old_id,source,source_device,metric,semantics,record_day,offset_minutes,computed_revision,result_cipher) VALUES(?,7,'watch','device','heart_rate','instant','1956-02-29',0,8,?)",
 		dailyKey, sealed(t, old, "{}", health.DailyResultScope(dailyKey, "8")))

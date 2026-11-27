@@ -2,24 +2,34 @@
 package fence
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 )
 
 type Point [2]float64 // longitude, latitude
 
 func (p *Point) UnmarshalJSON(b []byte) error {
-	var values []*float64
-	if err := json.Unmarshal(b, &values); err != nil {
-		return err
+	// Validate JSON number grammar before ParseFloat, which also accepts
+	// non-JSON forms. Only two finite representable numbers may reach Point.
+	if json.Valid(b) {
+		b = bytes.TrimSpace(b)
+		if len(b) >= 5 && b[0] == '[' && b[len(b)-1] == ']' {
+			left, right, ok := bytes.Cut(b[1:len(b)-1], []byte{','})
+			if ok {
+				x, xerr := strconv.ParseFloat(string(bytes.TrimSpace(left)), 64)
+				y, yerr := strconv.ParseFloat(string(bytes.TrimSpace(right)), 64)
+				if xerr == nil && yerr == nil {
+					*p = Point{x, y}
+					return nil
+				}
+			}
+		}
 	}
-	if len(values) != 2 || values[0] == nil || values[1] == nil {
-		return fmt.Errorf("坐标必须恰好包含经度、纬度两个数值")
-	}
-	*p = Point{*values[0], *values[1]}
-	return nil
+	return fmt.Errorf("坐标必须恰好包含经度、纬度两个数值")
 }
 
 func ValidPoint(p Point) bool {
@@ -98,6 +108,35 @@ func BoundaryDistance(p []Point, q Point) float64 {
 	}
 	return best
 }
+
+// WithinBoundary reports whether a validated polygon has any edge within the
+// given accuracy radius. Keep the same projection and Hypot rounding as
+// BoundaryDistance, but avoid scanning remaining edges after a match.
+func WithinBoundary(p []Point, q Point, radius float64) bool {
+	if len(p) < 2 {
+		return false
+	}
+	xscale := 111195 * math.Cos(q[1]*math.Pi/180)
+	ax, ay := (p[0][0]-q[0])*xscale, (p[0][1]-q[1])*111195
+	for _, next := range p[1:] {
+		bx, by := (next[0]-q[0])*xscale, (next[1]-q[1])*111195
+		dx, dy := bx-ax, by-ay
+		denom := dx*dx + dy*dy
+		if denom < 1e-12 {
+			if math.Hypot(ax, ay) <= radius {
+				return true
+			}
+		} else {
+			t := math.Max(0, math.Min(1, -(ax*dx+ay*dy)/denom))
+			if math.Hypot(ax+t*dx, ay+t*dy) <= radius {
+				return true
+			}
+		}
+		ax, ay = bx, by
+	}
+	return false
+}
+
 func Active(second, begin, end int) bool {
 	if begin < end {
 		return second >= begin && second < end
