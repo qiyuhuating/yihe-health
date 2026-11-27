@@ -65,7 +65,9 @@ jobs:
           docker inspect --format '{{.Config.Image}} {{.Image}}' '${{ job.services.mysql.id }}' > "$evidence/database-images.txt"
           go list -m -json all > "$evidence/modules.jsonl"
           go vet ./... > "$evidence/vet.txt" 2>&1
-          go test -json -race -count=1 -timeout 45m ./... > "$evidence/mysql.jsonl" 2>&1
+          # MySQL integration tests migrate isolated databases; the handlers
+          # package exhausted 45m on hosted CI while still progressing.
+          go test -json -race -count=1 -timeout 60m ./... > "$evidence/mysql.jsonl" 2>&1
           python3 ../scripts/reliability/audit-go-results.py "$evidence/mysql.jsonl" --mode mysql --output "$evidence/mysql-summary.json"
           go build ./... > "$evidence/build.txt" 2>&1
           CGO_ENABLED=0 go build -trimpath  -ldflags='-s -w' -o "$evidence/yihe-server" ./cmd/server

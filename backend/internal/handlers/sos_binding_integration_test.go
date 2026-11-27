@@ -109,7 +109,10 @@ func TestSOSVersionedRetryAndRequiredIdentity(t *testing.T) {
 	h := testHandler(t, pool)
 	payload := map[string]any{"deviceNo": "WATCH001", "secret": testSecret, "requestId": "versioned-retry", "bindingVersion": 1}
 	first := api(t, h.deviceSos, payload)
+	// A retry remains idempotent even if the device's replacement metadata is invalid.
+	payload["positionAccuracy"] = -1
 	again := api(t, h.deviceSos, payload)
+	delete(payload, "positionAccuracy")
 	if first["incidentId"] != again["incidentId"] || again["duplicate"] != true {
 		t.Fatalf("retry: first=%v again=%v", first, again)
 	}
@@ -197,7 +200,13 @@ func TestSOSPersistenceRollbackLeavesNoPartialRows(t *testing.T) {
 		_ = tx.Rollback()
 		t.Fatal(err)
 	}
-	if _, err = (telemetryRepository{}).PersistSOSIncident(ctx, tx, d, "", "", "rollback-probe", positionMetadata{Version: 1, Validity: "missing"}, time.Now()); err != nil {
+	repo := telemetryRepository{}
+	prepared, err := repo.prepareSOSPosition("", "", positionMetadata{Version: 1, Validity: "missing"})
+	if err != nil {
+		_ = tx.Rollback()
+		t.Fatal(err)
+	}
+	if _, err = repo.PersistSOSIncident(ctx, tx, d, "rollback-probe", prepared, time.Now()); err != nil {
 		_ = tx.Rollback()
 		t.Fatal(err)
 	}

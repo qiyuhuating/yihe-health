@@ -33,6 +33,26 @@ describe('care task read scheduling', () => {
     view.unmount()
   })
 
+  it('supersedes a pre-change read without waiting for its response', async () => {
+    let complete!: (value: ReturnType<typeof fixture>) => void
+    post.mockImplementationOnce(() => new Promise(resolve => { complete = resolve }))
+      .mockResolvedValueOnce(fixture('最新任务'))
+    const view = mountInbox()
+    try {
+      await flushPromises()
+      const signal = post.mock.calls[0]?.[2]?.signal as AbortSignal
+      expect(signal.aborted).toBe(false)
+      store.notifyAlertsChanged()
+      await flushPromises()
+      expect(signal.aborted).toBe(true)
+      expect(post).toHaveBeenCalledTimes(2)
+      expect(view.text()).toContain('最新任务')
+      complete(fixture('过期任务'))
+      await flushPromises()
+      expect(view.text()).not.toContain('过期任务')
+    } finally { view.unmount() }
+  })
+
   it('refreshes tasks on tab visibility restoration and unregisters the listener', async () => {
     const visibility = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     try {

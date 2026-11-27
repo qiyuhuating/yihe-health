@@ -82,3 +82,21 @@ it('refreshes on first foreground return after a hidden mount', () => {
     expect(vi.getTimerCount()).toBe(1)
   } finally { stop() }
 })
+
+it('does not repeat a periodic refresh on an immediate foreground return', () => {
+  vi.useFakeTimers()
+  const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false)
+  const refresh = vi.fn()
+  const stop = startVisiblePolling(refresh, 15_000)
+  try {
+    vi.advanceTimersByTime(15_000)
+    hidden.mockReturnValue(true)
+    document.dispatchEvent(new Event('visibilitychange'))
+    vi.advanceTimersByTime(100)
+    hidden.mockReturnValue(false)
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(refresh).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(15_000)
+    expect(refresh).toHaveBeenCalledTimes(2)
+  } finally { stop() }
+})

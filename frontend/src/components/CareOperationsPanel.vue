@@ -97,19 +97,24 @@ const showAudit = ref(false)
 const loading = ref(false)
 const assigning = ref<number | string | null>(null)
 const error = ref('')
-const post = <T,>(url: string, body: Record<string, unknown> = {}) =>
-  api.post<T>('api/v1/care/' + url, body)
+const post = <T,>(url: string, body: Record<string, unknown> = {}, signal?: AbortSignal) =>
+  api.post<T>('api/v1/care/' + url, body, { signal })
 
 let disposed = false
 let staffRevision = 0
 let auditRevision = 0
+let diagnosticsRead: AbortController | undefined
+let staffRead: AbortController | undefined
+let auditRead: AbortController | undefined
 let stopPolling: (() => void) | undefined
 
 async function refresh() {
   if (disposed || loading.value || !isSupervisor.value) return
   loading.value = true
+  const current = new AbortController()
+  diagnosticsRead = current
   try {
-    const { data } = await post<Diagnostics>('diagnostics')
+    const { data } = await post<Diagnostics>('diagnostics', {}, current.signal)
     if (disposed) return
     diagnostics.value = data
     authorized.value = true
@@ -127,14 +132,18 @@ async function refresh() {
       error.value = apiErrorMessage(cause, '服务诊断暂不可用')
     }
   } finally {
+    if (diagnosticsRead === current) diagnosticsRead = undefined
     if (!disposed) loading.value = false
   }
 }
 
 async function loadStaff() {
   const revision = ++staffRevision
+  staffRead?.abort()
+  const current = new AbortController()
+  staffRead = current
   try {
-    const { data } = await post<{ staff: Staff[] }>('staff')
+    const { data } = await post<{ staff: Staff[] }>('staff', {}, current.signal)
     if (disposed || revision !== staffRevision) return
     staff.value = Array.isArray(data.staff) ? data.staff : []
   } catch (cause) {
@@ -169,9 +178,12 @@ async function assign(person: Staff, duty: Duty) {
 
 async function ifAudit() {
   const revision = ++auditRevision
+  auditRead?.abort()
   if (disposed || (!showAudit.value && isSupervisor.value) || !canAudit.value) return
+  const current = new AbortController()
+  auditRead = current
   try {
-    const { data } = await post<{ accesses: AccessEntry[] }>('accessAudit')
+    const { data } = await post<{ accesses: AccessEntry[] }>('accessAudit', {}, current.signal)
     if (!disposed && revision === auditRevision && canAudit.value) {
       accesses.value = Array.isArray(data.accesses) ? data.accesses : []
     }
@@ -192,6 +204,9 @@ onBeforeUnmount(() => {
   staffRevision++
   auditRevision++
   stopPolling?.()
+  diagnosticsRead?.abort()
+  staffRead?.abort()
+  auditRead?.abort()
 })
 </script>
 <style scoped>

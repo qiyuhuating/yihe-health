@@ -12,7 +12,10 @@ void yihe_sort_sleep(uint64_t *keys, uint32_t count);
 */
 import "C"
 
-import "math/bits"
+import (
+	"math/bits"
+	"unsafe"
+)
 
 func sortSleepNative(samples []*Sample) bool {
 	if len(samples) < 2048 || uint64(len(samples)) > uint64(^uint32(0)) {
@@ -86,4 +89,8 @@ func sortSleepNative(samples []*Sample) bool {
 		keys[at] = C.uint64_t(at)
 	}
 	return true
+}
+
+func sortSleepKeys(keys []uint64) {
+	C.yihe_sort_sleep((*C.uint64_t)(unsafe.Pointer(&keys[0])), C.uint32_t(len(keys)))
 }

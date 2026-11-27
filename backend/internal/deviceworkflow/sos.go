@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	"yihe-care/internal/careworkflow"
-	"yihe-care/internal/db"
 	"yihe-care/internal/devicerepo"
 	"yihe-care/internal/notify"
 	"yihe-care/internal/securestore"
@@ -33,19 +32,40 @@ type SOSResult struct {
 // SOSHooks connect the signed-request boundary and incident encoder to the transaction.
 // A rejected nonce must write its own response; the transaction is rolled back.
 type SOSHooks struct {
+	Prioritize  func(context.Context, string, int64) (func(), error)
 	AcceptNonce func(context.Context, *sql.Tx, int64) bool
 	Persist     func(context.Context, *sql.Tx, *devicerepo.DeviceRecord) (int64, error)
 }
 
 // SOS owns lock ordering, retry lookup, incident persistence, outbox enqueue and commit.
-func SOS(ctx context.Context, store *db.Database, box *securestore.Box, input SOSInput, hooks SOSHooks) (SOSResult, Failure, error) {
+func SOS(ctx context.Context, store *sql.DB, box *securestore.Box, input SOSInput, hooks SOSHooks) (SOSResult, Failure, error) {
+	var device *devicerepo.DeviceRecord
+	var failure Failure
+	var err error
+	if hooks.Prioritize != nil {
+		device, failure, err = Authenticate(ctx, store, input.Number, input.Secret)
+		if err != nil || device == nil {
+			return SOSResult{}, failure, err
+		}
+		if device.No == input.Number && device.OldID != nil && device.HealthEpoch == input.Epoch {
+			release, err := hooks.Prioritize(ctx, device.No, *device.OldID)
+			if err != nil {
+				return SOSResult{}, "", err
+			}
+			defer release()
+		}
+	}
 	tx, err := store.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	if err != nil {
 		return SOSResult{}, "", err
 	}
 	defer tx.Rollback()
 
-	device, failure, err := LockBoundDevice(ctx, tx, input.Number, input.Secret, input.Epoch)
+	if hooks.Prioritize == nil {
+		device, failure, err = LockBoundDevice(ctx, tx, input.Number, input.Secret, input.Epoch)
+	} else {
+		device, failure, err = LockAuthenticatedDevice(ctx, tx, device, input.Number, input.Secret, input.Epoch)
+	}
 	if err != nil || device == nil {
 		return SOSResult{}, failure, err
 	}

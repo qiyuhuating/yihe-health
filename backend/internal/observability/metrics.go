@@ -1,11 +1,13 @@
 package observability
 
 import (
+	"context"
 	"fmt"
 	"github.com/google/uuid"
 	"log/slog"
+	"maps"
 	"net/http"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,12 +17,12 @@ import (
 type Registry struct {
 	mu             sync.Mutex
 	values         map[string]float64
-	httpHistograms map[string]*httpHistogram
+	httpHistograms map[httpLabels]*httpHistogram
 	resolve        func(*http.Request) string
 }
 
 func New() *Registry {
-	return &Registry{values: map[string]float64{}, httpHistograms: make(map[string]*httpHistogram)}
+	return &Registry{values: map[string]float64{}, httpHistograms: make(map[httpLabels]*httpHistogram)}
 }
 
 var Default = New()
@@ -55,7 +57,13 @@ type httpHistogram struct {
 	keys *[len(httpBucketBounds) + 4]string
 }
 
-func newHTTPHistogram(labels string) *httpHistogram {
+type httpLabels struct {
+	route, method string
+	status        int
+}
+
+func newHTTPHistogram(key httpLabels) *httpHistogram {
+	labels := `route=` + strconv.Quote(key.route) + `,method=` + strconv.Quote(key.method) + `,status=` + strconv.Quote(strconv.Itoa(key.status))
 	keys := new([len(httpBucketBounds) + 4]string)
 	keys[0] = "yihe_http_requests_total{" + labels + "}"
 	keys[1] = "yihe_http_duration_seconds_count{" + labels + "}"
@@ -67,7 +75,7 @@ func newHTTPHistogram(labels string) *httpHistogram {
 	return &httpHistogram{keys: keys}
 }
 
-func (r *Registry) observeHTTP(labels string, seconds float64) {
+func (r *Registry) observeHTTP(labels httpLabels, seconds float64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	h := r.httpHistograms[labels]
@@ -92,13 +100,7 @@ func (r *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// network client. A slow or disconnected scraper must not block request
 	// completion, counters, or dispatcher heartbeat updates.
 	r.mu.Lock()
-	size := len(r.values) + len(r.httpHistograms)*(len(httpBucketBounds)+4)
-	values := make(map[string]float64, size)
-	keys := make([]string, 0, size)
-	for k, v := range r.values {
-		values[k] = v
-		keys = append(keys, k)
-	}
+	values := maps.Clone(r.values)
 	// Copy numeric state under lock. Formatting and network writes happen
 	// after unlock so slow scrapers cannot block request completion.
 	histograms := make([]httpHistogram, 0, len(r.httpHistograms))
@@ -106,11 +108,16 @@ func (r *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		histograms = append(histograms, *h)
 	}
 	r.mu.Unlock()
+	type point struct {
+		key   string
+		value float64
+	}
+	points := make([]point, 0, len(values)+len(histograms)*(len(httpBucketBounds)+4))
 	put := func(key string, value float64) {
-		if _, exists := values[key]; !exists {
-			keys = append(keys, key)
-		}
-		values[key] = value
+		// Histogram observations take precedence over manually set names,
+		// matching the previous map-based exposition.
+		delete(values, key)
+		points = append(points, point{key, value})
 	}
 	for _, h := range histograms {
 		put(h.keys[0], float64(h.count))
@@ -123,9 +130,17 @@ func (r *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		put(h.keys[len(h.keys)-1], float64(h.count))
 	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		if _, err := fmt.Fprintf(w, "%s %s\n", k, strconv.FormatFloat(values[k], 'g', -1, 64)); err != nil {
+	for key, value := range values {
+		points = append(points, point{key, value})
+	}
+	slices.SortFunc(points, func(a, b point) int { return strings.Compare(a.key, b.key) })
+	line := make([]byte, 0, 256)
+	for _, p := range points {
+		line = append(line[:0], p.key...)
+		line = append(line, ' ')
+		line = strconv.AppendFloat(line, p.value, 'g', -1, 64)
+		line = append(line, '\n')
+		if _, err := w.Write(line); err != nil {
 			return
 		}
 	}
@@ -204,8 +219,9 @@ func (r *Registry) HTTP(next http.Handler) http.Handler {
 		case "TRACE":
 			method = "TRACE"
 		}
-		labels := `route=` + strconv.Quote(route) + `,method=` + strconv.Quote(method) + `,status=` + strconv.Quote(strconv.Itoa(out.status))
-		r.observeHTTP(labels, seconds)
-		slog.Info("http_request", "request_id", id, "route", route, "method", method, "status", out.status, "duration_ms", seconds*1000)
+		r.observeHTTP(httpLabels{route, method, out.status}, seconds)
+		slog.LogAttrs(context.Background(), slog.LevelInfo, "http_request",
+			slog.String("request_id", id), slog.String("route", route), slog.String("method", method),
+			slog.Int("status", out.status), slog.Float64("duration_ms", seconds*1000))
 	})
 }

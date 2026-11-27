@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ type ProjectionBackfillReport struct {
 	Table     string `json:"table"`
 	Before    int64  `json:"pending_before"`
 	Migrated  int    `json:"migrated"`
+	Verified  int    `json:"verified,omitempty"`
 	Remaining *int64 `json:"remaining"`
 }
 
@@ -114,6 +116,20 @@ func (t projectionTarget) pendingCount(ctx context.Context, database *sql.DB) (i
 
 func (t projectionTarget) verifyReader(ctx context.Context, database *sql.DB, box *securestore.Box) error {
 	keys := strings.Join(t.keys, ",")
+	if t.table == "health_sample" {
+		var id string
+		var owner, revision int64
+		var stored ProjectionPayload
+		err := database.QueryRowContext(ctx, "SELECT LOWER(HEX(sample_id)),old_id,revision,"+SampleCipherSQL+" FROM health_sample WHERE payload_encrypted=true ORDER BY sample_id LIMIT 1").Scan(&id, &owner, &revision, &stored.Cipher)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		_, err = stored.OpenSample(box, id, owner, revision)
+		return err
+	}
 	var stored ProjectionPayload
 	row := database.QueryRowContext(ctx, "SELECT "+keys+","+t.ciphertext+" FROM "+t.table+
 		" WHERE "+t.protected+" ORDER BY "+keys+" LIMIT 1")
@@ -179,7 +195,11 @@ func (t projectionTarget) scan(row *sql.Row, payload any) ([]any, string, error)
 	parts := make([]string, len(key))
 	for i, value := range key {
 		if binary, ok := value.([]byte); ok {
-			parts[i] = string(binary)
+			if t.keys[i] == "sample_id" {
+				parts[i] = hex.EncodeToString(binary)
+			} else {
+				parts[i] = string(binary)
+			}
 		} else {
 			parts[i] = fmt.Sprint(value)
 		}

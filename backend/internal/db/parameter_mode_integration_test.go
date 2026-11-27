@@ -150,6 +150,16 @@ func TestMySQLConnectionStatementCacheLifecycle(t *testing.T) {
 	if after := prepares(); after-before != 2 {
 		t.Fatal("did not reuse both prepared handles", before, after)
 	}
+	if _, err = conn.ExecContext(ctx, "UPDATE cache_probe SET id=id WHERE id=1"); err != nil {
+		t.Fatal(err)
+	}
+	var unchanged string
+	var unchangedJSON string
+	var unchangedBlob []byte
+	var unchangedAt time.Time
+	if err = conn.QueryRowContext(ctx, selectRow, 1).Scan(&unchangedJSON, &unchangedBlob, &unchanged, &unchangedAt); err != nil || prepares()-before != 2 {
+		t.Fatal("parameterless DML evicted plans", err)
+	}
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
 		t.Fatal(err)

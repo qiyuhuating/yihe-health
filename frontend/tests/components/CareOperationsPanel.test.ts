@@ -37,9 +37,13 @@ it('ignores a late staff response after the component unmounts', async () => {
     global: { stubs: { ElButton: Button, ElSelect: Select, ElOption: true, SecurityPanel: true } }
   })
   await flushPromises()
+  const staffCall = vi.mocked(axios.post).mock.calls.find(call => call[0] === '/api/v1/care/staff')
+  const signal = staffCall?.[2]?.signal
+  expect(signal?.aborted).toBe(false)
   view.unmount()
+  expect(signal?.aborted).toBe(true)
   finishStaff({ data: { staff: [{ id: 1, name: 'late', duty: 'caregiver' }] } })
   await flushPromises()
-  expect(axios.post).toHaveBeenCalledWith('/api/v1/care/staff', {}, { withCredentials: true, signal: undefined, timeout: REQUEST_TIMEOUT_MS })
+  expect(axios.post).toHaveBeenCalledWith('/api/v1/care/staff', {}, { withCredentials: true, signal: expect.any(AbortSignal), timeout: REQUEST_TIMEOUT_MS })
   vi.restoreAllMocks()
 })
