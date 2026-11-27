@@ -22,7 +22,7 @@ use subtle::ConstantTimeEq;
 use tokio::sync::Semaphore;
 
 #[derive(Clone, Copy, Debug)]
-enum Failure {
+pub(crate) enum Failure {
     Signature,
     Invalid,
     Credentials,
@@ -31,6 +31,7 @@ enum Failure {
     Epoch,
     Binding,
     Replay,
+    Conflict,
     Database,
     Busy,
 }
@@ -44,6 +45,7 @@ impl IntoResponse for Failure {
             Self::Unbound => (409, "DEVICE_NOT_BOUND", "设备未绑定"),
             Self::Epoch => (409, "EPOCH_EXPIRED", "绑定纪元已过期"),
             Self::Binding => (409, "BINDING_CHANGED", "绑定已变化"),
+            Self::Conflict => (409, "REQUEST_ID_CONFLICT", "请求标识已用于其他载荷"),
             Self::Replay => (409, "NONCE_REPLAY", "设备请求已处理，请使用新的随机数重试"),
             Self::Database => (500, "INTERNAL_ERROR", "服务处理失败"),
             Self::Busy => (503, "SERVICE_UNAVAILABLE", "服务暂不可用"),
@@ -63,19 +65,24 @@ impl From<sqlx::Error> for Failure {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct StepReport {
+pub(crate) struct StepReport {
     #[serde(rename = "deviceNo")]
     number: String,
     secret: String,
     #[serde(rename = "bindingVersion")]
-    epoch: i64,
+    pub(crate) epoch: i64,
     #[serde(rename = "beTime")]
     reported: String,
-    step: i64,
+    pub(crate) step: i64,
+    #[serde(rename = "requestId", default, deserialize_with = "present_request_id")]
+    pub(crate) request_id: Option<String>,
 }
-struct Verified {
-    report: StepReport,
-    observed: NaiveDateTime,
+fn present_request_id<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    String::deserialize(d).map(Some)
+}
+pub(crate) struct Verified {
+    pub(crate) report: StepReport,
+    pub(crate) observed: NaiveDateTime,
     nonce: [u8; 32],
     expires: NaiveDateTime,
 }
@@ -91,7 +98,11 @@ fn header<'a>(headers: &'a HeaderMap, name: &str) -> Result<&'a str, Failure> {
     }
     Ok(value.trim())
 }
-fn verify(headers: &HeaderMap, raw: &[u8], now: DateTime<Utc>) -> Result<Verified, Failure> {
+pub(crate) fn verify(
+    headers: &HeaderMap,
+    raw: &[u8],
+    now: DateTime<Utc>,
+) -> Result<Verified, Failure> {
     let signature = header(headers, "x-device-signature")?;
     let ts = header(headers, "x-device-timestamp")?;
     let nonce = header(headers, "x-device-nonce")?;
@@ -196,7 +207,10 @@ fn check(d: &Device, secret: &str) -> Result<(), Failure> {
     }
     Ok(())
 }
-async fn commit(pool: &MySqlPool, v: Verified, now: DateTime<Utc>) -> Result<(), Failure> {
+pub(crate) async fn authorize<'a>(
+    pool: &'a MySqlPool,
+    v: &Verified,
+) -> Result<(Transaction<'a, MySql>, i64, i64), Failure> {
     let r = &v.report;
     // No write based on the unlocked snapshot. Re-read credential and
     // ownership under the existing resident -> device lock order.
@@ -238,10 +252,18 @@ async fn commit(pool: &MySqlPool, v: Verified, now: DateTime<Utc>) -> Result<(),
         }
         return Err(Failure::Database);
     }
-    persist_step(&mut tx, current.id, owner, r.epoch, v.observed, r.step).await?;
+    Ok((tx, current.id, owner))
+}
+async fn commit(pool: &MySqlPool, v: Verified, now: DateTime<Utc>) -> Result<(), Failure> {
+    if v.report.request_id.is_some() {
+        return Err(Failure::Invalid);
+    }
+    let (mut tx, id, owner) = authorize(pool, &v).await?;
+    let r = &v.report;
+    persist_step(&mut tx, id, owner, r.epoch, v.observed, r.step).await?;
     let seen = now.naive_utc();
     sqlx::query("UPDATE device SET last_time=GREATEST(COALESCE(last_time,?),?),last_online_at=GREATEST(COALESCE(last_online_at,?),?) WHERE device_id=? AND health_epoch=? AND ?>=COALESCE(last_online_at,?)")
-        .bind(seen).bind(seen).bind(seen).bind(seen).bind(current.id).bind(r.epoch).bind(seen).bind(seen).execute(&mut *tx).await?;
+        .bind(seen).bind(seen).bind(seen).bind(seen).bind(id).bind(r.epoch).bind(seen).bind(seen).execute(&mut *tx).await?;
     tx.commit().await?;
     Ok(())
 }
@@ -290,7 +312,7 @@ async fn step(State(state): State<StateData>, request: Request) -> Result<Respon
 }
 
 /// Credentials are passed only through the local process environment.
-pub async fn test_router() -> Result<Router, Box<dyn std::error::Error>> {
+pub(crate) async fn test_pool() -> Result<MySqlPool, Box<dyn std::error::Error>> {
     let host: IpAddr = std::env::var("YIHE_NEXT_DB_HOST")?.parse()?;
     let schema = std::env::var("YIHE_NEXT_DB_SCHEMA")?;
     if !host.is_loopback()
@@ -326,6 +348,10 @@ pub async fn test_router() -> Result<Router, Box<dyn std::error::Error>> {
         })
         .connect_with(options)
         .await?;
+    Ok(pool)
+}
+pub async fn test_router() -> Result<Router, Box<dyn std::error::Error>> {
+    let pool = test_pool().await?;
     Ok(Router::new()
         .route("/api/v1/device/report", post(step))
         .with_state(StateData {

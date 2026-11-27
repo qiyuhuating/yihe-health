@@ -86,7 +86,6 @@ jobs:
           exit 1
       - run: go mod verify
       - run: go vet -mod=readonly ./...
-      - run: go test -mod=readonly -race -count=1 -v -timeout 180s ./...
       - name: Install Rust toolchain
         run: rustup toolchain install 1.100.0 --profile minimal --component rustfmt,clippy
       - name: Verify native Rust gateway
@@ -96,6 +95,10 @@ jobs:
           cargo +1.100.0 clippy --locked --all-targets -- -D warnings
           cargo +1.100.0 test --locked --all-targets
           cargo +1.100.0 build --locked
+      - name: Verify JetStream and Rust producer end to end
+        env:
+          YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+        run: go test -mod=readonly -race -count=1 -v -timeout 240s ./...
       - name: Compare actual Go handlers with Rust gateway
         working-directory: backend
         env:

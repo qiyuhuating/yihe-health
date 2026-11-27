@@ -1,5 +1,6 @@
 //! Loopback-only experimental gateway. Go remains the sole business writer.
 pub mod native;
+pub mod outbox;
 #[cfg(test)]
 mod tests;
 use axum::{

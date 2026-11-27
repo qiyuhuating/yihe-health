@@ -57,6 +57,51 @@ password authentication uses the SQLx MySQL RSA feature on the disposable
 loopback connection; TLS and restricted production credentials are future
 deployment requirements.
 
+## Native JetStream producer (test only)
+
+The --native-outbox-test mode requires the signed step-report subset plus
+a valid requestId. The native admission transaction reuses the locked
+credential/binding validation and nonce INSERT, then reads the existing
+experimental authorization generation under lock. It commits a keyed
+semantic fingerprint and a Go-compatible AES-256-GCM sne1: envelope in
+rust_step_outbox. A 202 response means durable SQL admission only, not
+broker delivery or business commit. The fixture installs the schema and
+uses an unversioned 32-byte test key shared with Go; keyring migration
+and production key management are not implemented.
+
+A retry with a fresh nonce and identical semantic identity/payload reuses
+the original admission, including timestamps and exact ciphertext; a
+changed payload or authorization generation with the same device/epoch/
+requestId is rejected. Exact nonce replay remains a conflict. Each device
+may have at most 64 pending records; indexed pending queries avoid scanning
+published history. The published request fingerprint stays in SQL for
+admission idempotency. Global quotas and safe retention/pruning remain
+production prerequisites.
+
+The --dispatch-one-test LOOPBACK:PORT mode selects one pending row and
+publishes via async-nats to the existing telemetry subject, with the
+SHA-256 of the stored bytes as Nats-Msg-Id and the expected stream header.
+Only a confirmed PubAck permits an exact-byte conditional SQL update to
+clear the ciphertext and record publication. No SQL lock or transaction
+is held during broker I/O. --dispatch-crash-test exits with code 77
+immediately after a real PubAck and before the SQL update, exclusively
+for testing. Re-running dispatch republishes the same bytes; the Go
+consumer checks the live authorization generation and atomically records
+its durable commit/rejection before ACK. Broker dedup is finite, so the
+consumer receipt remains the final business fence. Delivery is at-least-
+once, not a claim of exactly-once distributed transport.
+
+The integration test in experiments/jetstream uses a real sync-always
+NATS server and the production MySQL migrations plus disposable experiment
+tables. It verifies admission rollback, payload authentication, replay,
+conflicting request IDs, unavailable broker, process exit after PubAck,
+redelivery and revoked generation. Set YIHE_NEXT_GATEWAY_BINARY to the
+built Rust binary and TEST_MYSQL_DSN to a disposable database. The
+dispatcher is intentionally one-shot: persistent connection reuse,
+bounded global backlog, retry/backoff scheduling, poison quarantine,
+production TLS/ACLs, key rotation and operational cutover are not yet
+implemented. No production route or schema is changed.
+
 ## Verification
 
 From this directory:
@@ -86,5 +131,5 @@ to verify byte preservation, and exercises nonce replay and idempotent SOS
 retry. The separate Rust network tests simulate saturated admission and
 an abruptly disconnected upstream.
 
-Next: extend native wire authentication and transactional business handling beyond the step-only subset; typed binary protocol and simulator integration, safe handoff to the durable event lanes, actual performance comparison and end-to-end fault testing.
+Next: extend native wire authentication and transactional business handling beyond the step-only subset; typed binary protocol and simulator integration, long-lived durable dispatch, actual performance comparison and end-to-end fault testing.
 Do not place this service on a production ingress before those gates.

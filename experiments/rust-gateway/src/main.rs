@@ -26,6 +26,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         }
+        [_, mode, address] if mode == "--dispatch-one-test" || mode == "--dispatch-crash-test" => {
+            let sent = yihe_next_gateway::outbox::dispatch_one(
+                address.parse()?,
+                mode == "--dispatch-crash-test",
+            )
+            .await?;
+            println!("{}", if sent { "published" } else { "empty" });
+            Ok(())
+        }
+        [_, mode, bind] if mode == "--native-outbox-test" => {
+            let bind: SocketAddr = bind.parse()?;
+            if !bind.ip().is_loopback() {
+                return Err("native test listener must be loopback".into());
+            }
+            let app = yihe_next_gateway::outbox::router().await?;
+            let listener = tokio::net::TcpListener::bind(bind).await?;
+            println!("{}", listener.local_addr()?);
+            io::stdout().flush()?;
+            axum::serve(listener, app).await?;
+            Ok(())
+        }
         [_, mode, bind] if mode == "--native-step-test" => {
             let bind: SocketAddr = bind.parse()?;
             if !bind.ip().is_loopback() {
