@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	wirebin "encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -14,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -246,6 +249,135 @@ func TestRustOutboxProducer(t *testing.T) {
 	if err != nil || info.State.Msgs != 0 {
 		t.Fatalf("unconsumed broker messages: %v", err)
 	}
+	// The simulator sends an actual signed binary request. The independent
+	// Go encoder also checks the wire tags and Ed25519 domain, not just a
+	// shared Rust implementation.
+	simulator := os.Getenv("YIHE_NEXT_WATCH_BINARY")
+	if simulator == "" {
+		t.Fatal("YIHE_NEXT_WATCH_BINARY required for binary protocol test")
+	}
+	sinkExec(t, db, "CREATE TABLE rust_device_key(device_id BIGINT PRIMARY KEY,generation BIGINT NOT NULL,public_key BINARY(32) NOT NULL) ENGINE=InnoDB")
+	seed := bytes.Repeat([]byte{11}, 32)
+	private := ed25519.NewKeyFromSeed(seed)
+	public := private.Public().(ed25519.PublicKey)
+	sinkExec(t, db, "INSERT INTO rust_device_key SELECT device_id,generation,? FROM broker_device_generation WHERE device_id=1", []byte(public))
+	observed := now.Add(-time.Minute).Unix()
+	watch := exec.CommandContext(ctx, simulator, "--send", strings.TrimSpace(address), "WATCH001", "1", "binary-sim-1", "binary-sim-nonce-001", strconv.FormatInt(observed, 10), "3200")
+	watch.Env = append(os.Environ(), "WATCH_NEXT_SEED_HEX="+hex.EncodeToString(seed))
+	if output, err := watch.CombinedOutput(); err != nil || !bytes.HasPrefix(output, []byte("202 ")) {
+		t.Fatalf("simulator: %v %s", err, output)
+	}
+	post(body("binary-sim-1", 3200), "binary-sim-nonce-001", 409, "NONCE_REPLAY")
+	// Encode canonical protobuf with the Go standard library, independently of prost.
+	fieldVar := func(dst []byte, tag, n uint64) []byte {
+		return wirebin.AppendUvarint(wirebin.AppendUvarint(dst, tag<<3), n)
+	}
+	fieldBytes := func(dst []byte, tag uint64, value []byte) []byte {
+		return append(wirebin.AppendUvarint(wirebin.AppendUvarint(dst, tag<<3|2), uint64(len(value))), value...)
+	}
+	packet := func(id, nonce string, n uint64, key ed25519.PrivateKey) []byte {
+		p := fieldVar(nil, 1, 1)
+		p = fieldBytes(p, 2, []byte("WATCH001"))
+		p = fieldVar(p, 3, 1)
+		p = fieldBytes(p, 4, []byte(id))
+		p = fieldBytes(p, 5, []byte(nonce))
+		p = fieldVar(p, 6, uint64(time.Now().Unix()))
+		p = fieldVar(p, 7, uint64(observed))
+		p = fieldVar(p, 8, n)
+		signature := ed25519.Sign(key, append([]byte("yihe-next-step-v1\x00"), p...))
+		return fieldBytes(fieldBytes(nil, 1, p), 2, signature)
+	}
+	binaryPost := func(data []byte, want int, code string) {
+		t.Helper()
+		r, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+strings.TrimSpace(address)+"/api/v2/device/step", bytes.NewReader(data))
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Header.Set("Content-Type", "application/x-protobuf")
+		resp, err := client.Do(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var result map[string]any
+		if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != want || (code != "" && result["code"] != code) {
+			t.Fatalf("binary status %d code %v want %d/%s", resp.StatusCode, result["code"], want, code)
+		}
+	}
+	p := packet("binary-go-1", "binary-go-nonce-0001", 3300, private)
+	bad := append([]byte(nil), p...)
+	bad[len(bad)-1] ^= 1
+	binaryPost(bad, 401, "DEVICE_SIGNATURE_INVALID")
+	binaryPost(append(append([]byte(nil), p...), 0x18, 1), 400, "INVALID_REQUEST")
+	binaryPost(p, 202, "")
+	binaryPost(p, 409, "NONCE_REPLAY")
+	pending(2)
+	// A single worker publishes both records, then handles a later arrival
+	// without rebuilding its NATS connection or SQL pool.
+	before, err := server.Varz(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workerCtx, stopWorker := context.WithCancel(ctx)
+	worker := exec.CommandContext(workerCtx, binary, "--dispatch-worker-test", addr)
+	worker.Env = env
+	worker.Stderr = os.Stderr
+	if err = worker.Start(); err != nil {
+		stopWorker()
+		t.Fatal(err)
+	}
+	defer func() {
+		stopWorker()
+		if worker.ProcessState == nil {
+			_ = worker.Wait()
+		}
+	}()
+	waitPending := func(want int) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for {
+			var count int
+			if err = db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rust_step_outbox WHERE published_at IS NULL").Scan(&count); err != nil {
+				t.Fatal(err)
+			}
+			if count == want {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("worker pending %d want %d", count, want)
+			}
+			time.Sleep(25 * time.Millisecond)
+		}
+	}
+	waitPending(0)
+	for range 2 {
+		if err = l.CommitOne(ctx, sink.Commit); err != nil {
+			t.Fatal(err)
+		}
+	}
+	time.Sleep(300 * time.Millisecond)
+	binaryPost(packet("binary-go-2", "binary-go-nonce-0002", 3400, private), 202, "")
+	waitPending(0)
+	if err = l.CommitOne(ctx, sink.Commit); err != nil {
+		t.Fatal(err)
+	}
+	after, err := server.Varz(nil)
+	if err != nil || after.TotalConnections-before.TotalConnections != 1 {
+		t.Fatalf("worker did not reuse broker connection: %v", err)
+	}
+	sinkCount(t, db, "SELECT n FROM broker_test_writes", 4)
+	sinkCount(t, db, "SELECT step FROM watch_day_info", 3400)
+	stopWorker()
+	_ = worker.Wait()
+	// Revoking the generation invalidates the enrolled key immediately.
+	sinkExec(t, db, "UPDATE device SET status=0 WHERE device_id=1")
+	sinkExec(t, db, "UPDATE device SET status=1 WHERE device_id=1")
+	binaryPost(packet("binary-revoked", "binary-revoked-0001", 3500, private), 401, "DEVICE_AUTH_FAILED")
+	pending(0)
+	t.Log("binary simulator, independent Go wire encoder, cross-protocol replay, revoked key and one NATS connection across three publications passed")
 	// Exercise the actual per-device admission bound. Pre-fill pending rows
 	// using the same valid envelope; these remain disposable fixture data.
 	for i := range 64 {

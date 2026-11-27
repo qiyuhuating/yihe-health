@@ -1,0 +1,18 @@
+syntax = "proto3";
+package yihe.next.v1;
+
+// Strict canonical encoding, version 1 only. Signature covers domain || payload.
+message Step {
+  uint32 version = 1;
+  string device_no = 2;
+  int64 binding_epoch = 3;
+  string request_id = 4;
+  string nonce = 5;
+  int64 signed_at = 6;
+  int64 observed_at = 7;
+  optional uint32 step = 8;
+}
+message SignedStep {
+  bytes payload = 1;
+  bytes signature = 2;
+}

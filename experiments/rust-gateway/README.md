@@ -96,11 +96,50 @@ NATS server and the production MySQL migrations plus disposable experiment
 tables. It verifies admission rollback, payload authentication, replay,
 conflicting request IDs, unavailable broker, process exit after PubAck,
 redelivery and revoked generation. Set YIHE_NEXT_GATEWAY_BINARY to the
-built Rust binary and TEST_MYSQL_DSN to a disposable database. The
-dispatcher is intentionally one-shot: persistent connection reuse,
-bounded global backlog, retry/backoff scheduling, poison quarantine,
-production TLS/ACLs, key rotation and operational cutover are not yet
-implemented. No production route or schema is changed.
+built Rust binary, YIHE_NEXT_WATCH_BINARY to the built opt-in simulator,
+and TEST_MYSQL_DSN to a disposable database.
+
+The --dispatch-worker-test LOOPBACK:PORT mode reuses a SQL connection
+pool and NATS connection while publishing pending rows. It immediately
+continues when there is work, backs off on idle (100 ms to 2 s) and failure
+(250 ms to 5 s), and reconnects on failures without clearing pending rows.
+Ctrl-C stops between attempts. The integration test observes the actual
+NATS server connection count: three publications, including one after an
+idle period, use one new connection. Automatic recovery after an actual
+broker restart and graceful shutdown latency are not separately verified.
+Global quotas, poison quarantine, production TLS/ACLs, key rotation and
+operational cutover remain future work.
+
+## Protobuf / Ed25519 device experiment
+
+The same --native-outbox-test listener exposes POST /api/v2/device/step
+with application/x-protobuf. The shared experiments/device-wire crate
+defines step.proto and the canonical signed encoding. The version-1
+packet is limited to 1024 bytes and contains only a step observation,
+device number, binding epoch, request ID, nonce, and signed/observed
+Unix seconds. Ed25519 authenticates the domain-separated original
+payload; unknown/duplicate fields and noncanonical encodings are
+rejected. This intentionally requires canonical encoding rather than
+accepting all valid Protobuf encodings.
+
+An enrolled public key in the disposable rust_device_key table is bound
+to the current broker authorization generation. Rust verifies before
+locking, then verifies the current key again under the resident/device
+and generation locks. The same nonce namespace and encrypted Outbox
+admission transaction are used by both HMAC JSON and Ed25519 requests.
+A generation change invalidates the enrolled key, even after re-enable.
+Enrollment is fixture-only; no real device provisioning, hardware
+keystore, production key lifecycle, QUIC/MQTT or firmware migration
+is implemented.
+
+Build the opt-in simulator from watch-sim with
+cargo build --locked --features next-wire --bin watch-sim-next.
+Its --public-key / --send commands use a 32-byte hex test seed provided
+through WATCH_NEXT_SEED_HEX, and only permit loopback endpoints.
+The existing default simulator binary and production routes are unchanged.
+The integration test sends a real simulator packet and independently
+encodes and signs Protobuf in Go, exercises tampering and cross-protocol
+replay, then consumes the actual broker events. See step.proto for tags.
 
 ## Verification
 
@@ -131,5 +170,5 @@ to verify byte preservation, and exercises nonce replay and idempotent SOS
 retry. The separate Rust network tests simulate saturated admission and
 an abruptly disconnected upstream.
 
-Next: extend native wire authentication and transactional business handling beyond the step-only subset; typed binary protocol and simulator integration, long-lived durable dispatch, actual performance comparison and end-to-end fault testing.
+Next: extend native wire authentication and transactional business handling beyond the step-only subset; expand the typed binary protocol and simulator beyond step reports, harden durable dispatch and key provisioning, measure actual performance and run end-to-end fault testing.
 Do not place this service on a production ingress before those gates.

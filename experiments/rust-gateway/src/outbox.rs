@@ -19,7 +19,7 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use hmac::{Hmac, Mac};
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use sqlx::{MySqlPool, Row};
+use sqlx::{MySql, MySqlPool, Row, Transaction};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
 
@@ -87,7 +87,39 @@ async fn admit(
                     .all(|b| b.is_ascii_alphanumeric() || b"_.:-".contains(&b))
         })
         .ok_or(Failure::Invalid)?;
-    let (mut tx, id, owner) = native::authorize(pool, &v).await?;
+    let (tx, id, owner) = native::authorize(pool, &v).await?;
+    admit_locked(
+        tx,
+        id,
+        owner,
+        keys,
+        StepInput {
+            epoch: r.epoch,
+            request_id,
+            observed: v.observed.and_utc(),
+            step: r.step,
+        },
+        now,
+    )
+    .await
+}
+
+struct StepInput<'a> {
+    epoch: i64,
+    request_id: &'a str,
+    observed: DateTime<Utc>,
+    step: i64,
+}
+
+async fn admit_locked(
+    mut tx: Transaction<'_, MySql>,
+    id: i64,
+    owner: i64,
+    keys: &Keys,
+    r: StepInput<'_>,
+    now: DateTime<Utc>,
+) -> Result<(), Failure> {
+    let request_id = r.request_id;
     let generation: i64 = sqlx::query_scalar(
         "SELECT generation FROM broker_device_generation WHERE device_id=? FOR UPDATE",
     )
@@ -97,10 +129,7 @@ async fn admit(
     if generation <= 0 {
         return Err(Failure::Database);
     }
-    let observed = v
-        .observed
-        .and_utc()
-        .to_rfc3339_opts(SecondsFormat::Secs, true);
+    let observed = r.observed.to_rfc3339_opts(SecondsFormat::Secs, true);
     let semantic = json!([id, owner, r.epoch, generation, request_id, observed, r.step]);
     let fingerprint =
         keys.fingerprint(&serde_json::to_vec(&semantic).map_err(|_| Failure::Database)?);
@@ -156,11 +185,89 @@ async fn enqueue(State(s): State<Admission>, request: Request) -> Result<Respons
     )
         .into_response())
 }
+async fn enqueue_binary(State(s): State<Admission>, request: Request) -> Result<Response, Failure> {
+    let _permit = s.gate.try_acquire().map_err(|_| Failure::Busy)?;
+    let (parts, body) = request.into_parts();
+    if parts
+        .headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        != Some(yihe_device_wire::CONTENT_TYPE)
+    {
+        return Err(Failure::Invalid);
+    }
+    let raw = tokio::time::timeout(
+        Duration::from_secs(10),
+        to_bytes(body, yihe_device_wire::MAX_PACKET),
+    )
+    .await
+    .map_err(|_| Failure::Invalid)?
+    .map_err(|_| Failure::Invalid)?;
+    let now = Utc::now();
+    let (step, envelope) =
+        yihe_device_wire::decode(&raw, now.timestamp()).map_err(|e| match e {
+            yihe_device_wire::Error::Signature => Failure::Signature,
+            yihe_device_wire::Error::Invalid => Failure::Invalid,
+        })?;
+    // Authenticate before row-lock acquisition, then recheck the same
+    // enrolled public key and its generation under resident/device locks.
+    let key:Vec<u8>=sqlx::query_scalar("SELECT k.public_key FROM rust_device_key k JOIN device d ON d.device_id=k.device_id JOIN broker_device_generation g ON g.device_id=k.device_id AND g.generation=k.generation WHERE d.device_no=?")
+        .bind(&step.device_no).fetch_optional(&s.pool).await?.ok_or(Failure::Credentials)?;
+    yihe_device_wire::verify(&envelope, &key).map_err(|_| Failure::Signature)?;
+    let (mut tx, id, owner) =
+        native::lock_device(&s.pool, &step.device_no, step.binding_epoch, None).await?;
+    let generation: i64 = sqlx::query_scalar(
+        "SELECT generation FROM broker_device_generation WHERE device_id=? FOR UPDATE",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    let locked_key: Vec<u8> = sqlx::query_scalar(
+        "SELECT public_key FROM rust_device_key WHERE device_id=? AND generation=? FOR UPDATE",
+    )
+    .bind(id)
+    .bind(generation)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(Failure::Credentials)?;
+    yihe_device_wire::verify(&envelope, &locked_key).map_err(|_| Failure::Signature)?;
+    let expires =
+        DateTime::from_timestamp(step.signed_at.checked_add(300).ok_or(Failure::Invalid)?, 0)
+            .ok_or(Failure::Invalid)?
+            .naive_utc();
+    let observed = DateTime::from_timestamp(step.observed_at, 0).ok_or(Failure::Invalid)?;
+    let mut hash = Sha256::new();
+    hash.update(step.device_no.as_bytes());
+    hash.update([0]);
+    hash.update(step.nonce.as_bytes());
+    native::reserve_nonce(&mut tx, id, &hash.finalize().into(), expires).await?;
+    admit_locked(
+        tx,
+        id,
+        owner,
+        &s.keys,
+        StepInput {
+            epoch: step.binding_epoch,
+            request_id: &step.request_id,
+            observed,
+            step: i64::from(step.step.ok_or(Failure::Invalid)?),
+        },
+        now,
+    )
+    .await?;
+    Ok((
+        axum::http::StatusCode::ACCEPTED,
+        Json(json!({"returnCode":"1111","state":"admitted"})),
+    )
+        .into_response())
+}
+
 pub async fn router() -> Result<Router, Box<dyn std::error::Error>> {
     let pool = native::test_pool().await?;
     let keys = Arc::new(Keys::load()?);
     Ok(Router::new()
         .route("/api/v1/device/report", post(enqueue))
+        .route(yihe_device_wire::PATH, post(enqueue_binary))
         .with_state(Admission {
             pool,
             keys,
@@ -175,14 +282,84 @@ pub async fn dispatch_one(
     address: SocketAddr,
     exit_after_ack: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
+    let pool = native::test_pool().await?;
+    let js = connect(address).await?;
+    dispatch_pending(&pool, &js, exit_after_ack).await
+}
+
+async fn connect(
+    address: SocketAddr,
+) -> Result<async_nats::jetstream::Context, Box<dyn std::error::Error>> {
+    if !address.ip().is_loopback() || address.port() == 0 {
+        return Err("test broker must be loopback".into());
+    }
+    let client = tokio::time::timeout(
+        Duration::from_secs(5),
+        async_nats::connect(format!("nats://{address}")),
+    )
+    .await??;
+    Ok(async_nats::jetstream::new(client))
+}
+
+/// Reuse SQL and NATS connections. Limit idle polling and retry delays; no
+/// SQL transaction spans network I/O. Stop between attempts on Ctrl-C.
+pub async fn dispatch_worker(address: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() || address.port() == 0 {
         return Err("test broker must be loopback".into());
     }
     let pool = native::test_pool().await?;
+    let mut js = None;
+    let mut idle = Duration::from_millis(100);
+    let mut retry = Duration::from_millis(250);
+    let stop = tokio::signal::ctrl_c();
+    tokio::pin!(stop);
+    loop {
+        let result = async {
+            if js.is_none() {
+                js = Some(connect(address).await?);
+            }
+            dispatch_pending(&pool, js.as_ref().expect("connected"), false).await
+        }
+        .await;
+        let delay = match result {
+            Ok(true) => {
+                idle = Duration::from_millis(100);
+                retry = Duration::from_millis(250);
+                Duration::ZERO
+            }
+            Ok(false) => {
+                retry = Duration::from_millis(250);
+                let delay = idle;
+                idle = (idle * 2).min(Duration::from_secs(2));
+                delay
+            }
+            Err(_) => {
+                eprintln!("dispatch attempt failed; pending event retained");
+                js = None;
+                let delay = retry;
+                retry = (retry * 2).min(Duration::from_secs(5));
+                delay
+            }
+        };
+        tokio::select! {
+            biased;
+            result=&mut stop=>{result?;break;}
+            _=tokio::time::sleep(delay)=>{}
+        }
+    }
+    pool.close().await;
+    Ok(())
+}
+
+async fn dispatch_pending(
+    pool: &MySqlPool,
+    js: &async_nats::jetstream::Context,
+    exit_after_ack: bool,
+) -> Result<bool, Box<dyn std::error::Error>> {
     let Some(row) = sqlx::query(
         "SELECT id,encoded FROM rust_step_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
     )
-    .fetch_optional(&pool)
+    .fetch_optional(pool)
     .await?
     else {
         return Ok(false);
@@ -193,12 +370,6 @@ pub async fn dispatch_one(
         return Err("invalid stored envelope size".into());
     }
     let digest = hex::encode(Sha256::digest(&encoded));
-    let client = tokio::time::timeout(
-        Duration::from_secs(5),
-        async_nats::connect(format!("nats://{address}")),
-    )
-    .await??;
-    let js = async_nats::jetstream::new(client);
     let mut headers = async_nats::HeaderMap::new();
     headers.insert("Nats-Msg-Id", digest.as_str());
     headers.insert("Nats-Expected-Stream", STREAM);
@@ -216,7 +387,6 @@ pub async fn dispatch_one(
         std::process::exit(77);
     }
     sqlx::query("UPDATE rust_step_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?")
-        .bind(id).bind(encoded).execute(&pool).await?;
-    pool.close().await;
+        .bind(id).bind(encoded).execute(pool).await?;
     Ok(true)
 }

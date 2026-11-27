@@ -26,6 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         }
+        [_, mode, address] if mode == "--dispatch-worker-test" => {
+            yihe_next_gateway::outbox::dispatch_worker(address.parse()?).await
+        }
         [_, mode, address] if mode == "--dispatch-one-test" || mode == "--dispatch-crash-test" => {
             let sent = yihe_next_gateway::outbox::dispatch_one(
                 address.parse()?,

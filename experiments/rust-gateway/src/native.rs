@@ -212,11 +212,27 @@ pub(crate) async fn authorize<'a>(
     v: &Verified,
 ) -> Result<(Transaction<'a, MySql>, i64, i64), Failure> {
     let r = &v.report;
+    let (mut tx, id, owner) = lock_device(pool, &r.number, r.epoch, Some(&r.secret)).await?;
+    reserve_nonce(&mut tx, id, &v.nonce, v.expires).await?;
+    Ok((tx, id, owner))
+}
+
+pub(crate) async fn lock_device<'a>(
+    pool: &'a MySqlPool,
+    number: &str,
+    epoch: i64,
+    secret: Option<&str>,
+) -> Result<(Transaction<'a, MySql>, i64, i64), Failure> {
+    let check_auth = |d: &Device| match secret {
+        Some(s) => check(d, s),
+        None if d.status.is_none() || d.status == Some(0) => Err(Failure::Disabled),
+        None => Ok(()),
+    };
     // No write based on the unlocked snapshot. Re-read credential and
     // ownership under the existing resident -> device lock order.
     let first=sqlx::query("SELECT device_id,device_no,secret,old_id,status,health_epoch FROM device WHERE device_no=?")
-        .bind(&r.number).fetch_optional(pool).await?.ok_or(Failure::Credentials).and_then(read_device)?;
-    check(&first, &r.secret)?;
+        .bind(number).fetch_optional(pool).await?.ok_or(Failure::Credentials).and_then(read_device)?;
+    check_auth(&first)?;
     let owner = first.owner.ok_or(Failure::Unbound)?;
     let mut tx = pool.begin().await?;
     sqlx::query("SELECT old_id FROM oldperson WHERE old_id=? FOR UPDATE")
@@ -225,24 +241,33 @@ pub(crate) async fn authorize<'a>(
         .await?;
     let current=read_device(sqlx::query("SELECT device_id,device_no,secret,old_id,status,health_epoch FROM device WHERE device_id=? FOR UPDATE")
         .bind(first.id).fetch_one(&mut *tx).await?)?;
-    check(&current, &r.secret)?;
-    if current.number != r.number {
+    check_auth(&current)?;
+    if current.number != number {
         return Err(Failure::Credentials);
     }
-    if r.epoch < current.epoch {
+    if epoch < current.epoch {
         return Err(Failure::Epoch);
     }
-    if current.owner != Some(owner) || current.epoch != r.epoch {
+    if current.owner != Some(owner) || current.epoch != epoch {
         return Err(Failure::Binding);
     }
+    Ok((tx, current.id, owner))
+}
+
+pub(crate) async fn reserve_nonce(
+    tx: &mut Transaction<'_, MySql>,
+    id: i64,
+    digest: &[u8; 32],
+    expires: NaiveDateTime,
+) -> Result<(), Failure> {
     // This is the existing shared production replay table, not a local cache.
     let inserted = sqlx::query(
         "INSERT INTO device_request_nonces(device_id,nonce_digest,expires_at) VALUES(?,?,?)",
     )
-    .bind(current.id)
-    .bind(v.nonce.as_slice())
-    .bind(v.expires)
-    .execute(&mut *tx)
+    .bind(id)
+    .bind(digest.as_slice())
+    .bind(expires)
+    .execute(&mut **tx)
     .await;
     if let Err(e) = inserted {
         if e.as_database_error()
@@ -252,7 +277,7 @@ pub(crate) async fn authorize<'a>(
         }
         return Err(Failure::Database);
     }
-    Ok((tx, current.id, owner))
+    Ok(())
 }
 async fn commit(pool: &MySqlPool, v: Verified, now: DateTime<Utc>) -> Result<(), Failure> {
     if v.report.request_id.is_some() {

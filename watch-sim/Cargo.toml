@@ -1,5 +1,6 @@
 [package]
 name = "yihe-watch-sim"
+default-run = "watch-sim"
 version = "2.0.0"
 edition = "2024"
 rust-version = "1.100.0"
@@ -13,7 +14,16 @@ name = "watch_sim"
 name = "watch-sim"
 path = "src/main.rs"
 
+[[bin]]
+name = "watch-sim-next"
+path = "src/bin/next.rs"
+required-features = ["next-wire"]
+
+[features]
+next-wire = ["dep:yihe-device-wire"]
+
 [dependencies]
+yihe-device-wire = { path = "../experiments/device-wire", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"

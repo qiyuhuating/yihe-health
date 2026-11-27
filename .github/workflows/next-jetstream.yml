@@ -5,6 +5,8 @@ on:
     paths:
       - 'experiments/jetstream/**'
       - 'experiments/rust-gateway/**'
+      - 'experiments/device-wire/**'
+      - 'watch-sim/**'
       - 'yihe-core/**'
       - 'backend/**'
       - '.github/workflows/next-jetstream.yml'
@@ -13,6 +15,8 @@ on:
     paths:
       - 'experiments/jetstream/**'
       - 'experiments/rust-gateway/**'
+      - 'experiments/device-wire/**'
+      - 'watch-sim/**'
       - 'yihe-core/**'
       - 'backend/**'
       - '.github/workflows/next-jetstream.yml'
@@ -95,9 +99,19 @@ jobs:
           cargo +1.100.0 clippy --locked --all-targets -- -D warnings
           cargo +1.100.0 test --locked --all-targets
           cargo +1.100.0 build --locked
+      - name: Verify shared binary protocol
+        working-directory: experiments/device-wire
+        run: |
+          cargo +1.100.0 fmt --check
+          cargo +1.100.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.100.0 test --locked
+      - name: Build opt-in watch simulator
+        working-directory: watch-sim
+        run: cargo +1.100.0 build --locked --features next-wire --bin watch-sim-next
       - name: Verify JetStream and Rust producer end to end
         env:
           YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+          YIHE_NEXT_WATCH_BINARY: ${{ github.workspace }}/watch-sim/target/debug/watch-sim-next
         run: go test -mod=readonly -race -count=1 -v -timeout 240s ./...
       - name: Compare actual Go handlers with Rust gateway
         working-directory: backend

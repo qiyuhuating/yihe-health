@@ -2,6 +2,10 @@
 
 Rust 单设备模拟器支持本地模拟和通过现有 HTTP 接口连接 preview。默认发送完整 `report`，现有心率、血压、步数、睡眠、位置和告警页面继续读取原有数据表。无需修改前后端接口，也无需兼容旧 Node 模拟器。
 
+## 实验性二进制步数协议
+
+默认 `watch-sim` 不变。仅在隔离 Yihe-Next 实验中使用 `cargo build --locked --features next-wire --bin watch-sim-next` 构建附加模拟器。它使用 Protobuf 和 Ed25519，私钥种子通过 `WATCH_NEXT_SEED_HEX` 环境变量传入，支持 `--public-key` 导出公钥以及 `--send ADDR DEVICE EPOCH REQUEST_ID NONCE OBSERVED_UNIX STEP` 发送步数请求。仅连接 loopback，需在实验库登记公钥；HTTP 202 代表持久入队，不代表业务处理完成。详见 [实验网关文档](../experiments/rust-gateway/README.md)。
+
 ## 无网络本地模拟
 
 发布包中双击 `本地模拟.cmd` 即可启动。数据保存在旁边的 `本地数据` 文件夹，打开终端显示的 `index.html` 查看当前指标、趋势、轨迹和事件。
