@@ -26,6 +26,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         }
+        [_, mode, bind] if mode == "--native-step-test" => {
+            let bind: SocketAddr = bind.parse()?;
+            if !bind.ip().is_loopback() {
+                return Err("native test listener must be loopback".into());
+            }
+            let app = yihe_next_gateway::native::test_router().await?;
+            let listener = tokio::net::TcpListener::bind(bind).await?;
+            println!("{}", listener.local_addr()?);
+            io::stdout().flush()?;
+            axum::serve(listener, app).await?;
+            Ok(())
+        }
         [_, mode, bind, upstream] if mode == "--serve" => {
             let bind: SocketAddr = bind.parse()?;
             if !bind.ip().is_loopback() {

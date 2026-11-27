@@ -100,7 +100,7 @@ jobs:
         working-directory: backend
         env:
           YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
-        run: go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential)$' -count=1 -v -timeout 180s ./internal/handlers
+        run: go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential|NativeStep)$' -count=1 -v -timeout 240s ./internal/handlers
       - name: Stop isolated Valkey
         if: always()
         run: docker rm -f yihe-next-valkey || true

@@ -53,4 +53,4 @@ RTO < 15 s 必须从故障发生至恢复可用的实际演练测得。双 AZ �
 该模块复用真实 MySQL 业务持久化函数，在隔离迁移库中验证加密低风险遥测、原子回执、绑定版本与授权代际检查。它不接入生产 HTTP 路由，不安装生产迁移，也未实现设备接入认证、生命体征及 SOS 业务消费。
 同一实验模块另含 RustFS/S3 加密对象影子复制：原始 BLOB 保留，条件 PUT 和下载认证完成后，以原有锁序复核源版本并发布影子账本。真实 RustFS/MySQL 测试通过，但尚不授权生产存储切换。
 Valkey 会话影子迁移保留原加密载荷和绝对过期时间，MySQL 元数据投影与原会话写入、撤销同事务更新；每次影子读取仍实时校验 MySQL 与二次验证版本。真实 Valkey/MySQL 撤权测试通过，尚未切换生产会话后端或测试实际跨节点故障转移。
-Phase 2 已建立独立 Axum/Tokio 网关，保留 Go 作为唯一业务写入者，原生 Rust SOS 字段解析与直接 Yihe-Core 统计经实际 Go 实现差分验证；独立 MySQL 迁移库 HTTP 差分验证签名、重放和 SOS 重试。尚未迁移完整认证、nonce 事务、二进制设备协议或生产路由。详见 [Rust gateway experiment](../experiments/rust-gateway/README.md)。
+Phase 2 已建立独立 Axum/Tokio 网关，保留 Go 作为唯一业务写入者，原生 Rust SOS 字段解析与直接 Yihe-Core 统计经实际 Go 实现差分验证；独立 MySQL 迁移库 HTTP 差分验证签名、重放和 SOS 重试。独立测试模式已实现签名步数上报的 Rust 原生认证、居民/设备锁后复核、共享 nonce 表与步数/心跳原子事务；完整设备协议、SOS、生产路由及 JetStream 接入仍未迁移。详见 [Rust gateway experiment](../experiments/rust-gateway/README.md)。

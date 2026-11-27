@@ -2,8 +2,7 @@
 
 This standalone crate uses Axum, Tokio, reqwest and the existing yihe-core
 as a normal Rust dependency. It is not linked to the production deployment,
-desktop package or device simulator. It is a migration scaffold, not a
-replacement for the Go backend.
+desktop package or device simulator. It is a migration scaffold, not a replacement for the Go backend. An isolated native step-report writer now exercises the first complete Rust business transaction.
 
 ## Scope
 
@@ -28,6 +27,36 @@ replacement for the Go backend.
   request. The candidate does not implement signatures, position checks,
   replay protection or business logic. Full parser parity is not claimed.
 
+## Native step-report writer (test only)
+
+The --native-step-test mode serves only the existing report path on loopback
+and connects only to a disposable loopback yihe_test_<8 hex digits> schema.
+SQLx uses a bounded connection pool, READ COMMITTED and UTC SQL sessions.
+The strict signed-only subset requires deviceNo, secret, bindingVersion,
+beTime (UTC wall-clock format), and integer step; other fields, including
+requestId, vitals, location, alarm and sleep, are rejected. This deliberately
+does not implement legacy coercion, the full report parser, Go's local wall
+clock, unsigned firmware or numbered report receipt semantics.
+
+Rust verifies HMAC over the original bytes and the timestamp/nonce contract,
+compares the existing domain-separated device credential hash in constant
+time, reads the binding, then takes resident/device locks in the existing
+order and rechecks the live credential, status and epoch. The existing
+device_request_nonces unique key is shared with Go. Step upsert preserves
+newest observations, archives previous binding data, and updates the
+heartbeat in the same transaction as the nonce. An error rolls back all
+writes; a successful response is emitted only after COMMIT. Unknown SQL
+errors are not exposed to the caller. This mode is isolated from relay mode.
+
+The native differential test compares real Go and Rust responses for the
+supported subset, verifies persisted rows across rebindings, exercises
+Go-to-Rust and Rust-to-Go nonce replay on one schema, concurrent same-nonce
+requests, injected write failure and retry, and observes a MySQL row-lock
+wait before revoking authorization to prove locked revalidation. MySQL
+password authentication uses the SQLx MySQL RSA feature on the disposable
+loopback connection; TLS and restricted production credentials are future
+deployment requirements.
+
 ## Verification
 
 From this directory:
@@ -44,7 +73,7 @@ compiled binary and TEST_MYSQL_DSN to a disposable MySQL 8.4 instance with
 temporary schema creation/deletion permissions. Run:
 
 ```powershell
-go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential)$' -count=1 -v -timeout 180s ./internal/handlers
+go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential|NativeStep)$' -count=1 -v -timeout 240s ./internal/handlers
 ```
 
 The tagged test calls the actual Go SOS parser and health.Aggregate, rather
@@ -57,7 +86,5 @@ to verify byte preservation, and exercises nonce replay and idempotent SOS
 retry. The separate Rust network tests simulate saturated admission and
 an abruptly disconnected upstream.
 
-Next: native wire authentication with real credential and nonce transactions,
-typed binary protocol and simulator integration, safe handoff to the durable
-event lanes, actual performance comparison and end-to-end fault testing.
+Next: extend native wire authentication and transactional business handling beyond the step-only subset; typed binary protocol and simulator integration, safe handoff to the durable event lanes, actual performance comparison and end-to-end fault testing.
 Do not place this service on a production ingress before those gates.
