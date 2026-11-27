@@ -28,6 +28,32 @@ func TestMySQLSOSConnectionLimit(t *testing.T) {
 	}
 }
 
+func TestMySQLBusinessConnectionLimit(t *testing.T) {
+	for _, tc := range []struct {
+		raw  string
+		want int
+		fail bool
+	}{{"", 20, false}, {"4", 4, false}, {"64", 64, false}, {"0", 0, true}, {"65", 0, true}, {"bad", 0, true}} {
+		got, err := mysqlBusinessConnectionLimit(tc.raw)
+		if got != tc.want || (err != nil) != tc.fail {
+			t.Fatalf("%q: %d %v", tc.raw, got, err)
+		}
+	}
+}
+
+func TestMySQLIdleConnectionBudget(t *testing.T) {
+	for _, tc := range []struct {
+		raw        string
+		open, want int
+		fail       bool
+	}{{"", 4, 4, false}, {"", 64, 20, false}, {"32", 64, 32, false}, {"5", 4, 0, true}} {
+		got, err := mysqlIdleConnectionLimit(tc.raw, tc.open)
+		if got != tc.want || (err != nil) != tc.fail {
+			t.Fatalf("%q with budget %d: %d %v", tc.raw, tc.open, got, err)
+		}
+	}
+}
+
 func TestMySQLIdleConnectionLimit(t *testing.T) {
 	for _, tc := range []struct {
 		input string
@@ -45,7 +71,7 @@ func TestMySQLIdleConnectionLimit(t *testing.T) {
 		{"10000", 0, true},
 		{"not-an-integer", 0, true},
 	} {
-		got, err := mysqlIdleConnectionLimit(tc.input)
+		got, err := mysqlIdleConnectionLimit(tc.input, 20)
 		if (err != nil) != tc.error || (!tc.error && got != tc.want) {
 			t.Errorf("mysqlIdleConnectionLimit(%q)=(%d,%v), want (%d,error=%t)", tc.input, got, err, tc.want, tc.error)
 		}
