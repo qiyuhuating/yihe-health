@@ -34,7 +34,7 @@ jobs:
     name: Check Tauri native Windows code
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Prepare compile-only backend hash and sidecar placeholder
         shell: pwsh
         run: |
