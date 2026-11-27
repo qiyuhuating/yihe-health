@@ -17,6 +17,7 @@ import (
 	"yihe-care/internal/auth"
 	"yihe-care/internal/csrf"
 	"yihe-care/internal/health"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/session"
 )
 
@@ -45,6 +46,14 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		mustExec(t, pool, "INSERT INTO device(device_id,device_no,secret,old_id) SELECT ?,?,secret,? FROM device WHERE device_id=1", i, fmt.Sprintf("WATCH%03d", i), i)
 	}
 	h := testHandler(t, pool)
+	if raw := os.Getenv("MIXED_HEALTH_LIMIT"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 || n > healthWriteConcurrency {
+			t.Fatal("invalid MIXED_HEALTH_LIMIT")
+		}
+		h.healthWrites.limit = n
+		h.healthWrites.urgentLimit = min(n, healthWriteUrgentConcurrency)
+	}
 	warmLatest := os.Getenv("MIXED_SOS_WARM_LATEST") == "1"
 	if warmLatest {
 		for i := 1; i <= workers; i++ {
@@ -74,6 +83,32 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	} else {
 		mux.HandleFunc("/batch", h.healthBatch)
 		mux.HandleFunc("/sos", h.deviceSos)
+	}
+	var phaseMu sync.Mutex
+	phases := make(map[string][]float64)
+	if os.Getenv("MIXED_TRACE_PHASES") == "1" {
+		next := app
+		app = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			lane := ""
+			switch r.URL.Path {
+			case "/batch", "/api/v1/device/healthBatch":
+				lane = "health"
+			case "/sos", "/api/v1/device/sos":
+				lane = "sos"
+			case "/api/v1/auth/login":
+				lane = "login"
+			}
+			if lane != "" {
+				ctx := observability.WithTransactionTrace(r.Context(), func(stage string, elapsed time.Duration) {
+					phaseMu.Lock()
+					key := lane + "." + stage
+					phases[key] = append(phases[key], float64(elapsed)/float64(time.Millisecond))
+					phaseMu.Unlock()
+				})
+				r = r.WithContext(ctx)
+			}
+			next.ServeHTTP(w, r)
+		})
 	}
 	server := httptest.NewServer(app)
 	defer server.Close()
@@ -308,6 +343,17 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		sort.Float64s(v)
 		p := func(n int) float64 { return v[(len(v)*n+99)/100-1] }
 		return map[string]float64{"p50_ms": p(50), "p95_ms": p(95), "p99_ms": p(99), "max_ms": v[len(v)-1]}
+	}
+	if len(phases) > 0 {
+		stageStats := make(map[string]any, len(phases))
+		for k, v := range phases {
+			stageStats[k] = map[string]any{"count": len(v), "latency": stats(v)}
+		}
+		phaseJSON, err := json.Marshal(stageStats)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("MIXED_PHASES %s", phaseJSON)
 	}
 	if authMix {
 		if len(profileMS) == 0 || len(loginMS) == 0 {

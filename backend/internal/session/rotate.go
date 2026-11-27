@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"yihe-care/internal/observability"
 )
 
 // ErrSessionChanged means a previously presented session cannot be rotated:
@@ -64,11 +66,15 @@ func (d *databaseStore) rotate(ctx context.Context, oldID string, sess *Session,
 	}
 	ctx, cancel := context.WithTimeout(ctx, operationTimeout)
 	defer cancel()
+	trace := observability.TransactionTraceFrom(ctx)
+	start := trace.Start()
 	tx, err := d.db.BeginTx(ctx, nil)
+	trace.End("pool_begin", start)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
+	start = trace.Start()
 	args := []any{idHash(sess.ID), sess.Principal.Role, sess.Principal.ID, sealed, sess.ExpiresAt.UTC()}
 	if oldID == "" {
 		if _, err = tx.ExecContext(ctx, insertSessionSQL, args...); err != nil {
@@ -94,5 +100,9 @@ func (d *databaseStore) rotate(ctx context.Context, oldID string, sess *Session,
 			return err
 		}
 	}
-	return tx.Commit()
+	trace.End("business_sql", start)
+	start = trace.Start()
+	err = tx.Commit()
+	trace.End("commit", start)
+	return err
 }

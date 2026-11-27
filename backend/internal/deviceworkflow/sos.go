@@ -7,6 +7,7 @@ import (
 	"yihe-care/internal/careworkflow"
 	"yihe-care/internal/devicerepo"
 	"yihe-care/internal/notify"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/securestore"
 )
 
@@ -39,36 +40,46 @@ type SOSHooks struct {
 
 // SOS owns lock ordering, retry lookup, incident persistence, outbox enqueue and commit.
 func SOS(ctx context.Context, store *sql.DB, box *securestore.Box, input SOSInput, hooks SOSHooks) (SOSResult, Failure, error) {
+	trace := observability.TransactionTraceFrom(ctx)
 	var device *devicerepo.DeviceRecord
 	var failure Failure
 	var err error
 	if hooks.Prioritize != nil {
+		start := trace.Start()
 		device, failure, err = Authenticate(ctx, store, input.Number, input.Secret)
+		trace.End("authenticate", start)
 		if err != nil || device == nil {
 			return SOSResult{}, failure, err
 		}
 		if device.No == input.Number && device.OldID != nil && device.HealthEpoch == input.Epoch {
+			start := trace.Start()
 			release, err := hooks.Prioritize(ctx, device.No, *device.OldID)
+			trace.End("admission", start)
 			if err != nil {
 				return SOSResult{}, "", err
 			}
 			defer release()
 		}
 	}
+	start := trace.Start()
 	tx, err := store.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	trace.End("pool_begin", start)
 	if err != nil {
 		return SOSResult{}, "", err
 	}
 	defer tx.Rollback()
 
+	start = trace.Start()
 	if hooks.Prioritize == nil {
 		device, failure, err = LockBoundDevice(ctx, tx, input.Number, input.Secret, input.Epoch)
 	} else {
 		device, failure, err = LockAuthenticatedDevice(ctx, tx, device, input.Number, input.Secret, input.Epoch)
 	}
+	trace.End("bound_device_lock", start)
 	if err != nil || device == nil {
 		return SOSResult{}, failure, err
 	}
+	start = trace.Start()
 	if input.RequestID != "" {
 		prior, err := careworkflow.FindSOSRetry(ctx, tx, device.ID, input.RequestID)
 		if err != nil {
@@ -95,7 +106,11 @@ func SOS(ctx context.Context, store *sql.DB, box *securestore.Box, input SOSInpu
 	if err != nil {
 		return SOSResult{}, "", err
 	}
-	if err := tx.Commit(); err != nil {
+	trace.End("business_sql", start)
+	start = trace.Start()
+	err = tx.Commit()
+	trace.End("commit", start)
+	if err != nil {
 		return SOSResult{}, "", err
 	}
 	return SOSResult{IncidentID: incidentID, IncidentState: "received", NotificationState: notificationState}, "", nil

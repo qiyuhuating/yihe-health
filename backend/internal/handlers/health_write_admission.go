@@ -37,6 +37,8 @@ type healthWriteAdmission struct {
 	activeSOS       map[string]struct{}
 	activeSOSOwners map[int64]struct{}
 	urgentCount     int
+	limit           int
+	urgentLimit     int
 	waiting         chan struct{}
 	waiters         []*healthWriteWaiter
 	changed         chan struct{}
@@ -44,6 +46,8 @@ type healthWriteAdmission struct {
 
 func newHealthWriteAdmission() healthWriteAdmission {
 	return healthWriteAdmission{
+		limit:           healthWriteConcurrency,
+		urgentLimit:     healthWriteUrgentConcurrency,
 		active:          make(map[string]bool, healthWriteConcurrency),
 		owners:          make(map[int64]struct{}, healthWriteConcurrency),
 		domains:         make(map[string]int64, healthWriteConcurrency),
@@ -58,9 +62,9 @@ func newHealthWriteAdmission() healthWriteAdmission {
 // arrive together. Other devices can use the remaining connections instead
 // of queueing behind the same MySQL row lock. The DB still serializes replicas.
 func (a *healthWriteAdmission) tryAcquire(device string, owner ...int64) bool {
-	limit := healthWriteConcurrency
+	limit := a.limit
 	if a.urgentCount > 0 {
-		limit = healthWriteUrgentConcurrency
+		limit = a.urgentLimit
 	}
 	if len(a.active) >= limit || a.urgent[device] != 0 {
 		return false
@@ -226,8 +230,11 @@ var errHealthWriteBusy = errors.New("health write deferred for SOS")
 // database/sql's bounded bad-connection retry at the BEGIN boundary. No DML
 // has run, and the failed connection is discarded before retrying admission.
 func (a *healthWriteAdmission) beginPriorityTx(ctx context.Context, pool *sql.DB, device string, lateDeviceLock bool) (*sql.Tx, *sql.Conn, error) {
+	trace := observability.TransactionTraceFrom(ctx)
 	for attempt := 0; ; attempt++ {
+		start := trace.Start()
 		conn, err := pool.Conn(ctx)
+		trace.End("connection", start)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -235,7 +242,9 @@ func (a *healthWriteAdmission) beginPriorityTx(ctx context.Context, pool *sql.DB
 			conn.Close()
 			return nil, nil, errHealthWriteBusy
 		}
+		start = trace.Start()
 		tx, err := conn.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+		trace.End("begin", start)
 		if err == nil {
 			return tx, conn, nil
 		}
