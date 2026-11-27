@@ -35,7 +35,7 @@ async fn reject(
 fn valid_phone(phone: &str) -> bool {
     phone.len() == 11 && phone.starts_with('1') && phone.bytes().all(|b| b.is_ascii_digit())
 }
-async fn notify(
+pub(crate) async fn notify(
     tx: &mut Transaction<'_, MySql>,
     keys: &Keys,
     incident: i64,

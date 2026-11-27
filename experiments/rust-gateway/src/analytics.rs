@@ -125,7 +125,9 @@ pub fn transitions(input: Value) -> Result<Value, Box<dyn std::error::Error>> {
     }
     Ok(json!(output))
 }
-pub fn decisions(input: Value) -> Result<Value, Box<dyn std::error::Error>> {
+pub(crate) fn evaluate_input(
+    input: Value,
+) -> Result<rules::Candidates, Box<dyn std::error::Error>> {
     let v: RuleInput = serde_json::from_value(input)?;
     let policy = rules::Policy {
         enabled: v.enabled,
@@ -143,7 +145,10 @@ pub fn decisions(input: Value) -> Result<Value, Box<dyn std::error::Error>> {
         heart_baseline: v.heart_baseline.map(Into::into),
         blood_baseline: v.blood_baseline.map(Into::into),
     };
-    let candidates = rules::evaluate(policy, input);
+    Ok(rules::evaluate(policy, input))
+}
+pub fn decisions(input: Value) -> Result<Value, Box<dyn std::error::Error>> {
+    let candidates = evaluate_input(input)?;
     Ok(json!(
         candidates
             .as_slice()

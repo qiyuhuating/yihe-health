@@ -5,10 +5,21 @@ use std::{
 };
 use yihe_next_gateway::{core_statistics, router, sos_shape};
 
+fn dispatch_lane(mode: &str) -> yihe_next_gateway::consumer::Lane {
+    use yihe_next_gateway::consumer::Lane;
+    if mode.starts_with("--dispatch-sos-") {
+        Lane::Sos
+    } else if mode.starts_with("--dispatch-vital-") {
+        Lane::Vital
+    } else {
+        Lane::Step
+    }
+}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     match args.as_slice() {
+        [_, mode] if mode == "--rule-commit-test" => yihe_next_gateway::rule_tx::run().await,
         [_, mode] if mode == "--oracle" => {
             // Local differential test transport, not a public HTTP API.
             let stdin = io::stdin().lock();
@@ -76,14 +87,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         [_, mode, address]
             if matches!(
                 mode.as_str(),
-                "--dispatch-worker-test" | "--dispatch-vital-worker-test"
+                "--dispatch-worker-test"
+                    | "--dispatch-vital-worker-test"
+                    | "--dispatch-sos-worker-test"
             ) =>
         {
-            yihe_next_gateway::outbox::dispatch_worker(
-                address.parse()?,
-                mode == "--dispatch-vital-worker-test",
-            )
-            .await
+            yihe_next_gateway::outbox::dispatch_worker(address.parse()?, dispatch_lane(mode)).await
         }
         [_, mode, address]
             if matches!(
@@ -92,23 +101,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     | "--dispatch-crash-test"
                     | "--dispatch-vital-one-test"
                     | "--dispatch-vital-crash-test"
+                    | "--dispatch-sos-one-test"
+                    | "--dispatch-sos-crash-test"
             ) =>
         {
             let sent = yihe_next_gateway::outbox::dispatch_one(
                 address.parse()?,
                 mode.ends_with("-crash-test"),
-                mode.starts_with("--dispatch-vital-"),
+                dispatch_lane(mode),
             )
             .await?;
             println!("{}", if sent { "published" } else { "empty" });
             Ok(())
         }
-        [_, mode, bind] if mode == "--native-outbox-test" => {
+        [_, mode, bind]
+            if matches!(mode.as_str(), "--native-outbox-test" | "--native-sos-test") =>
+        {
             let bind: SocketAddr = bind.parse()?;
             if !bind.ip().is_loopback() {
                 return Err("native test listener must be loopback".into());
             }
-            let app = yihe_next_gateway::outbox::router().await?;
+            let app = if mode == "--native-sos-test" {
+                yihe_next_gateway::outbox::sos_router().await?
+            } else {
+                yihe_next_gateway::outbox::router().await?
+            };
             let listener = tokio::net::TcpListener::bind(bind).await?;
             println!("{}", listener.local_addr()?);
             io::stdout().flush()?;

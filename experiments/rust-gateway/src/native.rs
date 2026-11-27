@@ -346,6 +346,11 @@ async fn step(State(state): State<StateData>, request: Request) -> Result<Respon
 
 /// Credentials are passed only through the local process environment.
 pub(crate) async fn test_pool() -> Result<MySqlPool, Box<dyn std::error::Error>> {
+    test_pool_with_limit(8).await
+}
+pub(crate) async fn test_pool_with_limit(
+    limit: u32,
+) -> Result<MySqlPool, Box<dyn std::error::Error>> {
     let host: IpAddr = std::env::var("YIHE_NEXT_DB_HOST")?.parse()?;
     let schema = std::env::var("YIHE_NEXT_DB_SCHEMA")?;
     if !host.is_loopback()
@@ -363,7 +368,7 @@ pub(crate) async fn test_pool() -> Result<MySqlPool, Box<dyn std::error::Error>>
         .database(&schema)
         .ssl_mode(MySqlSslMode::Disabled);
     let pool = MySqlPoolOptions::new()
-        .max_connections(8)
+        .max_connections(limit)
         .acquire_timeout(Duration::from_secs(5))
         .after_connect(|conn, _| {
             Box::pin(async move {

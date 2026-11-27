@@ -237,9 +237,65 @@ No notification sender is started. A broker ACK is not delivery or
 human acceptance; the consumer acknowledges only after SQL commit.
 --consume-sos-crash-test exits after COMMIT before broker ACK.
 Go retry lookup and protected notification readers validate the actual
-native records. Device-facing signed SOS admission, location reporting,
-full delivery/priority benchmarking, production schema and routing
-remain pending; the current production Go SOS path is unchanged.
+native records. A dedicated --native-sos-test listener exposes only
+POST /api/v2/device/sos, with its own four-connection SQL pool and four
+admission permits, separate from the ordinary eight-permit process.
+The canonical Sos Protobuf is signed with Ed25519 under the
+yihe-next-sos-wire-v1 + NUL domain. The same enrolled-key, epoch,
+generation and nonce fence applies. Its separate rust_sos_outbox uses
+the Go device/request incident identity (including historical epochs)
+and a per-device pending limit of 64. The --dispatch-sos-one-test,
+--dispatch-sos-worker-test and --dispatch-sos-crash-test modes target
+the independent YIHE_sos deployment. The real HTTP test exhausts eight
+ordinary body-reading permits, observes 503 for another ordinary
+request, and confirms SOS admission and durable incident commit.
+This proves process/pool/permit isolation, not isolation from shared
+MySQL locks, disk or host scheduling. Location reporting, notification
+delivery, production schema and routing remain pending. The current
+production Go SOS path is unchanged.
+
+### Native rule transaction differential
+
+--rule-commit-test reads trusted local JSON observation fixtures from
+stdin in a disposable schema; it is not an HTTP route. It evaluates
+the seven rule candidates via Yihe-Core with the default policy,
+uses the supplied Go-compatible observation keys/evidence fields,
+locks resident/device and reads live binding, then applies the
+native event-keyed state transition to the existing rule_state.
+Incident, encrypted evidence, event note, both original notification
+outboxes and an experimental keyed batch receipt share one SQL commit.
+Actual Go persistence is compared on an equivalent device for all
+seven rules, including recovery, source change, duplicate and receipt
+failure rollback. Production policy loading, observation acquisition,
+sample revision fencing, scheduler and broker integration are not
+implemented by this command. Trusted fixtures may not substitute for
+authoritative observations in a production deployment.
+
+The optional YIHE_NEXT_RULE_BENCH=1 tagged Go integration test
+TestNextCoreRulePersistence runs three alternating trials of 128
+batches (seven rule candidates each). Use an optimized release Rust
+binary via YIHE_NEXT_GATEWAY_BINARY and an isolated MySQL instance
+with durable commit settings. Both paths lock resident/device,
+evaluate the same inputs, update the actual rule tables/notifications
+and commit a test receipt. Go is in-process and Rust includes the local
+JSON pipe, so the comparison is not a pure language or full-backend
+benchmark. The test reports committed batches/s, P50 and P99.
+
+Measured on Ryzen AI 9 H 365, Go 1.27.4, release Rust 1.100.0,
+MySQL 8.4.13 with innodb_flush_log_at_trx_commit=1 and sync_binlog=1.
+One serial request at a time; 384 committed batches per runtime,
+seven candidates per batch. Median of the three per-trial results:
+
+| Runtime | Batches/s | P50 (ms) | P99 (ms) |
+| --- | ---: | ---: | ---: |
+| Go | 128.08 | 7.6023 | 14.9434 |
+| Rust | 120.19 | 7.6604 | 20.4964 |
+
+The Rust fixture includes pipe/JSON overhead; the measured transaction
+path is not faster than the Go control. Do not extrapolate to full
+backend performance. No CPU, RSS or mixed-load latency measurements
+were collected. Next profile connection, locks, queries, commit and
+IPC separately before optimizing the transaction path.
 
 ## Native analytics core
 
@@ -307,5 +363,5 @@ to verify byte preservation, and exercises nonce replay and idempotent SOS
 retry. The separate Rust network tests simulate saturated admission and
 an abruptly disconnected upstream.
 
-Next: design the distinct vital/SOS event contracts and expand native consumer coverage, connect authoritative committed observations to analytics, migrate rule evidence/incident/notification transactions, harden dispatch and key provisioning, then compare whole-service performance and fault recovery.
+Next: connect the native rule transaction to authoritative committed observations and production policy/scheduler revisions, extend device and SOS location contracts, harden dispatch, notification delivery and key provisioning, then compare whole-service performance and fault recovery.
 Do not place this service on a production ingress before those gates.

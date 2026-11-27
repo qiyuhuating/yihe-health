@@ -217,6 +217,90 @@ pub fn verify_vital(envelope: &SignedStep, key: &[u8]) -> Result<(), Error> {
         .map_err(|_| Error::Signature)
 }
 
+pub const SOS_PATH: &str = "/api/v2/device/sos";
+const SOS_DOMAIN: &[u8] = b"yihe-next-sos-wire-v1\0";
+#[derive(Clone, PartialEq, Message)]
+pub struct Sos {
+    #[prost(uint32, tag = "1")]
+    pub version: u32,
+    #[prost(string, tag = "2")]
+    pub device_no: String,
+    #[prost(int64, tag = "3")]
+    pub binding_epoch: i64,
+    #[prost(string, tag = "4")]
+    pub request_id: String,
+    #[prost(string, tag = "5")]
+    pub nonce: String,
+    #[prost(int64, tag = "6")]
+    pub signed_at: i64,
+}
+impl Sos {
+    fn validate(&self, now: i64) -> Result<(), Error> {
+        if self.version != 1
+            || self.device_no.is_empty()
+            || self.device_no.len() > 32
+            || !self
+                .device_no
+                .bytes()
+                .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'-' || b == b'_')
+            || self.binding_epoch <= 0
+            || self.request_id.is_empty()
+            || self.request_id.len() > 64
+            || !self
+                .request_id
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"_.:-".contains(&b))
+            || !(16..=64).contains(&self.nonce.len())
+            || !self
+                .nonce
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+        {
+            return Err(Error::Invalid);
+        }
+        if self.signed_at.abs_diff(now) > 300 {
+            return Err(Error::Signature);
+        }
+        Ok(())
+    }
+}
+pub fn sign_sos(s: &Sos, seed: &[u8; 32]) -> Result<Vec<u8>, Error> {
+    s.validate(s.signed_at)?;
+    let key = Ed25519KeyPair::from_seed_unchecked(seed).map_err(|_| Error::Signature)?;
+    let payload = s.encode_to_vec();
+    let signature = key
+        .sign(&[SOS_DOMAIN, payload.as_slice()].concat())
+        .as_ref()
+        .to_vec();
+    Ok(SignedStep { payload, signature }.encode_to_vec())
+}
+pub fn decode_sos(raw: &[u8], now: i64) -> Result<(Sos, SignedStep), Error> {
+    if raw.is_empty() || raw.len() > MAX_PACKET {
+        return Err(Error::Invalid);
+    }
+    let envelope = SignedStep::decode(raw).map_err(|_| Error::Invalid)?;
+    if envelope.encode_to_vec() != raw || envelope.signature.len() != 64 {
+        return Err(Error::Invalid);
+    }
+    let sos = Sos::decode(envelope.payload.as_slice()).map_err(|_| Error::Invalid)?;
+    if sos.encode_to_vec() != envelope.payload {
+        return Err(Error::Invalid);
+    }
+    sos.validate(now)?;
+    Ok((sos, envelope))
+}
+pub fn verify_sos(envelope: &SignedStep, key: &[u8]) -> Result<(), Error> {
+    if key.len() != 32 {
+        return Err(Error::Signature);
+    }
+    signature::UnparsedPublicKey::new(&signature::ED25519, key)
+        .verify(
+            &[SOS_DOMAIN, envelope.payload.as_slice()].concat(),
+            &envelope.signature,
+        )
+        .map_err(|_| Error::Signature)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

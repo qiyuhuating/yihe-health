@@ -24,6 +24,15 @@ message Vital {
   optional uint32 hr = 8;
   optional uint32 bp = 9;
 }
+// No-position emergency request, separate signature domain.
+message Sos {
+  uint32 version = 1;
+  string device_no = 2;
+  int64 binding_epoch = 3;
+  string request_id = 4;
+  string nonce = 5;
+  int64 signed_at = 6;
+}
 message SignedStep {
   bytes payload = 1;
   bytes signature = 2;

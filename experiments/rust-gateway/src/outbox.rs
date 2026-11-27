@@ -411,6 +411,108 @@ async fn enqueue_vital(State(s): State<Admission>, request: Request) -> Result<R
         .into_response())
 }
 
+async fn enqueue_sos(State(s): State<Admission>, request: Request) -> Result<Response, Failure> {
+    let _permit = s.gate.try_acquire().map_err(|_| Failure::Busy)?;
+    let (parts, body) = request.into_parts();
+    if parts
+        .headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        != Some(yihe_device_wire::CONTENT_TYPE)
+    {
+        return Err(Failure::Invalid);
+    }
+    let raw = tokio::time::timeout(
+        Duration::from_secs(10),
+        to_bytes(body, yihe_device_wire::MAX_PACKET),
+    )
+    .await
+    .map_err(|_| Failure::Invalid)?
+    .map_err(|_| Failure::Invalid)?;
+    let now = Utc::now();
+    let (v, envelope) =
+        yihe_device_wire::decode_sos(&raw, now.timestamp()).map_err(|e| match e {
+            yihe_device_wire::Error::Invalid => Failure::Invalid,
+            yihe_device_wire::Error::Signature => Failure::Signature,
+        })?;
+    let (mut tx, id, owner, generation) = authorize_wire(
+        &s.pool,
+        &v.device_no,
+        v.binding_epoch,
+        &v.nonce,
+        v.signed_at,
+        |key| yihe_device_wire::verify_sos(&envelope, key),
+    )
+    .await?;
+    let fingerprint = s.keys.digest_scoped(
+        b"yihe-next-sos-admission-v1",
+        &serde_json::to_vec(&json!([
+            id,
+            owner,
+            v.binding_epoch,
+            generation,
+            v.request_id
+        ]))
+        .map_err(|_| Failure::Database)?,
+    );
+    // Preserve global Go incident identity across binding epochs.
+    if let Some((prior_owner, kind)) = sqlx::query_as::<_, (i64, String)>(
+        "SELECT old_id,kind FROM care_incident WHERE device_id=? AND request_id=? FOR UPDATE",
+    )
+    .bind(id)
+    .bind(&v.request_id)
+    .fetch_optional(&mut *tx)
+    .await?
+        && (prior_owner != owner || kind != "sos")
+    {
+        return Err(Failure::Conflict);
+    }
+    if let Some(prior) = sqlx::query_scalar::<_, Vec<u8>>(
+        "SELECT fingerprint FROM rust_sos_outbox WHERE device_id=? AND request_id=?",
+    )
+    .bind(id)
+    .bind(v.request_id.as_bytes())
+    .fetch_optional(&mut *tx)
+    .await?
+    {
+        if prior != fingerprint.as_bytes() {
+            return Err(Failure::Conflict);
+        }
+    } else {
+        let pending: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM rust_sos_outbox WHERE device_id=? AND published_at IS NULL",
+        )
+        .bind(id)
+        .fetch_one(&mut *tx)
+        .await?;
+        if pending >= 64 {
+            return Err(Failure::Busy);
+        }
+        let event = json!({"version":1,"device_id":id,"resident_id":owner,"binding_epoch":v.binding_epoch,"auth_generation":generation,"request_id":v.request_id,"received_at":now.to_rfc3339_opts(SecondsFormat::Micros,true)});
+        let encoded = s.keys.seal_scoped(
+            &serde_json::to_vec(&event).map_err(|_| Failure::Database)?,
+            b"yihe-next-sos-event-v1",
+        )?;
+        sqlx::query("INSERT INTO rust_sos_outbox(device_id,binding_epoch,request_id,fingerprint,encoded) VALUES(?,?,?,?,?)").bind(id).bind(v.binding_epoch).bind(v.request_id.as_bytes()).bind(fingerprint.as_bytes()).bind(encoded).execute(&mut *tx).await?;
+    }
+    tx.commit().await?;
+    Ok((
+        axum::http::StatusCode::ACCEPTED,
+        Json(json!({"returnCode":"1111","state":"admitted"})),
+    )
+        .into_response())
+}
+
+/// Separate process, SQL pool and admission permits. Ordinary routes are absent.
+pub async fn sos_router() -> Result<Router, Box<dyn std::error::Error>> {
+    Ok(Router::new()
+        .route(yihe_device_wire::SOS_PATH, post(enqueue_sos))
+        .with_state(Admission {
+            pool: native::test_pool_with_limit(4).await?,
+            keys: Arc::new(Keys::load()?),
+            gate: Arc::new(Semaphore::new(4)),
+        }))
+}
 pub async fn router() -> Result<Router, Box<dyn std::error::Error>> {
     let pool = native::test_pool().await?;
     let keys = Arc::new(Keys::load()?);
@@ -431,11 +533,11 @@ pub async fn router() -> Result<Router, Box<dyn std::error::Error>> {
 pub async fn dispatch_one(
     address: SocketAddr,
     exit_after_ack: bool,
-    vital: bool,
+    lane: crate::consumer::Lane,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let pool = native::test_pool().await?;
     let js = connect(address).await?;
-    dispatch_pending(&pool, &js, exit_after_ack, vital).await
+    dispatch_pending(&pool, &js, exit_after_ack, lane).await
 }
 
 async fn connect(
@@ -456,7 +558,7 @@ async fn connect(
 /// SQL transaction spans network I/O. Stop between attempts on Ctrl-C.
 pub async fn dispatch_worker(
     address: SocketAddr,
-    vital: bool,
+    lane: crate::consumer::Lane,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() || address.port() == 0 {
         return Err("test broker must be loopback".into());
@@ -472,7 +574,7 @@ pub async fn dispatch_worker(
             if js.is_none() {
                 js = Some(connect(address).await?);
             }
-            dispatch_pending(&pool, js.as_ref().expect("connected"), false, vital).await
+            dispatch_pending(&pool, js.as_ref().expect("connected"), false, lane).await
         }
         .await;
         let delay = match result {
@@ -509,22 +611,27 @@ async fn dispatch_pending(
     pool: &MySqlPool,
     js: &async_nats::jetstream::Context,
     exit_after_ack: bool,
-    vital: bool,
+    lane: crate::consumer::Lane,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let (select, update, stream, subject) = if vital {
-        (
+    let (select, update, stream, subject) = match lane {
+        crate::consumer::Lane::Vital => (
             "SELECT id,encoded FROM rust_vital_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
             "UPDATE rust_vital_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?",
             "YIHE_vitals",
             "yihe.next.vitals",
-        )
-    } else {
-        (
+        ),
+        crate::consumer::Lane::Sos => (
+            "SELECT id,encoded FROM rust_sos_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
+            "UPDATE rust_sos_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?",
+            "YIHE_sos",
+            "yihe.next.sos",
+        ),
+        crate::consumer::Lane::Step => (
             "SELECT id,encoded FROM rust_step_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
             "UPDATE rust_step_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?",
             STREAM,
             SUBJECT,
-        )
+        ),
     };
     let Some(row) = sqlx::query(select).fetch_optional(pool).await? else {
         return Ok(false);
