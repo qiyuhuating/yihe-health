@@ -141,6 +141,70 @@ The integration test sends a real simulator packet and independently
 encodes and signs Protobuf in Go, exercises tampering and cross-protocol
 replay, then consumes the actual broker events. See step.proto for tags.
 
+## Native JetStream consumer (test only)
+
+--consume-one-test LOOPBACK:PORT fetches one event from the existing
+YIHE_telemetry / commit durable consumer. --consume-worker-test reuses
+the MySQL pool, event key and NATS connection, pulls one event at a time,
+and retries errors with a delay. --consume-crash-test exits with code 78
+after SQL COMMIT, before the broker acknowledgement.
+
+The supported wire subset is step-only with UTC timestamps, the existing
+sne1 AES-GCM test envelope and Go's canonical JSON / HMAC receipt digest.
+Unsupported metrics or invalid events stay unacknowledged (delayed NAK).
+The consumer obtains resident, device and authorization generation locks
+in that order, checks live binding/status, consults the existing rejection
+and receipt tables, and commits the day metric, heartbeat and receipt in
+one transaction. Only a confirmed business commit, matching receipt or
+durable terminal rejection permits DoubleAck. The real fault test injects
+receipt failure, exits the Rust process after COMMIT, waits for actual
+broker redelivery, then consumes via Go; resealed Go events also replay
+safely through Rust. The simulator integration test exercises the native
+admission/publish/consume chain and replays the same event through Go.
+
+This is not a production consumer deployment. It does not handle sleep,
+vital samples, SOS, keyring rotation, poison quarantine, or notification
+delivery. The shared lane cannot be cut over to this subset while it
+contains unsupported events. The consumer does not manufacture heart-rate
+observations from step events.
+
+## Native analytics core
+
+yihe-core::rolling implements a bounded integer heart-rate ring with
+separate timestamp/value columns, histogram/bitset extrema, exact sum
+and second moment. A fused append returns statistics with identity and
+revision validation; unsupported fractional, corrected, out-of-order or
+missing-revision data require an authoritative rebuild. Coverage extension
+requires the caller's proof of completeness. Existing immutable SIMD
+snapshot queries remain available.
+
+yihe-core::rules evaluates seven compact rule candidates and models
+observation-keyed transitions. The local oracle compares 10,240 rolling
+windows and 1,200 candidate sets to the actual Go implementation; a
+disposable MySQL test also compares 16 transitions with persisted Go
+rule_state and incident creation. This is not production rule execution:
+timezone resolution, evidence, policy loading, incident/outbox writes and
+notification dispatch remain with Go. The step-only broker consumer is
+not a source of heart-rate data.
+
+Reproducible microbenchmarks: from backend, go test -tags
+yihe_next_gateway -run '^$' -bench '^BenchmarkNextGo(Window|RollingControl)$'
+-benchmem -cpu 1 -benchtime 6x; from yihe-core, cargo run --locked
+--release --example rolling_bench -- 6. On the local Ryzen AI 9 H 365,
+three interleaved trials of 4096 observations per iteration gave the
+following medians (ns/event, excluding setup and database/network I/O):
+
+| Window | Go Aggregate | Rust snapshot | Rust rolling | Go rolling control |
+| --- | ---: | ---: | ---: | ---: |
+| 64 | 467.2 | 58.740 | 20.500 | 5.518 |
+| 256 | 1720 | 52.112 | 20.866 | 5.086 |
+| 1024 | 6256 | 119.828 | 21.004 | 5.168 |
+| 4096 | 24877 | 386.845 | 21.061 | 5.192 |
+
+Go 1.27.4 and Rust 1.100.0; the test-only Go rolling control omits
+identity/revision/value validation, so this is not a language speed
+comparison. No full-service throughput, P99, CPU or RSS claim.
+
 ## Verification
 
 From this directory:
@@ -170,5 +234,5 @@ to verify byte preservation, and exercises nonce replay and idempotent SOS
 retry. The separate Rust network tests simulate saturated admission and
 an abruptly disconnected upstream.
 
-Next: extend native wire authentication and transactional business handling beyond the step-only subset; expand the typed binary protocol and simulator beyond step reports, harden durable dispatch and key provisioning, measure actual performance and run end-to-end fault testing.
+Next: design the distinct vital/SOS event contracts and expand native consumer coverage, connect authoritative committed observations to analytics, migrate rule evidence/incident/notification transactions, harden dispatch and key provisioning, then compare whole-service performance and fault recovery.
 Do not place this service on a production ingress before those gates.

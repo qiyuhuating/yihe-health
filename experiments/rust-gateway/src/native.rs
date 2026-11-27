@@ -286,14 +286,22 @@ async fn commit(pool: &MySqlPool, v: Verified, now: DateTime<Utc>) -> Result<(),
     let (mut tx, id, owner) = authorize(pool, &v).await?;
     let r = &v.report;
     persist_step(&mut tx, id, owner, r.epoch, v.observed, r.step).await?;
-    let seen = now.naive_utc();
-    sqlx::query("UPDATE device SET last_time=GREATEST(COALESCE(last_time,?),?),last_online_at=GREATEST(COALESCE(last_online_at,?),?) WHERE device_id=? AND health_epoch=? AND ?>=COALESCE(last_online_at,?)")
-        .bind(seen).bind(seen).bind(seen).bind(seen).bind(id).bind(r.epoch).bind(seen).bind(seen).execute(&mut *tx).await?;
+    touch(&mut tx, id, r.epoch, now.naive_utc()).await?;
     tx.commit().await?;
     Ok(())
 }
+pub(crate) async fn touch(
+    tx: &mut Transaction<'_, MySql>,
+    id: i64,
+    epoch: i64,
+    seen: NaiveDateTime,
+) -> Result<(), Failure> {
+    sqlx::query("UPDATE device SET last_time=GREATEST(COALESCE(last_time,?),?),last_online_at=GREATEST(COALESCE(last_online_at,?),?) WHERE device_id=? AND health_epoch=? AND ?>=COALESCE(last_online_at,?)")
+        .bind(seen).bind(seen).bind(seen).bind(seen).bind(id).bind(epoch).bind(seen).bind(seen).execute(&mut **tx).await?;
+    Ok(())
+}
 
-async fn persist_step(
+pub(crate) async fn persist_step(
     tx: &mut Transaction<'_, MySql>,
     device: i64,
     owner: i64,

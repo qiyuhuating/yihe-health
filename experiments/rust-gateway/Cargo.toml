@@ -23,6 +23,7 @@ subtle = "2.6.1"
 async-nats = { version = "=0.53.0", default-features = false, features = ["jetstream", "ring", "server_2_10", "server_2_11", "server_2_12", "server_2_14"] }
 aes-gcm = "0.10.3"
 getrandom = "0.4"
+futures-util = "0.3"
 
 [profile.release]
 lto = "thin"

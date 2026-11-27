@@ -92,6 +92,12 @@ jobs:
       - run: go vet -mod=readonly ./...
       - name: Install Rust toolchain
         run: rustup toolchain install 1.100.0 --profile minimal --component rustfmt,clippy
+      - name: Verify native analytics core
+        working-directory: yihe-core
+        run: |
+          cargo +1.100.0 fmt --check
+          cargo +1.100.0 clippy --locked --all-targets -- -D warnings
+          cargo +1.100.0 test --locked --all-targets
       - name: Verify native Rust gateway
         working-directory: experiments/rust-gateway
         run: |
@@ -118,6 +124,11 @@ jobs:
         env:
           YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
         run: go test -tags yihe_next_gateway -run '^TestNextGateway(NativeOracle|HTTPDifferential|NativeStep)$' -count=1 -v -timeout 240s ./internal/handlers
+      - name: Compare actual Go analytics and rule persistence with Rust
+        working-directory: backend
+        env:
+          YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
+        run: go test -tags yihe_next_gateway -run '^TestNextCore(Differential|Transitions)$' -count=1 -v -timeout 180s ./internal/rules
       - name: Stop isolated Valkey
         if: always()
         run: docker rm -f yihe-next-valkey || true

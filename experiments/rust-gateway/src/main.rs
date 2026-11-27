@@ -17,6 +17,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let input: Value = serde_json::from_str(&line?)?;
                 let result = match input.get("kind").and_then(Value::as_str) {
                     Some("sos") => json!(sos_shape(&input["body"])),
+                    Some("transitions") => {
+                        yihe_next_gateway::analytics::transitions(input["body"].clone())?
+                    }
+                    Some("rolling") => {
+                        yihe_next_gateway::analytics::rolling(input["body"].clone())?
+                    }
+                    Some("rules") => {
+                        yihe_next_gateway::analytics::decisions(input["body"].clone())?
+                    }
                     Some("core") => core_statistics(serde_json::from_value(input["body"].clone())?)
                         .unwrap_or_else(|e| json!({"error":e})),
                     _ => return Err("unknown oracle case".into()),
@@ -25,6 +34,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 stdout.flush()?;
             }
             Ok(())
+        }
+        [_, mode, address]
+            if matches!(
+                mode.as_str(),
+                "--consume-one-test" | "--consume-worker-test" | "--consume-crash-test"
+            ) =>
+        {
+            yihe_next_gateway::consumer::run(
+                address.parse()?,
+                mode == "--consume-worker-test",
+                mode == "--consume-crash-test",
+            )
+            .await
         }
         [_, mode, address] if mode == "--dispatch-worker-test" => {
             yihe_next_gateway::outbox::dispatch_worker(address.parse()?).await

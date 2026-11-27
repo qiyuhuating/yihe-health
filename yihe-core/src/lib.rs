@@ -3,6 +3,8 @@
 
 mod baseline;
 mod ffi;
+pub mod rolling;
+pub mod rules;
 mod simd;
 
 /// Identity of one instantaneous heart-rate series. The caller must resolve and

@@ -1,4 +1,6 @@
 //! Loopback-only experimental gateway. Go remains the sole business writer.
+pub mod analytics;
+pub mod consumer;
 pub mod native;
 pub mod outbox;
 #[cfg(test)]

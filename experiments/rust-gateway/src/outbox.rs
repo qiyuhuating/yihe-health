@@ -27,12 +27,12 @@ const SCOPE: &[u8] = b"yihe-next-telemetry-event-v1";
 const SUBJECT: &str = "yihe.next.telemetry";
 const STREAM: &str = "YIHE_telemetry";
 
-struct Keys {
+pub(crate) struct Keys {
     cipher: Aes256Gcm,
     lookup: [u8; 32],
 }
 impl Keys {
-    fn load() -> Result<Self, Box<dyn std::error::Error>> {
+    pub(crate) fn load() -> Result<Self, Box<dyn std::error::Error>> {
         // Only the unversioned single-key fixture is supported. No keyring
         // downgrade or accidental use of an unrelated production key.
         let key: [u8; 32] = STANDARD
@@ -60,6 +60,34 @@ impl Keys {
         let mut data = nonce.to_vec();
         data.extend(ciphertext);
         Ok(format!("sne1:{}", STANDARD_NO_PAD.encode(data)).into_bytes())
+    }
+    pub(crate) fn open(&self, encoded: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        if encoded.len() > 256 * 1024 {
+            return Err("oversize event".into());
+        }
+        let data = STANDARD_NO_PAD.decode(
+            encoded
+                .strip_prefix(b"sne1:")
+                .ok_or("unsupported event envelope")?,
+        )?;
+        if data.len() < 28 {
+            return Err("short event envelope".into());
+        }
+        self.cipher
+            .decrypt(
+                Nonce::from_slice(&data[..12]),
+                Payload {
+                    msg: &data[12..],
+                    aad: SCOPE,
+                },
+            )
+            .map_err(|_| "event authentication failed".into())
+    }
+    pub(crate) fn receipt_digest(&self, canonical: &[u8]) -> String {
+        let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&self.lookup).expect("32-byte key");
+        mac.update(b"yihe-next-telemetry-receipt-v1\0");
+        mac.update(canonical);
+        hex::encode(mac.finalize().into_bytes())
     }
     fn fingerprint(&self, data: &[u8]) -> [u8; 32] {
         let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&self.lookup).expect("32-byte key");

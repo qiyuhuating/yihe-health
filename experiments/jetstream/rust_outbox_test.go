@@ -372,6 +372,78 @@ func TestRustOutboxProducer(t *testing.T) {
 	sinkCount(t, db, "SELECT step FROM watch_day_info", 3400)
 	stopWorker()
 	_ = worker.Wait()
+	// Complete one actual simulator -> Rust admission -> Rust publisher ->
+	// Rust consumer chain. The shared receipt also survives Go replay.
+	watch = exec.CommandContext(ctx, simulator, "--send", strings.TrimSpace(address), "WATCH001", "1", "binary-native-chain", "binary-native-nonce-01", strconv.FormatInt(observed, 10), "3500")
+	watch.Env = append(os.Environ(), "WATCH_NEXT_SEED_HEX="+hex.EncodeToString(seed))
+	if output, err := watch.CombinedOutput(); err != nil || !bytes.HasPrefix(output, []byte("202 ")) {
+		t.Fatalf("native chain simulator: %v %s", err, output)
+	}
+	var nativeEncoded []byte
+	if err = db.QueryRowContext(ctx, "SELECT encoded FROM rust_step_outbox WHERE request_id='binary-native-chain'").Scan(&nativeEncoded); err != nil {
+		t.Fatal(err)
+	}
+	dispatch("--dispatch-one-test", addr, 0)
+	consumeCtx, stopConsume := context.WithCancel(ctx)
+	consumeWorker := exec.CommandContext(consumeCtx, binary, "--consume-worker-test", addr)
+	consumeWorker.Env = env
+	consumeWorker.Stderr = os.Stderr
+	beforeConsumer, err := server.Varz(nil)
+	if err != nil {
+		stopConsume()
+		t.Fatal(err)
+	}
+	if err = consumeWorker.Start(); err != nil {
+		stopConsume()
+		t.Fatal(err)
+	}
+	defer func() {
+		stopConsume()
+		if consumeWorker.ProcessState == nil {
+			_ = consumeWorker.Wait()
+		}
+	}()
+	waitConsumed := func(want int) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for {
+			info, err := stream.Info(ctx)
+			var step int
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = db.QueryRowContext(ctx, "SELECT step FROM watch_day_info").Scan(&step); err != nil {
+				t.Fatal(err)
+			}
+			if info.State.Msgs == 0 && step == want {
+				return
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("native consume: pending=%d step=%d want=%d", info.State.Msgs, step, want)
+			}
+			time.Sleep(25 * time.Millisecond)
+		}
+	}
+	waitConsumed(3500)
+	binaryPost(packet("binary-native-worker-2", "binary-native-nonce-02", 3600, private), 202, "")
+	dispatch("--dispatch-one-test", addr, 0)
+	waitConsumed(3600)
+	afterConsumer, err := server.Varz(nil)
+	if err != nil || afterConsumer.TotalConnections-beforeConsumer.TotalConnections != 2 {
+		t.Fatalf("consumer connection reuse (one worker, one publisher): %v", err)
+	}
+	stopConsume()
+	_ = consumeWorker.Wait()
+	sinkCount(t, db, "SELECT n FROM broker_test_writes", 6)
+	if _, err = l.js.Publish(ctx, l.subject, nativeEncoded, jetstream.WithMsgID("native-chain-go-replay")); err != nil {
+		t.Fatal(err)
+	}
+	if err = l.CommitOne(ctx, sink.Commit); err != nil {
+		t.Fatal(err)
+	}
+	sinkCount(t, db, "SELECT n FROM broker_test_writes", 6)
+	sinkCount(t, db, "SELECT COUNT(*) FROM broker_telemetry_rejection WHERE reason='request_id_conflict'", 0)
+	t.Log("actual simulator -> Rust admission -> Rust publisher -> Rust consumer -> MySQL, then Go replay passed")
 	// Revoking the generation invalidates the enrolled key immediately.
 	sinkExec(t, db, "UPDATE device SET status=0 WHERE device_id=1")
 	sinkExec(t, db, "UPDATE device SET status=1 WHERE device_id=1")
