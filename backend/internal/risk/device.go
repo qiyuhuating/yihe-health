@@ -3,6 +3,8 @@ package risk
 import (
 	"regexp"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // DeviceInfo is a best-effort browser hint, never a verified device identity.
@@ -30,11 +32,26 @@ func cleanModel(s string) string {
 		return ""
 	}
 	for _, r := range s {
-		if r < 32 || r > 126 && r < 160 {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) || r == utf8.RuneError {
 			return ""
 		}
 	}
 	return s
+}
+
+// cleanAuditAgent truncates at a UTF-8 boundary and removes control and
+// format characters. It never interprets malformed metadata as evidence
+// of abuse, and it does not gather additional device information.
+func cleanAuditAgent(s string) string {
+	if len(s) > 512 {
+		s = s[:512]
+	}
+	return strings.Map(func(r rune) rune {
+		if r == utf8.RuneError || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			return -1
+		}
+		return r
+	}, s)
 }
 
 // IdentifyDevice accepts User-Agent and optional Sec-CH-UA-Model; both are untrusted.
@@ -51,10 +68,10 @@ func IdentifyDevice(signals ...string) DeviceInfo {
 	if len(signals) > 2 {
 		hardwareID = strings.TrimSpace(signals[2])
 	}
-	if len(ua) > 512 {
-		ua = ua[:512]
-	}
-	d := DeviceInfo{Type: "unknown", OS: "Unknown", Browser: "Unknown", UserAgent: ua}
+	// Keep audit text valid and bounded; do not persist control or invisible
+	// formatting characters supplied by an untrusted client.
+	ua = cleanAuditAgent(ua)
+	d := DeviceInfo{Type: "unknown", OS: "Unknown", Browser: "Unknown", UserAgent: ua, HardwareSource: "not-provided"}
 	l := strings.ToLower(ua)
 	switch {
 	case strings.Contains(l, "android"):
@@ -100,6 +117,9 @@ func IdentifyDevice(signals ...string) DeviceInfo {
 	}
 	// Native clients may submit an app-scoped identifier (not IMEI/MAC).
 	// This is reported, not hardware-attested, so it must not authorize access.
+	if hardwareID != "" {
+		d.HardwareSource = "invalid-format"
+	}
 	if len(hardwareID) >= 16 && len(hardwareID) <= 128 {
 		valid := true
 		for _, c := range hardwareID {
