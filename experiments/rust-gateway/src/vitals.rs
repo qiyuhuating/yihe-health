@@ -7,9 +7,7 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use sqlx::{MySql, MySqlPool, Row, Transaction};
-use yihe_core::{Point, SeriesKey, Window, rolling::RollingHeartRate};
 
 const SCOPE: &[u8] = b"yihe-next-vitals-event-v1";
 type Bounds = (Option<i64>, Option<i64>, Option<i64>, Option<i64>);
@@ -185,126 +183,6 @@ pub(crate) async fn commit(pool: &MySqlPool, keys: &Keys, raw: &[u8]) -> Result<
     Ok(())
 }
 
-/// Test-only local read of the last <=256 committed vital events in the
-/// current binding, not the complete production health_sample history.
-/// No cached result survives a change in identity, revision or process.
-pub async fn stats(device: i64) -> Result<(), Box<dyn std::error::Error>> {
-    let pool = native::test_pool().await?;
-    let keys = Keys::load()?;
-    let owner: Option<i64> = sqlx::query_scalar("SELECT old_id FROM device WHERE device_id=?")
-        .bind(device)
-        .fetch_one(&pool)
-        .await?;
-    let owner = owner.ok_or("unbound device")?;
-    let mut tx = pool.begin().await?;
-    sqlx::query_scalar::<_, i64>("SELECT old_id FROM oldperson WHERE old_id=? FOR UPDATE")
-        .bind(owner)
-        .fetch_one(&mut *tx)
-        .await?;
-    let row =
-        sqlx::query("SELECT old_id,health_epoch,status FROM device WHERE device_id=? FOR UPDATE")
-            .bind(device)
-            .fetch_one(&mut *tx)
-            .await?;
-    let current: Option<i64> = row.try_get("old_id")?;
-    let epoch: i64 = row.try_get("health_epoch")?;
-    let status: Option<i64> = row.try_get("status")?;
-    if current != Some(owner) || status.is_none() || status == Some(0) {
-        return Err("binding unavailable".into());
-    }
-    let rows=sqlx::query("SELECT r.revision,r.measurement_id,m.old_id,m.device_id,m.create_time,m.measurement_cipher,m.hr,m.bp FROM rust_vital_receipt r LEFT JOIN ratepre m ON m.id=r.measurement_id WHERE r.device_id=? AND r.binding_epoch=? ORDER BY r.revision DESC LIMIT 256").bind(device).bind(epoch).fetch_all(&mut *tx).await?;
-    let key = SeriesKey {
-        resident_id: owner,
-        source: "vital-event".into(),
-        source_device: format!("{device}:{epoch}"),
-    };
-    let mut revision = 0i64;
-    let mut previous = None;
-    let mut points = Vec::new();
-    let mut state: Option<RollingHeartRate> = None;
-    let mut window = Window { from: 0, to: 1 };
-    let mut appends = 0;
-    let mut rebuilds = 0;
-    for row in rows.iter().rev() {
-        let rev: i64 = row.try_get("revision")?;
-        if previous.is_some_and(|p: i64| p.checked_add(1) != Some(rev)) {
-            return Err("noncontiguous committed revisions".into());
-        }
-        previous = Some(rev);
-        revision = rev;
-        let id: i64 = row.try_get("measurement_id")?;
-        let old: Option<i64> = row.try_get("old_id")?;
-        let dev: Option<i64> = row.try_get("device_id")?;
-        let legacy_hr: Option<i64> = row.try_get("hr")?;
-        let legacy_bp: Option<i64> = row.try_get("bp")?;
-        let cipher: Option<String> = row.try_get("measurement_cipher")?;
-        if old != Some(owner) || dev != Some(device) || legacy_hr.is_some() || legacy_bp.is_some() {
-            return Err("invalid committed measurement identity".into());
-        }
-        let plain = keys.open_scoped(
-            cipher.ok_or("missing protected measurement")?.as_bytes(),
-            format!("vital-measurements:{id}").as_bytes(),
-        )?;
-        let value: Protected = serde_json::from_slice(&plain)?;
-        if value.owner != owner.to_string() || value.device != device.to_string() {
-            return Err("protected identity mismatch".into());
-        }
-        let at: NaiveDateTime = row.try_get("create_time")?;
-        let at = at
-            .and_utc()
-            .timestamp_nanos_opt()
-            .ok_or("unsupported observation time")?;
-        let point = value.hr.map(|v| Point {
-            at,
-            value: v as f64,
-        });
-        if let Some(point) = point {
-            points.push(point);
-        }
-        if let (Some(s), Some(point)) = (&mut state, point) {
-            let next = Window {
-                from: window.from,
-                to: window
-                    .to
-                    .max(at.checked_add(1).ok_or("timestamp overflow")?),
-            };
-            if s.append(&key, rev, next, point).is_ok() {
-                window = next;
-                appends += 1;
-                continue;
-            }
-        }
-        if points.is_empty() {
-            continue;
-        }
-        points.sort_by_key(|p| p.at);
-        window = Window {
-            from: points[0].at,
-            to: points
-                .last()
-                .expect("nonempty")
-                .at
-                .checked_add(1)
-                .ok_or("timestamp overflow")?,
-        };
-        state = Some(
-            RollingHeartRate::from_committed(key.clone(), rev, window, &points, 256)
-                .map_err(|_| "invalid committed heart-rate snapshot")?,
-        );
-        rebuilds += 1;
-    }
-    let result = match state {
-        Some(s) => {
-            let v = s
-                .query(&key, revision, window)
-                .map_err(|_| "projection revision miss")?
-                .ok_or("empty projection")?;
-            json!({"revision":revision,"count":v.count,"min":v.min,"max":v.max,"mean":v.mean,"appends":appends,"rebuilds":rebuilds})
-        }
-        None => json!({"revision":revision,"count":0,"appends":appends,"rebuilds":rebuilds}),
-    };
-    tx.commit().await?;
-    println!("{result}");
-    pool.close().await;
-    Ok(())
-}
+#[path = "vital_projection.rs"]
+mod projection;
+pub use projection::{stats, stats_worker};

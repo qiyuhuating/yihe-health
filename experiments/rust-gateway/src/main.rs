@@ -43,29 +43,61 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     | "--consume-crash-test"
                     | "--consume-vital-one-test"
                     | "--consume-vital-worker-test"
+                    | "--consume-sos-one-test"
+                    | "--consume-sos-worker-test"
+                    | "--consume-sos-crash-test"
             ) =>
         {
             yihe_next_gateway::consumer::run(
                 address.parse()?,
                 matches!(
                     mode.as_str(),
-                    "--consume-worker-test" | "--consume-vital-worker-test"
+                    "--consume-worker-test"
+                        | "--consume-vital-worker-test"
+                        | "--consume-sos-worker-test"
                 ),
-                mode == "--consume-crash-test",
-                mode.starts_with("--consume-vital-"),
+                mode.ends_with("-crash-test"),
+                if mode.starts_with("--consume-vital-") {
+                    yihe_next_gateway::consumer::Lane::Vital
+                } else if mode.starts_with("--consume-sos-") {
+                    yihe_next_gateway::consumer::Lane::Sos
+                } else {
+                    yihe_next_gateway::consumer::Lane::Step
+                },
             )
             .await
+        }
+        [_, mode, device] if mode == "--vital-stats-worker-test" => {
+            yihe_next_gateway::vitals::stats_worker(device.parse()?).await
         }
         [_, mode, device] if mode == "--vital-stats-test" => {
             yihe_next_gateway::vitals::stats(device.parse()?).await
         }
-        [_, mode, address] if mode == "--dispatch-worker-test" => {
-            yihe_next_gateway::outbox::dispatch_worker(address.parse()?).await
+        [_, mode, address]
+            if matches!(
+                mode.as_str(),
+                "--dispatch-worker-test" | "--dispatch-vital-worker-test"
+            ) =>
+        {
+            yihe_next_gateway::outbox::dispatch_worker(
+                address.parse()?,
+                mode == "--dispatch-vital-worker-test",
+            )
+            .await
         }
-        [_, mode, address] if mode == "--dispatch-one-test" || mode == "--dispatch-crash-test" => {
+        [_, mode, address]
+            if matches!(
+                mode.as_str(),
+                "--dispatch-one-test"
+                    | "--dispatch-crash-test"
+                    | "--dispatch-vital-one-test"
+                    | "--dispatch-vital-crash-test"
+            ) =>
+        {
             let sent = yihe_next_gateway::outbox::dispatch_one(
                 address.parse()?,
-                mode == "--dispatch-crash-test",
+                mode.ends_with("-crash-test"),
+                mode.starts_with("--dispatch-vital-"),
             )
             .await?;
             println!("{}", if sent { "published" } else { "empty" });

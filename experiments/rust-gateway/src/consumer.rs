@@ -9,6 +9,28 @@ use sqlx::{MySql, MySqlPool, Row, Transaction};
 use std::{net::SocketAddr, time::Duration};
 
 pub(crate) type Error = Box<dyn std::error::Error + Send + Sync>;
+#[derive(Clone, Copy)]
+pub enum Lane {
+    Step,
+    Vital,
+    Sos,
+}
+impl Lane {
+    fn stream(self) -> &'static str {
+        match self {
+            Self::Step => "YIHE_telemetry",
+            Self::Vital => "YIHE_vitals",
+            Self::Sos => "YIHE_sos",
+        }
+    }
+    fn subject(self) -> &'static str {
+        match self {
+            Self::Step => "yihe.next.telemetry",
+            Self::Vital => "yihe.next.vitals",
+            Self::Sos => "yihe.next.sos",
+        }
+    }
+}
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase", deny_unknown_fields)]
 struct Event {
@@ -148,7 +170,7 @@ async fn one(
     keys: &Keys,
     consumer: &PullConsumer,
     crash: bool,
-    vital: bool,
+    lane: Lane,
 ) -> Result<bool, Error> {
     let mut messages = consumer
         .fetch()
@@ -162,10 +184,10 @@ async fn one(
     let msg = message?;
     // AckWait is 30s. A bounded attempt cannot monopolize the consumer.
     let work = async {
-        if vital {
-            crate::vitals::commit(pool, keys, &msg.payload).await
-        } else {
-            commit(pool, keys, &msg.payload).await
+        match lane {
+            Lane::Step => commit(pool, keys, &msg.payload).await,
+            Lane::Vital => crate::vitals::commit(pool, keys, &msg.payload).await,
+            Lane::Sos => crate::sos::commit(pool, keys, &msg.payload).await,
         }
     };
     match tokio::time::timeout(Duration::from_secs(20), work).await {
@@ -186,7 +208,7 @@ pub async fn run(
     address: SocketAddr,
     worker: bool,
     crash: bool,
-    vital: bool,
+    lane: Lane,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() || address.port() == 0 {
         return Err("test broker must be loopback".into());
@@ -200,22 +222,13 @@ pub async fn run(
     .await??;
     let js = async_nats::jetstream::new(client);
     let consumer: PullConsumer = js
-        .get_stream(if vital {
-            "YIHE_vitals"
-        } else {
-            "YIHE_telemetry"
-        })
+        .get_stream(lane.stream())
         .await?
         .get_consumer("commit")
         .await
         .map_err(|e| e.to_string())?;
     let config = &consumer.cached_info().config;
-    if config.filter_subject
-        != (if vital {
-            "yihe.next.vitals"
-        } else {
-            "yihe.next.telemetry"
-        })
+    if config.filter_subject != lane.subject()
         || config.ack_policy != async_nats::jetstream::consumer::AckPolicy::Explicit
         || config.ack_wait != Duration::from_secs(30)
         || config.max_deliver != -1
@@ -226,7 +239,7 @@ pub async fn run(
         let stop = tokio::signal::ctrl_c();
         tokio::pin!(stop);
         loop {
-            let delay = match one(&pool, &keys, &consumer, false, vital).await {
+            let delay = match one(&pool, &keys, &consumer, false, lane).await {
                 Ok(_) => Duration::ZERO,
                 Err(_) => {
                     eprintln!("consumer attempt failed; event retained");
@@ -241,7 +254,7 @@ pub async fn run(
         // An actual transaction/transport error still exits immediately.
         let deadline = tokio::time::Instant::now() + Duration::from_secs(35);
         loop {
-            match one(&pool, &keys, &consumer, crash, vital).await {
+            match one(&pool, &keys, &consumer, crash, lane).await {
                 Ok(true) => {
                     println!("committed");
                     break;

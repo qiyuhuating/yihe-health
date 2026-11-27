@@ -180,8 +180,14 @@ resident_id, binding_epoch, auth_generation, request_id, received_at,
 observed_at, hr and bp. Timestamps are UTC, observed_at is in integral
 seconds; hr (20..250) and bp (40..300) are nullable integers with at least
 one present. BP is the existing scalar measurement, not a systolic/
-diastolic pair. The test fixture is a trusted event issuer; public device
-admission, signed wire extension and vital producer outbox remain pending.
+diastolic pair. POST /api/v2/device/vitals accepts the independent Vital
+Protobuf message signed with the domain yihe-next-vital-wire-v1 + NUL.
+It uses the same enrolled key, generation and nonce transaction as
+the step endpoint, but writes rust_vital_outbox with a separate keyed
+fingerprint and encrypted event. The --dispatch-vital-one-test and
+--dispatch-vital-worker-test modes target YIHE_vitals only. Each device
+has 64 pending vital events. A 202 response is SQL admission only.
+Public production routing, provisioning and firmware remain pending.
 
 Under resident/device/generation locks the native consumer validates
 binding time, current epoch and generation, and checks a separate keyed
@@ -201,26 +207,39 @@ row, checks revision continuity, and incrementally replays ordered heart
 rate events into RollingHeartRate. Historical insertions or BP-only
 revision advances rebuild the bounded projection; after rebind old
 receipts are not included. The receipt revision is specific to this
-experiment, not the production health_sample clock. This is a bounded
-on-demand replay, not a continuously maintained cache; the window is
-the selected receipt set rather than the complete historical time series.
+experiment, not the production health_sample clock. The window is the
+selected receipt set rather than the complete historical time series.
+--vital-stats-worker-test DEVICE_ID maintains this bounded ring for one
+device, using an indexed revision probe and idle backoff (100ms to 2s).
+Only changed revisions acquire locks and load new committed receipts.
+Ordered samples append and expire the oldest sample at capacity;
+historical order, equal-time eviction and BP-only events may rebuild.
+Identity changes reset the cache; errors invalidate it. The worker
+emits diagnostic JSON, not clinical decisions or a production read
+API. Its receipt history is append-only; production corrections and
+health_sample integration are not supported.
 
-### SOS contract proposal (not implemented)
+### Independent SOS consumer experiment
 
-Use a separate SOS deployment/stream and authorization domain
-yihe-next-sos-event-v1, never the step or vital queue. An authenticated
-producer must seal version, device/resident identity, binding epoch,
-authorization generation, request ID and receive timestamp; no device
-secret or arbitrary notification destination belongs in the event.
-Preserve the current Go deviceworkflow.SOS transaction semantics,
-including resident/device fencing, FindSOSRetry's device/request
-identity, resident and kind conflict checks, durable incident ID,
-incident creation and notify.EnqueueIncident in one commit. A broker
-admission ACK cannot represent an incident commit or notification
-delivery. Confirmed consumer ACK must follow the durable incident/
-outbox transaction, including the prior-receipt case. Real SOS priority,
-retry, encrypted evidence, notification delivery and failure testing are
-required before migration. The existing Go SOS path remains unchanged.
+--consume-sos-one-test and --consume-sos-worker-test use the existing
+YIHE_sos stream and its independent broker/pool process. The trusted
+producer fixture seals version, device/resident identity, binding epoch,
+authorization generation, request ID and receive timestamp under
+yihe-next-sos-event-v1. This subset accepts no coordinates. The consumer
+checks the live binding/generation and keyed receipt/rejection; it also
+consults the actual Go care_incident device/request retry identity.
+The transaction writes alarm_precess, location alert snapshot, heartbeat,
+care_incident, care_incident_event, care_notification_outbox and
+message_outbox plus rust_sos_receipt. Family phone authentication and
+recipient encryption/index use the original Go domains. A valid
+recipient gets a pending SMS row and an available in-app message.
+No notification sender is started. A broker ACK is not delivery or
+human acceptance; the consumer acknowledges only after SQL commit.
+--consume-sos-crash-test exits after COMMIT before broker ACK.
+Go retry lookup and protected notification readers validate the actual
+native records. Device-facing signed SOS admission, location reporting,
+full delivery/priority benchmarking, production schema and routing
+remain pending; the current production Go SOS path is unchanged.
 
 ## Native analytics core
 

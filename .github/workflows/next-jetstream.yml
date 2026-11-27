@@ -118,7 +118,7 @@ jobs:
         env:
           YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
           YIHE_NEXT_WATCH_BINARY: ${{ github.workspace }}/watch-sim/target/debug/watch-sim-next
-        run: go test -mod=readonly -race -count=1 -v -timeout 240s ./...
+        run: go test -mod=readonly -race -count=1 -v -timeout 360s ./...
       - name: Compare actual Go handlers with Rust gateway
         working-directory: backend
         env:

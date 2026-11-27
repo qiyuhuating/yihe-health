@@ -251,38 +251,16 @@ async fn enqueue_binary(State(s): State<Admission>, request: Request) -> Result<
             yihe_device_wire::Error::Signature => Failure::Signature,
             yihe_device_wire::Error::Invalid => Failure::Invalid,
         })?;
-    // Authenticate before row-lock acquisition, then recheck the same
-    // enrolled public key and its generation under resident/device locks.
-    let key:Vec<u8>=sqlx::query_scalar("SELECT k.public_key FROM rust_device_key k JOIN device d ON d.device_id=k.device_id JOIN broker_device_generation g ON g.device_id=k.device_id AND g.generation=k.generation WHERE d.device_no=?")
-        .bind(&step.device_no).fetch_optional(&s.pool).await?.ok_or(Failure::Credentials)?;
-    yihe_device_wire::verify(&envelope, &key).map_err(|_| Failure::Signature)?;
-    let (mut tx, id, owner) =
-        native::lock_device(&s.pool, &step.device_no, step.binding_epoch, None).await?;
-    let generation: i64 = sqlx::query_scalar(
-        "SELECT generation FROM broker_device_generation WHERE device_id=? FOR UPDATE",
+    let (tx, id, owner, _) = authorize_wire(
+        &s.pool,
+        &step.device_no,
+        step.binding_epoch,
+        &step.nonce,
+        step.signed_at,
+        |key| yihe_device_wire::verify(&envelope, key),
     )
-    .bind(id)
-    .fetch_one(&mut *tx)
     .await?;
-    let locked_key: Vec<u8> = sqlx::query_scalar(
-        "SELECT public_key FROM rust_device_key WHERE device_id=? AND generation=? FOR UPDATE",
-    )
-    .bind(id)
-    .bind(generation)
-    .fetch_optional(&mut *tx)
-    .await?
-    .ok_or(Failure::Credentials)?;
-    yihe_device_wire::verify(&envelope, &locked_key).map_err(|_| Failure::Signature)?;
-    let expires =
-        DateTime::from_timestamp(step.signed_at.checked_add(300).ok_or(Failure::Invalid)?, 0)
-            .ok_or(Failure::Invalid)?
-            .naive_utc();
     let observed = DateTime::from_timestamp(step.observed_at, 0).ok_or(Failure::Invalid)?;
-    let mut hash = Sha256::new();
-    hash.update(step.device_no.as_bytes());
-    hash.update([0]);
-    hash.update(step.nonce.as_bytes());
-    native::reserve_nonce(&mut tx, id, &hash.finalize().into(), expires).await?;
     admit_locked(
         tx,
         id,
@@ -304,12 +282,142 @@ async fn enqueue_binary(State(s): State<Admission>, request: Request) -> Result<
         .into_response())
 }
 
+async fn authorize_wire<'a>(
+    pool: &'a MySqlPool,
+    number: &str,
+    epoch: i64,
+    nonce: &str,
+    signed_at: i64,
+    verify: impl Fn(&[u8]) -> Result<(), yihe_device_wire::Error>,
+) -> Result<(Transaction<'a, MySql>, i64, i64, i64), Failure> {
+    // Authenticate before row-lock acquisition, then recheck the same
+    // enrolled public key and its generation under resident/device locks.
+    let key:Vec<u8>=sqlx::query_scalar("SELECT k.public_key FROM rust_device_key k JOIN device d ON d.device_id=k.device_id JOIN broker_device_generation g ON g.device_id=k.device_id AND g.generation=k.generation WHERE d.device_no=?")
+        .bind(number).fetch_optional(pool).await?.ok_or(Failure::Credentials)?;
+    verify(&key).map_err(|_| Failure::Signature)?;
+    let (mut tx, id, owner) = native::lock_device(pool, number, epoch, None).await?;
+    let generation: i64 = sqlx::query_scalar(
+        "SELECT generation FROM broker_device_generation WHERE device_id=? FOR UPDATE",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    let locked_key: Vec<u8> = sqlx::query_scalar(
+        "SELECT public_key FROM rust_device_key WHERE device_id=? AND generation=? FOR UPDATE",
+    )
+    .bind(id)
+    .bind(generation)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(Failure::Credentials)?;
+    verify(&locked_key).map_err(|_| Failure::Signature)?;
+    let expires = DateTime::from_timestamp(signed_at.checked_add(300).ok_or(Failure::Invalid)?, 0)
+        .ok_or(Failure::Invalid)?
+        .naive_utc();
+    let mut hash = Sha256::new();
+    hash.update(number.as_bytes());
+    hash.update([0]);
+    hash.update(nonce.as_bytes());
+    native::reserve_nonce(&mut tx, id, &hash.finalize().into(), expires).await?;
+    Ok((tx, id, owner, generation))
+}
+
+async fn enqueue_vital(State(s): State<Admission>, request: Request) -> Result<Response, Failure> {
+    let _permit = s.gate.try_acquire().map_err(|_| Failure::Busy)?;
+    let (parts, body) = request.into_parts();
+    if parts
+        .headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        != Some(yihe_device_wire::CONTENT_TYPE)
+    {
+        return Err(Failure::Invalid);
+    }
+    let raw = tokio::time::timeout(
+        Duration::from_secs(10),
+        to_bytes(body, yihe_device_wire::MAX_PACKET),
+    )
+    .await
+    .map_err(|_| Failure::Invalid)?
+    .map_err(|_| Failure::Invalid)?;
+    let now = Utc::now();
+    let (v, envelope) =
+        yihe_device_wire::decode_vital(&raw, now.timestamp()).map_err(|e| match e {
+            yihe_device_wire::Error::Invalid => Failure::Invalid,
+            yihe_device_wire::Error::Signature => Failure::Signature,
+        })?;
+    let (mut tx, id, owner, generation) = authorize_wire(
+        &s.pool,
+        &v.device_no,
+        v.binding_epoch,
+        &v.nonce,
+        v.signed_at,
+        |key| yihe_device_wire::verify_vital(&envelope, key),
+    )
+    .await?;
+    let observed = DateTime::from_timestamp(v.observed_at, 0).ok_or(Failure::Invalid)?;
+    if observed.timestamp_nanos_opt().is_none() {
+        return Err(Failure::Invalid);
+    }
+    let bound: Option<chrono::NaiveDateTime> =
+        sqlx::query_scalar("SELECT bind_time FROM device WHERE device_id=?")
+            .bind(id)
+            .fetch_one(&mut *tx)
+            .await?;
+    if bound.is_some_and(|t| observed.naive_utc() < t) {
+        return Err(Failure::Invalid);
+    }
+    let observed = observed.to_rfc3339_opts(SecondsFormat::Secs, true);
+    let semantic = json!([
+        id,
+        owner,
+        v.binding_epoch,
+        generation,
+        v.request_id,
+        observed,
+        v.hr,
+        v.bp
+    ]);
+    let fingerprint = s.keys.digest_scoped(
+        b"yihe-next-vital-admission-v1",
+        &serde_json::to_vec(&semantic).map_err(|_| Failure::Database)?,
+    );
+    if let Some(prior)=sqlx::query_scalar::<_,Vec<u8>>("SELECT fingerprint FROM rust_vital_outbox WHERE device_id=? AND binding_epoch=? AND request_id=?")
+        .bind(id).bind(v.binding_epoch).bind(v.request_id.as_bytes()).fetch_optional(&mut *tx).await?{
+        if prior!=fingerprint.as_bytes(){return Err(Failure::Conflict)}
+        tx.commit().await?;
+        return Ok((axum::http::StatusCode::ACCEPTED,Json(json!({"returnCode":"1111","state":"admitted"}))).into_response())
+    }
+    let pending: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM rust_vital_outbox WHERE device_id=? AND published_at IS NULL",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if pending >= 64 {
+        return Err(Failure::Busy);
+    }
+    let event = json!({"version":1,"device_id":id,"resident_id":owner,"binding_epoch":v.binding_epoch,"auth_generation":generation,"request_id":v.request_id,"received_at":now.to_rfc3339_opts(SecondsFormat::Micros,true),"observed_at":observed,"hr":v.hr,"bp":v.bp});
+    let encoded = s.keys.seal_scoped(
+        &serde_json::to_vec(&event).map_err(|_| Failure::Database)?,
+        b"yihe-next-vitals-event-v1",
+    )?;
+    sqlx::query("INSERT INTO rust_vital_outbox(device_id,binding_epoch,request_id,fingerprint,encoded) VALUES(?,?,?,?,?)").bind(id).bind(v.binding_epoch).bind(v.request_id.as_bytes()).bind(fingerprint.as_bytes()).bind(encoded).execute(&mut *tx).await?;
+    tx.commit().await?;
+    Ok((
+        axum::http::StatusCode::ACCEPTED,
+        Json(json!({"returnCode":"1111","state":"admitted"})),
+    )
+        .into_response())
+}
+
 pub async fn router() -> Result<Router, Box<dyn std::error::Error>> {
     let pool = native::test_pool().await?;
     let keys = Arc::new(Keys::load()?);
     Ok(Router::new()
         .route("/api/v1/device/report", post(enqueue))
         .route(yihe_device_wire::PATH, post(enqueue_binary))
+        .route(yihe_device_wire::VITAL_PATH, post(enqueue_vital))
         .with_state(Admission {
             pool,
             keys,
@@ -323,10 +431,11 @@ pub async fn router() -> Result<Router, Box<dyn std::error::Error>> {
 pub async fn dispatch_one(
     address: SocketAddr,
     exit_after_ack: bool,
+    vital: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     let pool = native::test_pool().await?;
     let js = connect(address).await?;
-    dispatch_pending(&pool, &js, exit_after_ack).await
+    dispatch_pending(&pool, &js, exit_after_ack, vital).await
 }
 
 async fn connect(
@@ -345,7 +454,10 @@ async fn connect(
 
 /// Reuse SQL and NATS connections. Limit idle polling and retry delays; no
 /// SQL transaction spans network I/O. Stop between attempts on Ctrl-C.
-pub async fn dispatch_worker(address: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn dispatch_worker(
+    address: SocketAddr,
+    vital: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() || address.port() == 0 {
         return Err("test broker must be loopback".into());
     }
@@ -360,7 +472,7 @@ pub async fn dispatch_worker(address: SocketAddr) -> Result<(), Box<dyn std::err
             if js.is_none() {
                 js = Some(connect(address).await?);
             }
-            dispatch_pending(&pool, js.as_ref().expect("connected"), false).await
+            dispatch_pending(&pool, js.as_ref().expect("connected"), false, vital).await
         }
         .await;
         let delay = match result {
@@ -397,13 +509,24 @@ async fn dispatch_pending(
     pool: &MySqlPool,
     js: &async_nats::jetstream::Context,
     exit_after_ack: bool,
+    vital: bool,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let Some(row) = sqlx::query(
-        "SELECT id,encoded FROM rust_step_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
-    )
-    .fetch_optional(pool)
-    .await?
-    else {
+    let (select, update, stream, subject) = if vital {
+        (
+            "SELECT id,encoded FROM rust_vital_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
+            "UPDATE rust_vital_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?",
+            "YIHE_vitals",
+            "yihe.next.vitals",
+        )
+    } else {
+        (
+            "SELECT id,encoded FROM rust_step_outbox WHERE published_at IS NULL ORDER BY id LIMIT 1",
+            "UPDATE rust_step_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?",
+            STREAM,
+            SUBJECT,
+        )
+    };
+    let Some(row) = sqlx::query(select).fetch_optional(pool).await? else {
         return Ok(false);
     };
     let id: i64 = row.try_get("id")?;
@@ -414,21 +537,24 @@ async fn dispatch_pending(
     let digest = hex::encode(Sha256::digest(&encoded));
     let mut headers = async_nats::HeaderMap::new();
     headers.insert("Nats-Msg-Id", digest.as_str());
-    headers.insert("Nats-Expected-Stream", STREAM);
+    headers.insert("Nats-Expected-Stream", stream);
     let ack = tokio::time::timeout(Duration::from_secs(5), async {
-        js.publish_with_headers(SUBJECT, headers, encoded.clone().into())
+        js.publish_with_headers(subject, headers, encoded.clone().into())
             .await?
             .await
     })
     .await??;
-    if ack.stream != STREAM {
+    if ack.stream != stream {
         return Err("unexpected stream acknowledgement".into());
     }
     if exit_after_ack {
         // Test-only process termination after the real PubAck and before SQL.
         std::process::exit(77);
     }
-    sqlx::query("UPDATE rust_step_outbox SET encoded=NULL,published_at=UTC_TIMESTAMP(6) WHERE id=? AND encoded=?")
-        .bind(id).bind(encoded).execute(pool).await?;
+    sqlx::query(update)
+        .bind(id)
+        .bind(encoded)
+        .execute(pool)
+        .await?;
     Ok(true)
 }

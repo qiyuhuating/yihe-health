@@ -3,6 +3,7 @@ pub mod analytics;
 pub mod consumer;
 pub mod native;
 pub mod outbox;
+pub mod sos;
 #[cfg(test)]
 mod tests;
 pub mod vitals;
