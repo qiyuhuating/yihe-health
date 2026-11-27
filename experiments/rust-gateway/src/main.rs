@@ -28,11 +28,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "--rule-scheduler-test"
                     | "--rule-scheduler-worker-test"
                     | "--rule-scheduler-crash-test"
+                    | "--rule-scheduler-fair-test"
             ) =>
         {
             yihe_next_gateway::rule_scheduler::run(
                 mode == "--rule-scheduler-worker-test",
                 mode == "--rule-scheduler-crash-test",
+                mode == "--rule-scheduler-fair-test",
             )
             .await
         }

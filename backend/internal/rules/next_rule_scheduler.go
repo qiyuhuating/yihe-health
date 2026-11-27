@@ -18,6 +18,9 @@ import (
 //go:embed native_rule_fence.sql
 var nativeRuleFenceSQL string
 
+//go:embed native_rule_health_delta.sql
+var nativeRuleHealthDeltaSQL string
+
 // NativeCollectRequest is an internal pipe message from the Rust scheduler.
 // No writer locks or SQL connection are held while the collector responds.
 type NativeCollectRequest struct {
@@ -30,6 +33,7 @@ type NativeCollectRequest struct {
 	PolicyRevision *int64 `json:"policy_revision"`
 	Challenge      string `json:"challenge"`
 	Fence          string `json:"fence"`
+	DueUS          int64  `json:"due_us"`
 }
 
 type nativeObservation struct {
@@ -71,6 +75,7 @@ type NativeCollectReply struct {
 	Challenge      string       `json:"challenge"`
 	Fallback       bool         `json:"fallback"`
 	Stale          bool         `json:"stale"`
+	Recomputed     bool         `json:"recomputed"`
 	Fence          string       `json:"fence"`
 	OwnerRevision  *int64       `json:"owner_revision"`
 	PolicyRevision *int64       `json:"policy_revision"`
@@ -85,6 +90,9 @@ type NativeCollectReply struct {
 // The collector validates its own snapshot fingerprint; Rust rechecks it
 // under the write fences before committing. A stale result is retryable.
 func CollectNativeRuleInput(ctx context.Context, database *db.Database, box *securestore.Box, req NativeCollectRequest) (NativeCollectReply, error) {
+	if req.State == "recompute" {
+		return recomputeNativeRule(ctx, database, box, req)
+	}
 	reply := NativeCollectReply{Challenge: req.Challenge}
 	if req.State != "collect" || req.Device <= 0 || req.Owner <= 0 || req.Epoch <= 0 || len(req.Challenge) != 32 || len(req.Fence) != 64 {
 		return reply, errors.New("invalid native collect request")
@@ -114,9 +122,24 @@ func CollectNativeRuleInput(ctx context.Context, database *db.Database, box *sec
 		return reply, errors.New("native collect binding changed")
 	}
 	var revision int64
-	if err = tx.QueryRowContext(ctx, "SELECT revision FROM health_owner_clock WHERE old_id=?", req.Owner).Scan(&revision); err != nil || revision != req.OwnerRevision {
-		return reply, fmt.Errorf("native owner revision mismatch: %v", err)
+	if err = tx.QueryRowContext(ctx, "SELECT revision FROM health_owner_clock WHERE old_id=?", req.Owner).Scan(&revision); err != nil {
+		return reply, fmt.Errorf("native owner revision unavailable: %w", err)
 	}
+	if revision != req.OwnerRevision {
+		var safe bool
+		if revision > req.OwnerRevision {
+			if err = tx.QueryRowContext(ctx, nativeRuleHealthDeltaSQL, revision, req.Device, req.Owner, req.OwnerRevision, revision).Scan(&safe); err != nil {
+				return reply, err
+			}
+		}
+		if !safe {
+			reply.Stale = true
+			return reply, tx.Commit()
+		}
+	}
+	// Return the original validated revision. Rust checks the entire delta
+	// from that revision again while holding the owner clock at commit.
+	revision = req.OwnerRevision
 	var policyRevision *int64
 	err = tx.QueryRowContext(ctx, "SELECT revision FROM rule_policy WHERE device_id=?", req.Device).Scan(&policyRevision)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {

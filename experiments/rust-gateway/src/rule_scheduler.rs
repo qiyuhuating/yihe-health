@@ -17,12 +17,15 @@ use yihe_core::rules;
 type Error = Box<dyn std::error::Error>;
 type Input = Lines<BufReader<Stdin>>;
 const FENCE_SQL: &str = include_str!("../../../backend/internal/rules/native_rule_fence.sql");
+const HEALTH_DELTA_SQL: &str =
+    include_str!("../../../backend/internal/rules/native_rule_health_delta.sql");
 
 #[derive(Deserialize)]
 struct Reply {
     challenge: String,
     fallback: bool,
     stale: bool,
+    recomputed: bool,
     fence: String,
     owner_revision: Option<i64>,
     policy_revision: Option<i64>,
@@ -118,6 +121,7 @@ fn emit(out: &mut impl Write, v: &Value) -> Result<(), Error> {
 enum Attempt {
     Committed,
     Deferred,
+    Conflict,
     Fallback,
 }
 async fn process_task(
@@ -174,7 +178,10 @@ async fn process_task(
     if reply.challenge != challenge {
         return Err("collector challenge mismatch".into());
     }
-    if reply.stale || reply.fence != fence {
+    if reply.stale {
+        return Ok(Attempt::Conflict);
+    }
+    if reply.fence != fence || reply.recomputed {
         return Ok(Attempt::Deferred);
     }
     if reply.fallback {
@@ -271,7 +278,20 @@ async fn process_task(
     // No IPC, no decrypt/window collection under the write fences.
     // Every source read by the collector must still match its RR snapshot.
     if current_revision != revision {
-        return Ok(Attempt::Deferred);
+        if current_revision < revision {
+            return Ok(Attempt::Deferred);
+        }
+        let safe: i64 = sqlx::query_scalar(HEALTH_DELTA_SQL)
+            .bind(current_revision)
+            .bind(device)
+            .bind(owner)
+            .bind(revision)
+            .bind(current_revision)
+            .fetch_one(&mut *tx)
+            .await?;
+        if safe != 1 {
+            return Ok(Attempt::Conflict);
+        }
     }
     let current_fence: String = sqlx::query_scalar(FENCE_SQL)
         .bind(lower)
@@ -279,7 +299,7 @@ async fn process_task(
         .fetch_one(&mut *tx)
         .await?;
     if current_fence != fence {
-        return Ok(Attempt::Deferred);
+        return Ok(Attempt::Conflict);
     }
     let digest = keys.digest_scoped(b"yihe-next-scheduled-rule-v1", raw.as_bytes());
     b.request_id = format!("due-{}-{}", due.and_utc().timestamp_micros(), &digest[..32]);
@@ -301,6 +321,33 @@ async fn process_task(
     Ok(Attempt::Committed)
 }
 
+// Durable task age, not an unbounded in-memory retry map, determines
+// escalation. No Rust transaction or connection is held for the handoff.
+async fn recompute(
+    device: i64,
+    due: NaiveDateTime,
+    now: DateTime<Utc>,
+    input: &mut Input,
+    out: &mut impl Write,
+) -> Result<bool, Error> {
+    let mut nonce = [0u8; 16];
+    getrandom::fill(&mut nonce).map_err(|_| "challenge generation failed")?;
+    let challenge = hex::encode(nonce);
+    emit(
+        out,
+        &json!({"state":"recompute","device":device,"now_ns":now.timestamp_nanos_opt().ok_or("invalid evaluation time")?,"due_us":due.and_utc().timestamp_micros(),"challenge":challenge}),
+    )?;
+    let raw = match tokio::time::timeout(Duration::from_secs(10), input.next_line()).await {
+        Ok(Ok(Some(raw))) if raw.len() <= 64 * 1024 => raw,
+        _ => return Err("collector transport failed".into()),
+    };
+    let reply: Reply = serde_json::from_str(&raw)?;
+    if reply.challenge != challenge {
+        return Err("collector challenge mismatch".into());
+    }
+    Ok(reply.recomputed && !reply.stale)
+}
+
 async fn tick(
     pool: &MySqlPool,
     keys: &Keys,
@@ -308,6 +355,7 @@ async fn tick(
     input: &mut Input,
     out: &mut impl Write,
     crash_after_commit: bool,
+    fair: bool,
 ) -> Result<bool, Error> {
     let mut cursor: Option<(NaiveDateTime, i64)> = None;
     let (mut committed, mut deferred, mut fallback) = (0, 0, 0);
@@ -331,8 +379,17 @@ async fn tick(
                     }
                     committed += 1;
                 }
+                Ok(Attempt::Conflict)
+                    if fair && now.naive_utc() - due >= chrono::Duration::seconds(2) =>
+                {
+                    if recompute(device, due, now, input, out).await? {
+                        committed += 1
+                    } else {
+                        deferred += 1
+                    }
+                }
                 Ok(Attempt::Fallback) => fallback += 1,
-                Ok(Attempt::Deferred) => deferred += 1,
+                Ok(Attempt::Deferred | Attempt::Conflict) => deferred += 1,
                 Err(e) if e.to_string() == "collector transport failed" => return Err(e),
                 Err(_) => deferred += 1,
             }
@@ -366,7 +423,7 @@ async fn worker(
         let now = Utc::now();
         let wait = match head {
             Some(due) if due <= now.naive_utc() => {
-                if !tick(pool, keys, now, input, out, false).await? {
+                if !tick(pool, keys, now, input, out, false, true).await? {
                     idle = minimum;
                     continue;
                 }
@@ -394,7 +451,7 @@ async fn worker(
         }
     }
 }
-pub async fn run(continuous: bool, crash_after_commit: bool) -> Result<(), Error> {
+pub async fn run(continuous: bool, crash_after_commit: bool, fair: bool) -> Result<(), Error> {
     let pool = native::test_pool_with_limit(4).await?;
     let keys = Keys::load()?;
     let mut input = BufReader::new(tokio::io::stdin()).lines();
@@ -416,6 +473,7 @@ pub async fn run(continuous: bool, crash_after_commit: bool) -> Result<(), Error
             &mut input,
             &mut out,
             crash_after_commit,
+            fair,
         )
         .await?;
     }

@@ -325,13 +325,21 @@ The final short transaction acquires the resident, current device,
 policy/watch thresholds, exact eligible due task and existing owner clock
 with FOR UPDATE NOWAIT. The owner-first writer's clock never blocks while
 the scheduler owns the device. It checks binding, owner revision and the
-same fingerprint again before writing. In addition to health/policy
-revisions, the fingerprint includes heartbeat, battery, legacy latest
+same fingerprint again before writing. The fingerprint includes policy
+revision and payload, heartbeat, battery, legacy latest
 measurement identity/cipher digest, baseline replay keys, active SOS/fence
 presence and task state; this covers changes even when an already-overdue
 due_at stays unchanged. The protocol relies on existing ordinary writer
 locks and revision contracts, not arbitrary out-of-band maintenance.
 A missing clock, mismatched snapshot or busy row leaves the task durable.
+When the owner revision advances, Go collection and the Rust commit
+each verify the bounded native_rule_health_delta.sql proof. Up to 256
+journal entries may pass if every changed sample is unrelated to the
+device's heart-rate, systolic-pressure or steps rules (including historical
+epochs). The 257th entry, a missing terminal revision or missing projection
+row rejects the proof. Sample identities are immutable and tombstones
+retain their projection rows; this relies on normal append-only journal
+and writer contracts, not arbitrary history deletion or maintenance.
 The native decisions are cross-checked with Go evidence. Rule state,
 incident, protected evidence,
 notification outboxes, test receipt and exact due-task advancement commit
@@ -354,9 +362,29 @@ write fences remain available, SOS commits its incident/outbox, and the
 now-stale rule snapshot cannot commit. In one local MySQL 8.4.13 durable
 test the SOS transaction took 6.86 ms. This is a controlled single
 observation, not a full HTTP or high-concurrency P99 benchmark.
-Sustained conflicting updates may defer optimistic attempts; mixed-load
-starvation, lock hold durations, CPU/RSS and retry budgets still need
-measurement.
+The continuous worker and --rule-scheduler-fair-test allow one bounded
+Go recompute per tick for an actual optimistic conflict on a task at
+least two seconds overdue. Task age survives restarts; no in-memory
+retry map is needed. The trusted local Go adapter acquires all known
+fences with NOWAIT, reads current inputs, evaluates existing rules,
+and commits the actual incident/outbox/state, experimental receipt and
+exact task advancement together. There is no IPC while that Go
+transaction owns locks. The context budget is 100 ms; a busy row or
+deadline leaves the task retryable. This is not a hard server-side
+lock-release bound. A later-arriving SOS may still wait for the short
+transaction; no preemption or global SOS priority is claimed. Permanent
+contention or an expensive rule may still prevent progress. The final
+Release integration fixture on durable MySQL 8.4.13 (1/1) committed
+16/16 consecutive recomputes, each after a new committed heart-rate
+correction and a device heartbeat update invalidated the optimistic
+snapshot. The initial attempt with a held resident lock yielded. The
+16 successful local adapter round trips averaged 13.38 ms, with
+16.32 ms maximum; these include receipt and task advancement, not
+an independent lock-hold measurement. A separate SOS transaction
+during deliberately withheld 500 ms collector IPC took 7.83 ms.
+This deterministic interleaving is not a concurrent saturation
+benchmark. Mixed-load starvation and P99, lock hold duration and
+CPU/RSS remain to be measured.
 
 ### Rule transaction workload
 

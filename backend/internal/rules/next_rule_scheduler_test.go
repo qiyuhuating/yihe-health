@@ -282,9 +282,19 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	tick(now, nil, deferOne)
 	empty()
 	execSQL("DROP TRIGGER rust_fail_schedule")
+	// Real irrelevant health commits occur on both sides of the collector.
+	// They advance the owner revision without changing a rule dependency.
+	oxygen := sample("unrelated-oxygen", "oxygen_saturation", "%", 97, now.Add(-time.Second))
+	beforeCollect = func() { save([]health.Sample{oxygen}) }
 	// All these rows must be acquirable while the Rust process waits for
 	// collector IPC. Actual current data is revalidated after the reply.
 	tick(now, func(r *NativeCollectReply) {
+		if r.Stale {
+			t.Fatal("unrelated health revision rejected before collection")
+		}
+		oxygen.Version = 2
+		oxygen.Value = health.Number(98)
+		save([]health.Sample{oxygen})
 		for _, q := range []string{"SELECT revision FROM health_owner_clock WHERE old_id=1 FOR UPDATE NOWAIT", "SELECT revision FROM rule_policy WHERE device_id=1 FOR UPDATE NOWAIT", "SELECT health_epoch FROM device WHERE device_id=1 FOR UPDATE NOWAIT", "SELECT epoch FROM rule_task WHERE device_id=1 FOR UPDATE NOWAIT"} {
 			tx, err := database.BeginTx(ctx, nil)
 			if err != nil {
@@ -535,5 +545,131 @@ func TestNextCoreRuleScheduler(t *testing.T) {
 	if err = worker.Wait(); err != nil {
 		t.Fatal(err)
 	}
+	// Exercise the actual fair scheduler under a relevant update on every
+	// optimistic attempt. Use the same due row and a fresh evaluation
+	// cutoff; the bounded local recompute must advance it without stale data.
+	p.Enabled = true
+	payload, err = json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	execSQL("UPDATE rule_policy SET revision=12,payload=? WHERE device_id=1", payload)
+	execSQL("UPDATE care_incident SET state='verified' WHERE kind='sos'")
+	fairNow := now.Add(30 * time.Second)
+	fairDue := fairNow.Add(-3 * time.Second)
+	execSQL("UPDATE device SET last_time=?,battery=5 WHERE device_id=1", fairNow.Add(-time.Minute))
+	execSQL("UPDATE rule_task SET due_at=? WHERE device_id=1", fairDue)
+	fair, fairIn, fairOut := startProcess("--rule-scheduler-fair-test")
+	readReq := func(want string) NativeCollectRequest {
+		t.Helper()
+		raw, err := fairOut.ReadBytes('\n')
+		if err != nil {
+			t.Fatal(err)
+		}
+		var req NativeCollectRequest
+		if err = json.Unmarshal(raw, &req); err != nil || req.State != want {
+			t.Fatalf("fair request %q want %s: %v", raw, want, err)
+		}
+		return req
+	}
+	replyTo := func(req NativeCollectRequest, modify func()) NativeCollectReply {
+		t.Helper()
+		reply, err := CollectNativeRuleInput(ctx, database, box, req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if modify != nil {
+			modify()
+		}
+		raw, err := json.Marshal(reply)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = fairIn.Write(append(raw, '\n')); err != nil {
+			t.Fatal(err)
+		}
+		return reply
+	}
+	receiptCount := count("SELECT COUNT(*) FROM rust_rule_receipt")
+	const rounds = 16
+	var recomputeTimes []time.Duration
+	for i := 0; i <= rounds; i++ {
+		if i > 1 {
+			// Use the last committed due time rather than injecting another
+			// manual task wakeup. All subsequent attempts stay conflicted.
+			var scheduled time.Time
+			if err = database.QueryRowContext(ctx, "SELECT due_at FROM rule_task WHERE device_id=1").Scan(&scheduled); err != nil {
+				t.Fatal(err)
+			}
+			fairNow = scheduled.Add(3 * time.Second)
+		}
+		if _, err = fmt.Fprintf(fairIn, "%d\n", fairNow.UnixNano()); err != nil {
+			t.Fatal(err)
+		}
+		req := readReq("collect")
+		replyTo(req, func() {
+			// A relevant correction invalidates every optimistic attempt.
+			heart.Version++
+			heart.Value = health.Number(float64(160 + i))
+			save([]health.Sample{heart})
+			execSQL("UPDATE device SET last_time=? WHERE device_id=1", fairNow.Add(-time.Minute))
+		})
+		req = readReq("recompute")
+		if i == 0 {
+			// Emulate an already active emergency writer. The recompute
+			// may not wait behind the shared resident row.
+			holder, err := database.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var id int64
+			if err = holder.QueryRowContext(ctx, "SELECT old_id FROM oldperson WHERE old_id=1 FOR UPDATE").Scan(&id); err != nil {
+				t.Fatal(err)
+			}
+			r := replyTo(req, nil)
+			_ = holder.Rollback()
+			if !r.Stale || r.Recomputed {
+				t.Fatal("recompute failed to yield to resident lock")
+			}
+		} else {
+			begin := time.Now()
+			r := replyTo(req, nil)
+			recomputeTimes = append(recomputeTimes, time.Since(begin))
+			if !r.Recomputed || r.Stale {
+				t.Fatal("bounded recompute did not advance task")
+			}
+		}
+		raw, err := fairOut.ReadBytes('\n')
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got outcome
+		want := outcome{State: "tick", Committed: 1}
+		if i == 0 {
+			want = outcome{State: "tick", Deferred: 1}
+		}
+		if err = json.Unmarshal(raw, &got); err != nil || got != want {
+			t.Fatalf("fair tick %+v want %+v: %v", got, want, err)
+		}
+	}
+	if count("SELECT COUNT(*) FROM rust_rule_receipt") != receiptCount+rounds || count("SELECT COUNT(*) FROM rule_task WHERE device_id=1 AND due_at>?", fairNow) != 1 {
+		t.Fatal("fair recompute did not atomically advance receipt/task")
+	}
+	if count("SELECT COUNT(*) FROM rule_state WHERE device_id=1 AND epoch=1 AND kind='heart_rate' AND active") != 1 {
+		t.Fatal("recompute did not use current heart rate")
+	}
+	if err = fairIn.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err = fair.Wait(); err != nil {
+		t.Fatal(err)
+	}
+	var maxDuration, totalDuration time.Duration
+	for _, v := range recomputeTimes {
+		maxDuration = max(maxDuration, v)
+		totalDuration += v
+	}
+	t.Logf("sustained deterministic conflict workload: %d/%d recomputes committed; mean=%v max=%v (includes local adapter reply); initial busy resident yielded", len(recomputeTimes), rounds, totalDuration/time.Duration(rounds), maxDuration)
+	t.Log("irrelevant health deltas accepted; relevant writes force recompute, busy resident yields, next bounded attempt advances durable task")
 	t.Log("actual protected samples drive seven native rules; revision/policy/epoch/challenge fences, NOWAIT clock contention, atomic task rollback, correction, disarm, Go fallback, post-commit crash and autonomous trigger wakeups passed")
 }
