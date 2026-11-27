@@ -62,7 +62,7 @@ services:
       default:
         ipv4_address: ${GATEWAY_IPV4:-172.30.73.10}
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.35.1
     profiles: [paging]
     command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
     volumes: ["./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro", "alertmanager:/alertmanager"]
@@ -70,7 +70,7 @@ services:
     expose: ["9093"]
     restart: unless-stopped
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.13.5
     volumes: ["./prometheus.yml:/etc/prometheus/prometheus.yml:ro", "./alerts.yml:/etc/prometheus/alerts.yml:ro", "prometheus:/prometheus"]
     secrets: [metrics_token]
     ports: ["127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"]

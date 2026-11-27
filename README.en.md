@@ -104,7 +104,7 @@ MySQL 8.4 is the **only production application database** for resident data, ses
 
 ## Development
 
-The active default branch is `main`. Building the Windows desktop requires **PowerShell 7, Node.js (`^20.19.0 || >=22.12.0`), Go 1.27.4, and Rust 1.100.0 or newer**, plus MSVC C++ Build Tools and the Windows SDK. See [Windows build setup](docs/BUILD.md).
+The active default branch is `main`. Building the Windows desktop requires **PowerShell 7, Node.js 26.x, Go 1.27.4, and Rust 1.100.0 or newer**, plus MSVC C++ Build Tools and the Windows SDK. See [Windows build setup](docs/BUILD.md).
 
 ```powershell
 git clone https://github.com/qiyuhuating/yihe-health.git

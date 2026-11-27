@@ -11,7 +11,8 @@ updates:
       time: "04:00"
       timezone: "Asia/Singapore"
     open-pull-requests-limit: 5
-    # Node 24 and TypeScript 6 remain the current compiler/runtime line.
+    # Node 26 is the runtime; retain TypeScript 6 and Node 24 API types
+    # until the Vue and type-aware lint toolchain supports the newer versions.
     # Vue Router 5 passed local typecheck, unit tests and production build.
     # Major upgrades still require explicit compatibility review.
     ignore:

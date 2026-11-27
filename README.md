@@ -106,7 +106,7 @@ MySQL 8.4 是**唯一生产业务数据库**，保存档案、会话、告警、
 
 ## 开发与构建
 
-当前主分支为 `main`。完整构建要求：**PowerShell 7、Node.js（`^20.19.0 || >=22.12.0`）、Go 1.27.4、Rust（最低 1.100.0）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
+当前主分支为 `main`。完整构建要求：**PowerShell 7、Node.js 26.x、Go 1.27.4、Rust（最低 1.100.0）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
 
 ```powershell
 git clone https://github.com/qiyuhuating/yihe-health.git
