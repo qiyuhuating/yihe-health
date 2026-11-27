@@ -14,6 +14,12 @@ Base your work on `main` and open pull requests against `main`.
 
 Merged head branches are deleted automatically when possible. Keep active PR branches until their changes are integrated or explicitly superseded; see [branch lifecycle](reliability/branch-lifecycle.md). Planned upgrades across Node.js, TypeScript or Vue Router major versions require explicit compatibility checks rather than unreviewed automatic major-version PRs.
 
+## Development shell / 开发 Shell
+
+Use Bash for Linux VPS hosts, WSL/Codex and Ubuntu CI jobs. Prefer a checkout in the WSL Linux filesystem; keep PowerShell 7 for native Windows build, installer, signing and Windows-specific SDK scripts. Run existing platform-specific scripts in their supported environment rather than translating them mechanically. Preserve exit codes, pipeline failures, evidence artifacts and all required CI gates.
+
+Linux VPS、WSL/Codex 及 Ubuntu CI 作业默认使用 Bash；WSL 优先在 Linux 文件系统中检出源码。Windows 原生构建、安装器、签名和 Windows 专属 SDK 脚本继续使用 PowerShell 7。保留各平台脚本原生实现、失败退出码、日志产物及必需 CI 门禁。
+
 ## Before changing code / 开始前准备
 
 1. Read the [architecture](ARCHITECTURE.md), the relevant module README, and the [UI requirements](UI_UX.md) or [release gates](reliability/release-governance.md) for the affected area.

@@ -123,6 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
+        shell: bash
         working-directory: YiheWatch
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -131,7 +132,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '24'
+          node-version: '26'
           cache: npm
           cache-dependency-path: YiheWatch/package-lock.json
       - name: Run portable protocol checks (not an ArkTS SDK build)
@@ -154,6 +155,9 @@ jobs:
   integration:
     name: Real backend and lost-ack recovery
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     services:
       mysql:
         image: mysql:8.4
@@ -172,7 +176,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '24'
+          node-version: '26'
           cache: npm
           cache-dependency-path: YiheWatch/package-lock.json
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5

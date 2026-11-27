@@ -85,9 +85,9 @@ The desktop starts a local Go child process and stops it when the window closes.
 
 For a local complete stack, install Docker Compose and Python 3, then run from the repository root:
 
-```powershell
-python scripts/start-platform.py
-python scripts/bootstrap-admin.py
+```bash
+python3 scripts/start-platform.py
+python3 scripts/bootstrap-admin.py
 ```
 
 The stack starts MySQL 8.4, the Go API, Nginx, and monitoring. By default, the workspace is `http://127.0.0.1:8080` and Prometheus is `http://127.0.0.1:9090`, both bound to loopback. Back up `deploy/secrets/`, `deploy/platform.env`, and the MySQL volume. Do not expose this local configuration directly to the public internet.
@@ -113,11 +113,18 @@ MySQL 8.4 is the **only production application database** for resident data, ses
 
 ## Development
 
-The active default branch is `main`. Building the Windows desktop requires **PowerShell 7, Node.js (`^20.19.0 || >=22.12.0`), Go 1.27.4, and Rust 1.100.0 or newer**, plus MSVC C++ Build Tools and the Windows SDK. See [Windows build setup](docs/BUILD.md).
+The active default branch is `main`. Use Bash on Linux VPS hosts and Windows WSL (including Codex). General development requires Node.js 26.x and Go 1.27.4; Rust modules require Rust 1.100.0 or newer. On WSL, keep the checkout in the Linux filesystem (for example, `~/projects`) rather than installing large dependency trees under `/mnt/c`.
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/qiyuhuating/yihe-health.git
+cd yihe-health
+```
+
+Native Windows Tauri/NSIS packaging still requires PowerShell 7, MSVC C++ Build Tools and the Windows SDK on Windows. See [build setup](docs/BUILD.md). Run from the root of a native Windows checkout:
 
 ```powershell
-git clone https://github.com/qiyuhuating/yihe-health.git
-Set-Location yihe-health
 ./desktop/validate-version.ps1
 ./desktop/build.ps1
 ```
@@ -126,18 +133,9 @@ Main directories: `frontend/` (Vue UI), `backend/` (Go API and MySQL migrations)
 
 Useful change-scoped checks:
 
-```powershell
-Push-Location backend
-go test -count=1 ./...
-go vet ./...
-Pop-Location
-
-Push-Location frontend
-npm ci
-npm run typecheck
-npm test
-npm run build
-Pop-Location
+```bash
+(cd backend && go test -count=1 ./... && go vet ./...)
+(cd frontend && npm ci && npm run typecheck && npm test && npm run build)
 ```
 
 Database integration and race tests need a **disposable test database** configured through `TEST_MYSQL_DSN`; some tests skip without it. Native HarmonyOS builds, real watches, SMS gateways, production migrations, and long-running availability require independent verification. See the [testing guide](docs/TESTING.md).

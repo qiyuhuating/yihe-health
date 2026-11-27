@@ -2,7 +2,7 @@
 name = "yihe"
 version = "2.1.0"
 edition = "2024"
-rust-version = "1.99.1"
+rust-version = "1.100.0"
 description = "颐和 · Tauri 照护桌面软件"
 license = "MIT"
 

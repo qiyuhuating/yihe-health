@@ -18,6 +18,9 @@ jobs:
   change-scope:
     name: Security change scope
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 5
     outputs:
       codeql_go: ${{ steps.classify.outputs.codeql_go }}
@@ -41,6 +44,9 @@ jobs:
     if: ${{ needs.change-scope.outputs.codeql_go == 'true' || needs.change-scope.outputs.codeql_js == 'true' }}
     name: CodeQL / ${{ matrix.language }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 25
     permissions:
       contents: read
@@ -72,7 +78,7 @@ jobs:
           go-version: '1.27.4'
           cache-dependency-path: backend/go.sum
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066
+        uses: github/codeql-action/init@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
@@ -82,7 +88,7 @@ jobs:
         working-directory: backend
         run: go build ./...
       - name: Analyze
-        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066
+        uses: github/codeql-action/analyze@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea
         with:
           category: "/language:${{ matrix.language }}"
           output: ${{ runner.temp }}}/codeql-sarif
@@ -102,6 +108,9 @@ jobs:
     needs: [change-scope, codeql]
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 5
     steps:
       - name: Enforce selected CodeQL checks

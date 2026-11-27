@@ -28,7 +28,13 @@ $commit = (git -C $repo rev-parse HEAD).Trim()
 $sourceZip = Join-Path $release "Yihe-Source-$version.zip"
 git -C $repo archive --format=zip --prefix="Yihe-$version/" --output=$sourceZip $commit
 if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
-$notes = Get-Content -LiteralPath (Join-Path $repo "docs/releases/$version.md") -Raw
+$notesPath = Join-Path $repo "docs/releases/$version.md"
+$notes = if (Test-Path -LiteralPath $notesPath -PathType Leaf) {
+    Get-Content -LiteralPath $notesPath -Raw
+} else {
+    $channelMarker = if ($channel -eq 'stable') { '这是稳定渠道发布。' } else { '这是预览渠道发布。' }
+    "# 颐和 $version`n`n$channelMarker`n`n源码提交：$commit`n`n本版本未提供单独的发布说明。`n"
+}
 if ($channel -eq 'stable') {
     if ($notes.Contains('这是预览渠道发布。')) {
         $notes = $notes.Replace('这是预览渠道发布。', '这是稳定渠道发布。')
