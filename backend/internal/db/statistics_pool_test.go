@@ -2,9 +2,9 @@ package db_test
 
 import (
 	"context"
-	"yihe-care/internal/db/dbtest"
 	"testing"
 	"time"
+	"yihe-care/internal/db/dbtest"
 )
 
 func TestMySQLStatisticsPoolIsolation(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"yihe-care/internal/config"
 	"time"
+	"yihe-care/internal/config"
 )
 
 // Bulk is explicitly configured and never silently replaces Tencent's adapter.
