@@ -298,6 +298,48 @@ Production writers can use either device-first or experimental
 owner-clock-first locking; do not add a blocking clock lock after
 the device lock without an agreed migration strategy.
 
+### Fenced hybrid rule scheduler
+
+--rule-scheduler-test runs one due-index tick per local cutoff JSON line.
+--rule-scheduler-worker-test runs a persistent indexed-head worker, with
+100 ms to 2 s idle/failure backoff and a bounded two-second wakeup probe
+when idle. Neither mode scans the device inventory or claims tasks in
+memory. A fixed cutoff and (due_at, device_id) keyset pagination prevent
+failed early tasks from starving later candidates within a tick.
+
+For each task, Rust acquires the resident, current device, policy/watch
+threshold rows, exact eligible due task and existing owner clock with
+FOR UPDATE NOWAIT. In particular a clock held by an owner-first writer
+does not block while the native scheduler owns the device. A missing
+owner clock, a mismatched binding or a busy row leaves the task durable.
+The production-format native snapshot is read **inside** these fences.
+Rust sends a challenge-bound request over a trusted local pipe to the
+build-tagged Go CollectNativeRuleInput adapter, which uses one read-only
+REPEATABLE READ snapshot and the actual Go policy, baseline, legacy vital,
+activity-window and IANA-timezone algorithms. The reply is bounded by a
+ten-second read deadline; the collector must not acquire write locks.
+
+Rust checks the challenge, binding, clock revision, policy revision and
+numeric policy equality. Authenticated latest HR/BP and battery values
+from the locked SQL snapshot drive native candidates. Rust computes the
+candidates with the actual policy, cross-checks Go decisions/evidence,
+then reuses the batch writer. Rule state, incident, protected evidence,
+notification outboxes, test receipt and exact due-task advancement commit
+together; disabled policies disarm their due row. No notification sender
+runs. The task remains unchanged on rejection or rollback. Night
+SOS/fence upgrades and missing clocks are reported as fallback, not
+silently consumed; Go retains responsibility for those cases.
+
+--rule-scheduler-crash-test exits with 79 after the SQL commit but before
+reporting the tick. The tagged integration fixture exercises this mode and
+the worker protocol; it is not a production scheduler supervisor. All
+modes are restricted by the existing disposable-schema/loopback gate.
+Production deployment still requires a trusted adapter supervisor,
+explicit fallback handoff, full native window/timezone and night incident
+migration, bounded load and failure drills, and an agreed lock/writer
+ownership plan. Holding the fences across collector IPC may increase
+contention; do not infer mixed-load latency or throughput from correctness.
+
 ### Rule transaction workload
 
 The optional YIHE_NEXT_RULE_BENCH=1 tagged Go integration test

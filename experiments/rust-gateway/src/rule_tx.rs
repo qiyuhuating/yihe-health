@@ -10,20 +10,20 @@ type Error = Box<dyn std::error::Error>;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Evidence {
-    kind: String,
-    key: String,
-    data: serde_json::Map<String, Value>,
+pub(crate) struct Evidence {
+    pub(crate) kind: String,
+    pub(crate) key: String,
+    pub(crate) data: serde_json::Map<String, Value>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Batch {
-    device: i64,
-    owner: i64,
-    epoch: i64,
-    request_id: String,
-    input: Value,
-    evidence: Vec<Evidence>,
+pub(crate) struct Batch {
+    pub(crate) device: i64,
+    pub(crate) owner: i64,
+    pub(crate) epoch: i64,
+    pub(crate) request_id: String,
+    pub(crate) input: Value,
+    pub(crate) evidence: Vec<Evidence>,
 }
 
 struct PendingState<'a> {
@@ -231,11 +231,32 @@ async fn commit(pool: &MySqlPool, keys: &Keys, raw: &str) -> Result<(), Error> {
         if prior!=digest.as_bytes(){return Err("rule batch conflict".into())}
         tx.commit().await?;return Ok(())
     }
+    persist_batch(&mut tx, keys, &b, &candidates, now, &digest).await?;
+    tx.commit().await?;
+    Ok(())
+}
+pub(crate) async fn persist_batch(
+    tx: &mut Transaction<'_, MySql>,
+    keys: &Keys,
+    b: &Batch,
+    candidates: &yihe_core::rules::Candidates,
+    now: chrono::DateTime<chrono::Utc>,
+    digest: &str,
+) -> Result<(), Error> {
+    if candidates.as_slice().len() != b.evidence.len()
+        || candidates
+            .as_slice()
+            .iter()
+            .zip(&b.evidence)
+            .any(|(c, e)| c.kind.name() != e.kind || e.key.is_empty() || e.key.len() > 96)
+    {
+        return Err("candidate evidence mismatch".into());
+    }
     if !candidates.as_slice().is_empty() {
         // The resident/device fence serializes the whole epoch. Lock existing
         // states in primary-key order once; no per-candidate round trips.
         let prior=sqlx::query("SELECT kind,observation_key,streak,active,incident_id,CAST(evidence AS CHAR) AS evidence FROM rule_state WHERE device_id=? AND epoch=? ORDER BY kind FOR UPDATE")
-            .bind(b.device).bind(b.epoch).fetch_all(&mut *tx).await?;
+            .bind(b.device).bind(b.epoch).fetch_all(&mut **tx).await?;
         let canonical =
             crate::consumer::go_time(&now.to_rfc3339_opts(chrono::SecondsFormat::Nanos, true))
                 .map_err(|_| "invalid observation clock")?
@@ -249,14 +270,12 @@ async fn commit(pool: &MySqlPool, keys: &Keys, raw: &str) -> Result<(), Error> {
                     break;
                 }
             }
-            if let Some(update) =
-                prepare_state(&mut tx, keys, &b, *c, e, previous, &canonical).await?
-            {
+            if let Some(update) = prepare_state(tx, keys, b, *c, e, previous, &canonical).await? {
                 pending.push(update);
             }
         }
-        write_activations(&mut tx, keys, &b, &pending).await?;
-        write_states(&mut tx, &b, &pending, now).await?;
+        write_activations(tx, keys, b, &pending).await?;
+        write_states(tx, b, &pending, now).await?;
     }
     sqlx::query(
         "INSERT INTO rust_rule_receipt(device_id,epoch,request_id,payload_digest) VALUES(?,?,?,?)",
@@ -265,9 +284,8 @@ async fn commit(pool: &MySqlPool, keys: &Keys, raw: &str) -> Result<(), Error> {
     .bind(b.epoch)
     .bind(b.request_id.as_bytes())
     .bind(digest.as_bytes())
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
-    tx.commit().await?;
     Ok(())
 }
 pub async fn run() -> Result<(), Error> {

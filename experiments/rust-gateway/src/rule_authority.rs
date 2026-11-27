@@ -198,13 +198,24 @@ async fn snapshot(
     if device <= 0 {
         return Err("invalid device".into());
     }
-    let now = DateTime::<Utc>::from_timestamp_nanos(now_ns);
     let mut conn = pool.acquire().await?;
     sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
         .execute(&mut *conn)
         .await?;
     let mut tx = conn.begin().await?;
-    let row=sqlx::query("SELECT d.old_id,d.health_epoch,d.status,d.last_time,d.bind_time,CAST(d.battery AS DOUBLE) AS battery,c.revision,c.range_end,c.range_start,p.revision AS policy_revision,CAST(p.payload AS CHAR) AS policy,CAST(w.hrf AS DOUBLE) AS hrf,CAST(w.hrl AS DOUBLE) AS hrl,CAST(w.bpf AS DOUBLE) AS bpf,CAST(w.bpl AS DOUBLE) AS bpl,t.epoch AS task_epoch,t.eligible,t.due_at FROM device d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id LEFT JOIN rule_policy p ON p.device_id=d.device_id LEFT JOIN watch_info w ON w.device_id=d.device_id AND p.device_id IS NULL LEFT JOIN rule_task t ON t.device_id=d.device_id WHERE d.device_id=?").bind(device).fetch_one(&mut *tx).await?;
+    let result = read_snapshot(&mut tx, keys, device, now_ns).await?;
+    tx.commit().await?;
+    Ok(result)
+}
+
+pub(crate) async fn read_snapshot(
+    tx: &mut Transaction<'_, MySql>,
+    keys: &Keys,
+    device: i64,
+    now_ns: i64,
+) -> Result<Value, Error> {
+    let now = DateTime::<Utc>::from_timestamp_nanos(now_ns);
+    let row=sqlx::query("SELECT d.old_id,d.health_epoch,d.status,d.last_time,d.bind_time,CAST(d.battery AS DOUBLE) AS battery,c.revision,c.range_end,c.range_start,p.revision AS policy_revision,CAST(p.payload AS CHAR) AS policy,CAST(w.hrf AS DOUBLE) AS hrf,CAST(w.hrl AS DOUBLE) AS hrl,CAST(w.bpf AS DOUBLE) AS bpf,CAST(w.bpl AS DOUBLE) AS bpl,t.epoch AS task_epoch,t.eligible,t.due_at FROM device d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id LEFT JOIN rule_policy p ON p.device_id=d.device_id LEFT JOIN watch_info w ON w.device_id=d.device_id AND p.device_id IS NULL LEFT JOIN rule_task t ON t.device_id=d.device_id WHERE d.device_id=?").bind(device).fetch_one(&mut **tx).await?;
     let owner: Option<i64> = row.try_get("old_id")?;
     let owner = owner.ok_or("unbound device")?;
     let epoch: i64 = row.try_get("health_epoch")?;
@@ -239,7 +250,7 @@ async fn snapshot(
     };
     let policy_revision: Option<i64> = row.try_get("policy_revision")?;
     let observations = latest(
-        &mut tx,
+        tx,
         keys,
         &binding,
         now,
@@ -258,7 +269,6 @@ async fn snapshot(
     let result = json!({"owner":owner,"epoch":epoch,"ownerRevision":revision,"policyRevision":policy_revision,"policy":p,"observations":observations,
         "lastReportNs":last.or(bound).and_then(nanos),"battery":if last.is_some(){battery}else{None},
         "taskDue":task_epoch==Some(epoch)&&eligible==Some(true)&&due.is_some_and(|d|d<=now.naive_utc())});
-    tx.commit().await?;
     Ok(result)
 }
 /// Local disposable-schema diagnostics only. Never log decrypted data on error.

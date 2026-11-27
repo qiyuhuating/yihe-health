@@ -128,7 +128,7 @@ jobs:
         working-directory: backend
         env:
           YIHE_NEXT_GATEWAY_BINARY: ${{ github.workspace }}/experiments/rust-gateway/target/debug/yihe-next-gateway
-        run: go test -tags yihe_next_gateway -run '^TestNextCore(Differential|Transitions|RulePersistence|RuleAuthority)$' -count=1 -v -timeout 180s ./internal/rules
+        run: go test -tags yihe_next_gateway -run '^TestNextCore(Differential|Transitions|RulePersistence|RuleAuthority|RuleScheduler)$' -count=1 -v -timeout 180s ./internal/rules
       - name: Stop isolated Valkey
         if: always()
         run: docker rm -f yihe-next-valkey || true

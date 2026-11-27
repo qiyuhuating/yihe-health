@@ -4,6 +4,7 @@ pub mod consumer;
 pub mod native;
 pub mod outbox;
 pub mod rule_authority;
+pub mod rule_scheduler;
 pub mod rule_tx;
 pub mod sos;
 #[cfg(test)]

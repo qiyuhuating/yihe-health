@@ -128,11 +128,23 @@ pub fn transitions(input: Value) -> Result<Value, Box<dyn std::error::Error>> {
 pub(crate) fn evaluate_input(
     input: Value,
 ) -> Result<rules::Candidates, Box<dyn std::error::Error>> {
+    let enabled = input["enabled"].as_bool().ok_or("missing policy enabled")?;
+    evaluate_with_policy(
+        input,
+        rules::Policy {
+            enabled,
+            ..Default::default()
+        },
+    )
+}
+pub(crate) fn evaluate_with_policy(
+    input: Value,
+    policy: rules::Policy,
+) -> Result<rules::Candidates, Box<dyn std::error::Error>> {
     let v: RuleInput = serde_json::from_value(input)?;
-    let policy = rules::Policy {
-        enabled: v.enabled,
-        ..Default::default()
-    };
+    if v.enabled != policy.enabled {
+        return Err("policy enabled mismatch".into());
+    }
     let input = rules::Input {
         now_ns: v.now_ns,
         night: v.night,

@@ -22,6 +22,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         [_, mode] if mode == "--rule-authority-test" => {
             yihe_next_gateway::rule_authority::run().await
         }
+        [_, mode]
+            if matches!(
+                mode.as_str(),
+                "--rule-scheduler-test"
+                    | "--rule-scheduler-worker-test"
+                    | "--rule-scheduler-crash-test"
+            ) =>
+        {
+            yihe_next_gateway::rule_scheduler::run(
+                mode == "--rule-scheduler-worker-test",
+                mode == "--rule-scheduler-crash-test",
+            )
+            .await
+        }
         [_, mode] if mode == "--rule-commit-test" => yihe_next_gateway::rule_tx::run().await,
         [_, mode] if mode == "--oracle" => {
             // Local differential test transport, not a public HTTP API.
