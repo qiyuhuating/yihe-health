@@ -45,6 +45,9 @@ impl Keys {
         })
     }
     fn seal(&self, plaintext: &[u8]) -> Result<Vec<u8>, Failure> {
+        self.seal_scoped(plaintext, SCOPE)
+    }
+    pub(crate) fn seal_scoped(&self, plaintext: &[u8], scope: &[u8]) -> Result<Vec<u8>, Failure> {
         let mut nonce = [0u8; 12];
         getrandom::fill(&mut nonce).map_err(|_| Failure::Database)?;
         let ciphertext = self
@@ -53,7 +56,7 @@ impl Keys {
                 Nonce::from_slice(&nonce),
                 Payload {
                     msg: plaintext,
-                    aad: SCOPE,
+                    aad: scope,
                 },
             )
             .map_err(|_| Failure::Database)?;
@@ -62,6 +65,13 @@ impl Keys {
         Ok(format!("sne1:{}", STANDARD_NO_PAD.encode(data)).into_bytes())
     }
     pub(crate) fn open(&self, encoded: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        self.open_scoped(encoded, SCOPE)
+    }
+    pub(crate) fn open_scoped(
+        &self,
+        encoded: &[u8],
+        scope: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         if encoded.len() > 256 * 1024 {
             return Err("oversize event".into());
         }
@@ -78,14 +88,18 @@ impl Keys {
                 Nonce::from_slice(&data[..12]),
                 Payload {
                     msg: &data[12..],
-                    aad: SCOPE,
+                    aad: scope,
                 },
             )
             .map_err(|_| "event authentication failed".into())
     }
     pub(crate) fn receipt_digest(&self, canonical: &[u8]) -> String {
+        self.digest_scoped(b"yihe-next-telemetry-receipt-v1", canonical)
+    }
+    pub(crate) fn digest_scoped(&self, scope: &[u8], canonical: &[u8]) -> String {
         let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&self.lookup).expect("32-byte key");
-        mac.update(b"yihe-next-telemetry-receipt-v1\0");
+        mac.update(scope);
+        mac.update(&[0]);
         mac.update(canonical);
         hex::encode(mac.finalize().into_bytes())
     }

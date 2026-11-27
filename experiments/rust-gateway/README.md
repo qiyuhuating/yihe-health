@@ -151,7 +151,7 @@ after SQL COMMIT, before the broker acknowledgement.
 
 The supported wire subset is step-only with UTC timestamps, the existing
 sne1 AES-GCM test envelope and Go's canonical JSON / HMAC receipt digest.
-Unsupported metrics or invalid events stay unacknowledged (delayed NAK).
+Unsupported metrics or invalid events stay unacknowledged (delayed NAK). One-shot test consumption waits up to 35 seconds for a redelivery when a previous process lost its asynchronous NAK; transaction errors still exit immediately.
 The consumer obtains resident, device and authorization generation locks
 in that order, checks live binding/status, consults the existing rejection
 and receipt tables, and commits the day metric, heartbeat and receipt in
@@ -167,6 +167,60 @@ vital samples, SOS, keyring rotation, poison quarantine, or notification
 delivery. The shared lane cannot be cut over to this subset while it
 contains unsupported events. The consumer does not manufacture heart-rate
 observations from step events.
+
+## Independent vital event experiment
+
+The dedicated YIHE_vitals stream (subject yihe.next.vitals, durable
+commit) is provisioned by the disposable integration fixture, separately
+from YIHE_telemetry. --consume-vital-one-test and
+--consume-vital-worker-test reuse the existing bounded pull/ack framework.
+Version 1 encrypts the entire JSON event with AAD
+yihe-next-vitals-event-v1. Its fields are version, device_id,
+resident_id, binding_epoch, auth_generation, request_id, received_at,
+observed_at, hr and bp. Timestamps are UTC, observed_at is in integral
+seconds; hr (20..250) and bp (40..300) are nullable integers with at least
+one present. BP is the existing scalar measurement, not a systolic/
+diastolic pair. The test fixture is a trusted event issuer; public device
+admission, signed wire extension and vital producer outbox remain pending.
+
+Under resident/device/generation locks the native consumer validates
+binding time, current epoch and generation, and checks a separate keyed
+request receipt/rejection. It uses the real watch_info thresholds and
+ratepre table; the existing vital-measurements:<id> encrypted format
+binds owner and device, leaving legacy hr/bp columns NULL. The original
+alert snapshot's OR semantics preserve unresolved flags. Measurement,
+snapshot, heartbeat and receipt with a per-binding revision all commit
+together. Only then may the broker be acknowledged. A Go repository
+differential verifies the ciphertext via the real Go reader.
+
+--vital-stats-test DEVICE_ID is a loopback/disposable-schema local
+projection replay, not an authenticated production analytics endpoint.
+It locks the current resident/device, loads up to 256 latest receipts
+for the current epoch, authenticates each referenced committed ratepre
+row, checks revision continuity, and incrementally replays ordered heart
+rate events into RollingHeartRate. Historical insertions or BP-only
+revision advances rebuild the bounded projection; after rebind old
+receipts are not included. The receipt revision is specific to this
+experiment, not the production health_sample clock. This is a bounded
+on-demand replay, not a continuously maintained cache; the window is
+the selected receipt set rather than the complete historical time series.
+
+### SOS contract proposal (not implemented)
+
+Use a separate SOS deployment/stream and authorization domain
+yihe-next-sos-event-v1, never the step or vital queue. An authenticated
+producer must seal version, device/resident identity, binding epoch,
+authorization generation, request ID and receive timestamp; no device
+secret or arbitrary notification destination belongs in the event.
+Preserve the current Go deviceworkflow.SOS transaction semantics,
+including resident/device fencing, FindSOSRetry's device/request
+identity, resident and kind conflict checks, durable incident ID,
+incident creation and notify.EnqueueIncident in one commit. A broker
+admission ACK cannot represent an incident commit or notification
+delivery. Confirmed consumer ACK must follow the durable incident/
+outbox transaction, including the prior-receipt case. Real SOS priority,
+retry, encrypted evidence, notification delivery and failure testing are
+required before migration. The existing Go SOS path remains unchanged.
 
 ## Native analytics core
 

@@ -5,6 +5,7 @@ pub mod native;
 pub mod outbox;
 #[cfg(test)]
 mod tests;
+pub mod vitals;
 use axum::{
     Router,
     body::{Body, to_bytes},

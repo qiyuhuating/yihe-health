@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{MySql, MySqlPool, Row, Transaction};
 use std::{net::SocketAddr, time::Duration};
 
-type Error = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type Error = Box<dyn std::error::Error + Send + Sync>;
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase", deny_unknown_fields)]
 struct Event {
@@ -29,7 +29,7 @@ struct Payload {
     reported_at: String,
     step: i64,
 }
-fn go_time(value: &str) -> Result<(DateTime<Utc>, String), Error> {
+pub(crate) fn go_time(value: &str) -> Result<(DateTime<Utc>, String), Error> {
     // This experiment admits only UTC times; Go's RFC3339Nano omits
     // trailing zeroes in fractional seconds. Reject other time bases
     // rather than assign a different receipt digest to the same event.
@@ -148,6 +148,7 @@ async fn one(
     keys: &Keys,
     consumer: &PullConsumer,
     crash: bool,
+    vital: bool,
 ) -> Result<bool, Error> {
     let mut messages = consumer
         .fetch()
@@ -160,7 +161,14 @@ async fn one(
     };
     let msg = message?;
     // AckWait is 30s. A bounded attempt cannot monopolize the consumer.
-    match tokio::time::timeout(Duration::from_secs(20), commit(pool, keys, &msg.payload)).await {
+    let work = async {
+        if vital {
+            crate::vitals::commit(pool, keys, &msg.payload).await
+        } else {
+            commit(pool, keys, &msg.payload).await
+        }
+    };
+    match tokio::time::timeout(Duration::from_secs(20), work).await {
         Ok(Ok(())) => {}
         _ => {
             msg.ack_with(AckKind::Nak(Some(Duration::from_secs(1))))
@@ -178,6 +186,7 @@ pub async fn run(
     address: SocketAddr,
     worker: bool,
     crash: bool,
+    vital: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !address.ip().is_loopback() || address.port() == 0 {
         return Err("test broker must be loopback".into());
@@ -191,13 +200,22 @@ pub async fn run(
     .await??;
     let js = async_nats::jetstream::new(client);
     let consumer: PullConsumer = js
-        .get_stream("YIHE_telemetry")
+        .get_stream(if vital {
+            "YIHE_vitals"
+        } else {
+            "YIHE_telemetry"
+        })
         .await?
         .get_consumer("commit")
         .await
         .map_err(|e| e.to_string())?;
     let config = &consumer.cached_info().config;
-    if config.filter_subject != "yihe.next.telemetry"
+    if config.filter_subject
+        != (if vital {
+            "yihe.next.vitals"
+        } else {
+            "yihe.next.telemetry"
+        })
         || config.ack_policy != async_nats::jetstream::consumer::AckPolicy::Explicit
         || config.ack_wait != Duration::from_secs(30)
         || config.max_deliver != -1
@@ -208,7 +226,7 @@ pub async fn run(
         let stop = tokio::signal::ctrl_c();
         tokio::pin!(stop);
         loop {
-            let delay = match one(&pool, &keys, &consumer, false).await {
+            let delay = match one(&pool, &keys, &consumer, false, vital).await {
                 Ok(_) => Duration::ZERO,
                 Err(_) => {
                     eprintln!("consumer attempt failed; event retained");
@@ -218,10 +236,20 @@ pub async fn run(
             tokio::select! {biased; result=&mut stop=>{result?;break;},_=tokio::time::sleep(delay)=>{}}
         }
     } else {
-        match one(&pool, &keys, &consumer, crash).await {
-            Ok(true) => println!("committed"),
-            Ok(false) => return Err("no event received".into()),
-            Err(e) => return Err(e.to_string().into()),
+        // A process that exited after a failed commit may have lost its
+        // asynchronous NAK. Allow the full broker AckWait for redelivery.
+        // An actual transaction/transport error still exits immediately.
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(35);
+        loop {
+            match one(&pool, &keys, &consumer, crash, vital).await {
+                Ok(true) => {
+                    println!("committed");
+                    break;
+                }
+                Ok(false) if tokio::time::Instant::now() < deadline => continue,
+                Ok(false) => return Err("no event received before redelivery deadline".into()),
+                Err(e) => return Err(e.to_string().into()),
+            }
         }
     }
     pool.close().await;

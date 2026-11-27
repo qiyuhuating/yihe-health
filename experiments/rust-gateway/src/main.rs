@@ -38,15 +38,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         [_, mode, address]
             if matches!(
                 mode.as_str(),
-                "--consume-one-test" | "--consume-worker-test" | "--consume-crash-test"
+                "--consume-one-test"
+                    | "--consume-worker-test"
+                    | "--consume-crash-test"
+                    | "--consume-vital-one-test"
+                    | "--consume-vital-worker-test"
             ) =>
         {
             yihe_next_gateway::consumer::run(
                 address.parse()?,
-                mode == "--consume-worker-test",
+                matches!(
+                    mode.as_str(),
+                    "--consume-worker-test" | "--consume-vital-worker-test"
+                ),
                 mode == "--consume-crash-test",
+                mode.starts_with("--consume-vital-"),
             )
             .await
+        }
+        [_, mode, device] if mode == "--vital-stats-test" => {
+            yihe_next_gateway::vitals::stats(device.parse()?).await
         }
         [_, mode, address] if mode == "--dispatch-worker-test" => {
             yihe_next_gateway::outbox::dispatch_worker(address.parse()?).await

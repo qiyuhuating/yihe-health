@@ -96,7 +96,6 @@ func TestRustNativeConsumer(t *testing.T) {
 	sinkCount(t, db, "SELECT COUNT(*) FROM broker_telemetry_receipt", 0)
 	sinkCount(t, db, "SELECT COUNT(*) FROM device WHERE last_online_at IS NOT NULL", 0)
 	sinkExec(t, db, "DROP TRIGGER rust_fail_receipt")
-	time.Sleep(1100 * time.Millisecond) // Wait for the explicit delayed NAK.
 	// Actual process exits after COMMIT and before ACK.
 	run("--consume-crash-test", 78)
 	sinkCount(t, db, "SELECT step FROM watch_day_info", 1200)
