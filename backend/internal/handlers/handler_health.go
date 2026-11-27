@@ -240,8 +240,11 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	if internalError(w, err) {
 		return
 	}
+	start = trace.Start()
 	if priority {
-		// Return the explicit connection before advancing the derived projection.
+		// COMMIT released the physical device lock. Let SOS proceed now,
+		// but retain the upload's owner slot until projection publication.
+		h.healthWrites.finishTransaction(req.DeviceNo)
 		conn.Close()
 	}
 	committed = true
@@ -251,6 +254,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// Enqueue derived work before releasing the owner domain so local commits
 	// preserve order. The worker never holds a DB connection or a write slot.
 	h.advanceCoreAfterCommit(owner, &batch, req.Samples)
+	trace.End("post_commit_projection", start)
 	h.healthWrites.release(req.DeviceNo)
 	admitted = false
 	// This is a write acknowledgement, not the client's read cursor.
