@@ -65,9 +65,9 @@ func (h *Handler) healthDaily(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	// Existing rows are read in one committed snapshot. A write concurrent
-	// with this read may publish a newer revision, but cannot make the
-	// result/dirty/revision fields come from different committed states.
+	// Each row and its owner clock are read by the same SQL statement.
+	// A changed owner revision makes the cached result pending without
+	// requiring the upload transaction to update any daily rows.
 	// The duty or family binding remains locked by the enclosing transaction.
 	cached := make(map[string]dailyCacheRow, req.Days)
 	if err := readDailyRows(ctx, tx, keys, cached, false); internalError(w, err) {
@@ -132,7 +132,7 @@ func (h *Handler) healthDaily(w http.ResponseWriter, r *http.Request) {
 }
 
 func readDailyRows(ctx context.Context, tx *sql.Tx, keys []any, cached map[string]dailyCacheRow, locked bool) error {
-	query := "SELECT cache_key,dirty,computed_revision,result,result_cipher,error_text,updated_at FROM metric_daily WHERE cache_key IN (" +
+	query := "SELECT d.cache_key,(d.dirty OR d.computed_revision<>COALESCE(c.revision,0)),d.computed_revision,d.result,d.result_cipher,d.error_text,d.updated_at FROM metric_daily d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id WHERE d.cache_key IN (" +
 		strings.TrimSuffix(strings.Repeat("?,", len(keys)), ",") + ")"
 	if locked {
 		query += " FOR SHARE"

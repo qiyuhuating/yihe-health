@@ -138,9 +138,6 @@ func computeDailySnapshot(ctx context.Context, pool *db.Database, id string, box
 	if err != nil {
 		return nil, false, err
 	}
-	if !row.dirty {
-		return nil, false, nil
-	}
 	var clock ownerClock
 	err = tx.QueryRowContext(ctx, "SELECT revision,range_end FROM health_owner_clock WHERE old_id=?", row.key.OldID).Scan(&clock.revision, &clock.rangeEnd)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -148,6 +145,9 @@ func computeDailySnapshot(ctx context.Context, pool *db.Database, id string, box
 	}
 	if err != nil {
 		return nil, false, err
+	}
+	if !row.dirty && row.previousRevision == clock.revision {
+		return nil, false, nil
 	}
 	if clock.revision < 0 || clock.rangeEnd < clock.revision || clock.rangeEnd > maxSafeRevision {
 		return nil, false, fmt.Errorf("health revision exceeds safe cursor range")
@@ -185,7 +185,7 @@ func publishDailySnapshot(ctx context.Context, pool *db.Database, id string, box
 	if err != nil {
 		return false, err
 	}
-	if !row.dirty {
+	if !row.dirty && row.previousRevision == revision {
 		return true, nil
 	}
 	if row.key != result.key {
@@ -223,7 +223,7 @@ func refreshDailyLocked(ctx context.Context, pool *db.Database, id string, box *
 	if err != nil {
 		return err
 	}
-	if !row.dirty {
+	if !row.dirty && row.previousRevision == revision {
 		return nil
 	}
 	if _, err = row.previous.OpenDailyResult(box, id, row.previousRevision); err != nil {

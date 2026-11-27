@@ -11,7 +11,7 @@ import (
 	"yihe-care/internal/db/dbtest"
 )
 
-func TestDailyInvalidationDoesNotWaitOnOtherOwner(t *testing.T) {
+func TestDailyInvalidationDoesNotWaitOnLockedCacheRow(t *testing.T) {
 	p := dbtest.Fixture(t)
 	ctx := context.Background()
 	for i := 1; i <= 128; i++ {
@@ -29,7 +29,7 @@ func TestDailyInvalidationDoesNotWaitOnOtherOwner(t *testing.T) {
 	}
 	defer blocker.Rollback()
 	var key string
-	if err = blocker.QueryRowContext(ctx, "SELECT cache_key FROM metric_daily FORCE INDEX(idx_daily_dirty) WHERE dirty=false AND cache_key=? FOR UPDATE", fmt.Sprintf("%064x", 2)).Scan(&key); err != nil {
+	if err = blocker.QueryRowContext(ctx, "SELECT cache_key FROM metric_daily FORCE INDEX(idx_daily_dirty) WHERE dirty=false AND cache_key=? FOR UPDATE", fmt.Sprintf("%064x", 1)).Scan(&key); err != nil {
 		t.Fatal(err)
 	}
 	bounded, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -42,13 +42,13 @@ func TestDailyInvalidationDoesNotWaitOnOtherOwner(t *testing.T) {
 	at := time.Date(2026, 10, 22, 12, 0, 0, 0, time.UTC)
 	sample := Sample{RecordID: "independent", Source: "watch", SourceDevice: "A", Metric: "heart_rate", Unit: "count/min", Value: Number(72), Start: at, End: at, Version: 1}
 	if _, _, err = SaveBatch(bounded, tx, Owner{OldID: 1}, []Sample{sample}); err != nil {
-		t.Fatal("owner 1 blocked by unrelated dirty index row", err)
+		t.Fatal("owner 1 blocked by its own daily cache row", err)
 	}
 	if err = tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
 	var dirty bool
-	if err = p.QueryRowContext(ctx, "SELECT dirty FROM metric_daily WHERE old_id=1").Scan(&dirty); err != nil || !dirty {
+	if err = p.QueryRowContext(ctx, "SELECT (d.dirty OR d.computed_revision<>COALESCE(c.revision,0)) FROM metric_daily d LEFT JOIN health_owner_clock c ON c.old_id=d.old_id WHERE d.old_id=1").Scan(&dirty); err != nil || !dirty {
 		t.Fatal("owner 1 not invalidated", dirty, err)
 	}
 	if err = p.QueryRowContext(ctx, "SELECT dirty FROM metric_daily WHERE old_id=2").Scan(&dirty); err != nil || dirty {

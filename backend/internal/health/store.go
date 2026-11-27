@@ -212,14 +212,8 @@ func (batch *PreparedBatch) SaveProtected(ctx context.Context, tx *sql.Tx, o Own
 	if err = refreshLatest(ctx, tx, o, input, selection.final, box); err != nil {
 		return 0, 0, err
 	}
-	// Invalidate all cached days for this owner, including the OLD date of a
-	// corrected/deleted interval. Skip already-dirty rows to avoid needless
-	// update locks, redo work and cache invalidation churn. Force the owner
-	// index: scanning the global dirty index can lock unrelated owners and
-	// deadlock against another writer changing that same secondary index.
-	if _, err = tx.ExecContext(ctx, "UPDATE metric_daily FORCE INDEX (idx_daily_owner) SET dirty=true WHERE old_id=? AND dirty=false", o.OldID); err != nil {
-		return 0, 0, err
-	}
+	// Daily projections are versioned by the committed owner clock.
+	// Invalidation is implicit: no daily row is locked or rewritten here.
 	if err := clock.reserveNext(ctx, tx, o.OldID, revision); err != nil {
 		return 0, 0, err
 	}

@@ -39,6 +39,7 @@ func TestHealthDailyBatchOrderAndExistingResultsMySQL(t *testing.T) {
 		OldID: 1, Source: "watch", SourceDevice: "WATCH001", Metric: "heart_rate",
 		Semantics: "instant", Day: "2026-10-01", OffsetMinutes: 480,
 	}
+	mustExec(t, pool, "UPDATE health_owner_clock SET revision=5,range_end=GREATEST(range_end,5) WHERE old_id=1")
 	if _, err := pool.ExecContext(context.Background(),
 		"UPDATE metric_daily SET dirty=false,computed_revision=5,result=? WHERE cache_key=?",
 		`{"count":7,"mean":72}`, key.ID()); err != nil {
@@ -46,7 +47,7 @@ func TestHealthDailyBatchOrderAndExistingResultsMySQL(t *testing.T) {
 	}
 	key.Day = "2026-10-03"
 	if _, err := pool.ExecContext(context.Background(),
-		"UPDATE metric_daily SET dirty=false,error_text='source conflict' WHERE cache_key=?", key.ID()); err != nil {
+		"UPDATE metric_daily SET dirty=false,computed_revision=5,error_text='source conflict' WHERE cache_key=?", key.ID()); err != nil {
 		t.Fatal(err)
 	}
 	again := api(t, admin, req)["items"].([]any)
@@ -81,6 +82,7 @@ func TestDailyWarmReadUsesCommittedSnapshot(t *testing.T) {
 	api(t, admin, req)
 	ctx := context.Background()
 	key := health.DailyKey{OldID: 1, Source: "watch", SourceDevice: "WATCH001", Metric: "heart_rate", Semantics: "instant", Day: "2026-10-22"}.ID()
+	mustExec(t, pool, "UPDATE health_owner_clock SET revision=5,range_end=GREATEST(range_end,5) WHERE old_id=1")
 	mustExec(t, pool, "UPDATE metric_daily SET dirty=false,result=?,computed_revision=5 WHERE cache_key=?", `{"count":1,"mean":72}`, key)
 	tx, err := pool.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	if err != nil {
@@ -90,7 +92,7 @@ func TestDailyWarmReadUsesCommittedSnapshot(t *testing.T) {
 	if _, err = health.LockOwner(ctx, tx, 1); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = tx.ExecContext(ctx, "UPDATE metric_daily SET dirty=true WHERE cache_key=?", key); err != nil {
+	if _, err = tx.ExecContext(ctx, "UPDATE health_owner_clock SET revision=6,range_end=GREATEST(range_end,6) WHERE old_id=1"); err != nil {
 		t.Fatal(err)
 	}
 	raw, _ := json.Marshal(req)
