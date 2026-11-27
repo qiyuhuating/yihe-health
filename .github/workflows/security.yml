@@ -18,6 +18,9 @@ jobs:
   change-scope:
     name: Security change scope
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 5
     outputs:
       codeql_go: ${{ steps.classify.outputs.codeql_go }}
@@ -41,6 +44,9 @@ jobs:
     if: ${{ needs.change-scope.outputs.codeql_go == 'true' || needs.change-scope.outputs.codeql_js == 'true' }}
     name: CodeQL / ${{ matrix.language }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 25
     permissions:
       contents: read
@@ -102,6 +108,9 @@ jobs:
     needs: [change-scope, codeql]
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 5
     steps:
       - name: Enforce selected CodeQL checks

@@ -18,6 +18,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
+        shell: bash
         working-directory: frontend
     steps:
       - name: Checkout

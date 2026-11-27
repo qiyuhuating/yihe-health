@@ -1,4 +1,17 @@
-# Windows 构建
+# 构建指南
+
+## Linux / WSL 开发
+
+Linux VPS 与 Windows WSL 默认使用 Bash，安装 Git、Node.js 26.x、Go 1.27.4；按需安装 Rust 1.100.0 或更高版本、Python 3、Docker 和 MySQL 8.4 客户端。WSL 建议在 Linux 文件系统（如 `~/projects`）检出源码。仓库根目录运行：
+
+```bash
+(cd frontend && npm ci && npm run typecheck && npm run build)
+(cd backend && go test -count=1 ./... && go vet ./...)
+```
+
+数据库集成测试使用独立测试实例。Linux/WSL 可运行通用开发、容器和协议测试，但不能替代 Windows 原生桌面安装验收。
+
+## Windows 原生构建
 
 准备 Windows x64、C++ Build Tools（MSVC + Windows SDK）、Rust stable（最低版本 1.100.0，见 `desktop/Cargo.toml`）、Go 1.27.4（与 `backend/go.mod` 和 CI 一致）、Node.js 26.x（LTS）、PowerShell 7。推荐在开发者 PowerShell 环境中构建。前端依赖由 `frontend/package-lock.json` 锁定，Tauri/Rust 依赖由 `desktop/Cargo.lock` 锁定。
 
@@ -25,7 +38,7 @@ Tauri 官方参考：[Windows 前置条件](https://v2.tauri.app/start/prerequis
 
 Dockerfile 位于 `deploy/Dockerfile`，构建上下文仍是仓库根目录，`.dockerignore` 保留在根目录。从仓库根目录执行：
 
-```sh
+```bash
 docker build -f deploy/Dockerfile -t yihe:local .
 ```
 

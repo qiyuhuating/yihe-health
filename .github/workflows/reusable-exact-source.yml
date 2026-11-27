@@ -16,6 +16,9 @@ jobs:
   verify:
     if: ${{ github.ref == format('refs/heads/{0}', inputs.source_branch) }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

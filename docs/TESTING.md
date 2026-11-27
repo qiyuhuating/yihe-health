@@ -1,17 +1,19 @@
 # 测试分层 · 当前 preview
 
+通用命令默认在 Linux VPS 或 Windows WSL 的 Bash 中执行；Windows 原生桌面和 DevEco 构建仍使用 PowerShell 7。
+
 ## Go 后端
 
 在 `backend` 目录执行：
 
-```sh
+```bash
 go test -count=1 ./...
 go vet ./...
 ```
 
 需要数据库集成测试时，配置 `TEST_MYSQL_DSN` 指向**独立、可销毁**的 MySQL 8.4 测试实例；测试账号需有创建和删除随机测试库的权限。竞态测试：
 
-```sh
+```bash
 go test -race -count=1 -timeout 600s ./...
 ```
 
@@ -23,8 +25,8 @@ go test -race -count=1 -timeout 600s ./...
 
 跨包实验使用以下命令（仓库根目录，已配置隔离 MySQL 8.4 实例及匹配客户端或测试容器）：
 
-```powershell
-python scripts/reliability/run-mysql-fixture-tests.py ./internal/db/dbtest ./internal/handlers ./internal/session ./internal/notify ./internal/operationsrepo ./internal/telemetryrepo ./internal/careworkflow
+```bash
+python3 scripts/reliability/run-mysql-fixture-tests.py ./internal/db/dbtest ./internal/handlers ./internal/session ./internal/notify ./internal/operationsrepo ./internal/telemetryrepo ./internal/careworkflow
 ```
 
 该脚本仅从新建并完整迁移的空业务库导出一次归档，验证服务器 UUID、嵌入迁移文件内容摘要及归档哈希；所有消费者使用各自独立的新建数据库，不共享测试数据。每次运行使用专用临时目录，结束后清除归档，不跨作业缓存。省略包参数可运行整个后端套件；未接入的测试仍走完整迁移。共享模式不得用于生产数据库。 空库快照导出省略冗余 DROP TABLE、导入表锁和非唯一索引禁用/启用指令，仍保留全部表、数据、触发器及例程。快照模式复用有界管理连接池执行 CREATE/DROP DATABASE，业务连接仍按测试独立创建和关闭。每个恢复的 schema 仍须执行完整结构校验；协调备份恢复演练不使用精简导出选项。
@@ -38,7 +40,7 @@ python scripts/reliability/run-mysql-fixture-tests.py ./internal/db/dbtest ./int
 
 在 `frontend` 目录执行：
 
-```sh
+```bash
 npm ci
 npm test
 npm run typecheck
@@ -54,7 +56,7 @@ npm run build
 
 在 `YiheWatch` 目录执行：
 
-```sh
+```bash
 npm ci
 npm test
 ```

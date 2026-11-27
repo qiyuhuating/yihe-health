@@ -11,6 +11,9 @@ jobs:
   verify:
     name: Test, build and vet (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:

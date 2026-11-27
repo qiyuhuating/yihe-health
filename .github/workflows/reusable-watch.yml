@@ -123,6 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
+        shell: bash
         working-directory: YiheWatch
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -154,6 +155,9 @@ jobs:
   integration:
     name: Real backend and lost-ack recovery
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     services:
       mysql:
         image: mysql:8.4

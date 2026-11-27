@@ -76,9 +76,9 @@
 
 如需在本地启动完整服务栈，安装 Docker Compose 与 Python 3，在仓库根目录运行：
 
-```powershell
-python scripts/start-platform.py
-python scripts/bootstrap-admin.py
+```bash
+python3 scripts/start-platform.py
+python3 scripts/bootstrap-admin.py
 ```
 
 脚本启动 MySQL 8.4、Go API、Nginx 和监控，默认工作台地址为 `http://127.0.0.1:8080`，Prometheus 为 `http://127.0.0.1:9090`，均仅绑定本地回环地址。`deploy/secrets/`、`deploy/platform.env` 与 MySQL 数据卷需要妥善备份。不要将本地默认配置直接暴露到公网。
@@ -106,11 +106,18 @@ MySQL 8.4 是**唯一生产业务数据库**，保存档案、会话、告警、
 
 ## 开发与构建
 
-当前主分支为 `main`。完整构建要求：**PowerShell 7、Node.js 26.x、Go 1.27.4、Rust（最低 1.100.0）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
+当前主分支为 `main`。Linux VPS 和 Windows WSL（包括 Codex）默认使用 Bash；通用开发要求 Node.js 26.x、Go 1.27.4，Rust 模块使用 Rust 1.100.0 或更高版本。WSL 建议将源码放在 Linux 文件系统（如 `~/projects`），避免在 `/mnt/c` 下安装大量依赖。
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/qiyuhuating/yihe-health.git
+cd yihe-health
+```
+
+Windows 原生 Tauri/NSIS 打包需在 Windows 环境使用 PowerShell 7、MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。在 Windows 原生工作区的仓库根目录执行：
 
 ```powershell
-git clone https://github.com/qiyuhuating/yihe-health.git
-Set-Location yihe-health
 ./desktop/validate-version.ps1
 ./desktop/build.ps1
 ```
@@ -119,18 +126,9 @@ Set-Location yihe-health
 
 常用的变更相关验证：
 
-```powershell
-Push-Location backend
-go test -count=1 ./...
-go vet ./...
-Pop-Location
-
-Push-Location frontend
-npm ci
-npm run typecheck
-npm test
-npm run build
-Pop-Location
+```bash
+(cd backend && go test -count=1 ./... && go vet ./...)
+(cd frontend && npm ci && npm run typecheck && npm test && npm run build)
 ```
 
 数据库集成和竞态测试使用**隔离测试库** `TEST_MYSQL_DSN`；未配置时部分测试会跳过。HarmonyOS 原生编译、实体手表、短信网关、生产迁移及长时间运行须独立验收，不应因基础 CI 通过就视为已覆盖。测试范围见 [测试指南](docs/TESTING.md)。
