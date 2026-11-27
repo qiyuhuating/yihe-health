@@ -63,8 +63,9 @@ func referenceEvaluate(p Policy, in Input) []Candidate {
 		out = append(out, Candidate{"battery", in.Battery.Key, "normal", in.Battery.Value < p.BatteryLow, 1, map[string]any{"value": in.Battery.Value, "threshold": p.BatteryLow}})
 	}
 	if !in.LastReport.IsZero() {
-		key := strconv.FormatInt(in.LastReport.UnixMicro(), 10) + ":" + strconv.FormatInt(in.Now.UTC().Truncate(time.Minute).Unix(), 10)
-		out = append(out, Candidate{"no_report", key, severity, in.Now.Sub(in.LastReport) > time.Duration(p.OfflineSeconds)*time.Second, 1, map[string]any{"lastReport": in.LastReport, "thresholdSeconds": p.OfflineSeconds}})
+		breach := in.Now.Sub(in.LastReport) > time.Duration(p.OfflineSeconds)*time.Second
+		key := strconv.FormatInt(in.LastReport.UnixMicro(), 10) + ":" + strconv.Itoa(p.OfflineSeconds) + ":" + strconv.FormatBool(breach)
+		out = append(out, Candidate{"no_report", key, severity, breach, 1, map[string]any{"lastReport": in.LastReport, "thresholdSeconds": p.OfflineSeconds}})
 	}
 	if in.Activity != nil && night && p.Night(in.Activity.At) {
 		out = append(out, Candidate{"night_activity", in.Activity.Key, "high", in.Activity.Value >= p.NightSteps, 1, map[string]any{"steps": in.Activity.Value, "threshold": p.NightSteps, "windowMinutes": p.ActivityMinutes, "source": in.Activity.Source, "sourceDevice": in.Activity.Device}})

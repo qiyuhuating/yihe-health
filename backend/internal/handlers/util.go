@@ -173,13 +173,7 @@ func internalError(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
-	reference := ref()
-	var dbErr *mysqlDriver.MySQLError
-	if errors.As(err, &dbErr) {
-		log.Printf("internal error ref=%s mysql_code=%d", reference, dbErr.Number)
-	} else {
-		log.Printf("internal error ref=%s type=%T", reference, err)
-	}
+	reference := logInternalError(err)
 	if retryableError(err) {
 		w.Header().Set("Retry-After", "2")
 		response.Error(w, http.StatusServiceUnavailable, "SERVICE_BUSY", "服务暂时繁忙，请稍后重试")
@@ -187,6 +181,17 @@ func internalError(w http.ResponseWriter, err error) bool {
 	}
 	response.Error500(w, reference)
 	return true
+}
+
+func logInternalError(err error) string {
+	reference := ref()
+	var dbErr *mysqlDriver.MySQLError
+	if errors.As(err, &dbErr) {
+		log.Printf("internal error ref=%s mysql_code=%d", reference, dbErr.Number)
+	} else {
+		log.Printf("internal error ref=%s type=%T", reference, err)
+	}
+	return reference
 }
 
 // retryableError recognizes explicit database contention or resource exhaustion.

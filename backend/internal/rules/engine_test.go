@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"yihe-care/internal/db"
-	"yihe-care/internal/db/dbtest"
-	"yihe-care/internal/health"
 	"sync"
 	"testing"
 	"time"
+	"yihe-care/internal/db"
+	"yihe-care/internal/db/dbtest"
+	"yihe-care/internal/health"
 )
 
 func seed(t *testing.T) (*db.Database, time.Time) {
 	t.Helper()
-	p := dbtest.MySQL(t)
+	p := dbtest.Fixture(t)
 	now := time.Date(2026, 10, 20, 15, 30, 0, 0, time.UTC)
 	ctx := context.Background()
 	if _, err := p.ExecContext(ctx, "INSERT INTO oldperson(old_id,name) VALUES(1,'长者')"); err != nil {
@@ -149,7 +149,7 @@ func TestBaselineCoverUsesIndexWithoutPayloadLookups(t *testing.T) {
 		at := now.Add(-time.Duration(i+30) * time.Hour)
 		save(t, p, health.Sample{RecordID: fmt.Sprint(i), Source: "watch", SourceDevice: "RULE001", Metric: "heart_rate", Unit: "count/min", Value: health.Number(70), Start: at, End: at, Version: 1})
 	}
-	args := []any{int64(1), int64(1), "heart_rate", "watch", "RULE001", "watch", "RULE001", now.AddDate(0, 0, -7).UnixMicro(), now.Add(-15 * time.Minute).UnixMicro()}
+	args := []any{int64(1), int64(1), "heart_rate", "watch", baselineSourceKey("RULE001"), "watch", now.AddDate(0, 0, -7).UnixMicro(), now.Add(-15 * time.Minute).UnixMicro()}
 	var count, values int
 	var mean, deviation float64
 	if err := p.QueryRowContext(context.Background(), baselineCoverSQL, args...).Scan(&count, &values, &mean, &deviation); err != nil || count != 20 || values != 20 || mean != 70 || deviation != 0 {
@@ -250,7 +250,7 @@ func TestNightActivityMonotonicAndIntervals(t *testing.T) {
 	}
 }
 
-func TestTickPagesAndRetriesBeforeFailedDevice(t *testing.T) {
+func TestTickDuePagesAndRetriesFailedDevice(t *testing.T) {
 	p, now := seed(t)
 	ctx := context.Background()
 	for id := 2; id <= 102; id++ {
@@ -268,10 +268,12 @@ func TestTickPagesAndRetriesBeforeFailedDevice(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := Engine{DB: p}
-	for _, after := range []int64{100, 102, 0} {
-		if err = e.Tick(ctx); err != nil || e.After != after {
-			t.Fatalf("after=%d want=%d err=%v", e.After, after, err)
-		}
+	if err = e.Tick(ctx); err != nil {
+		t.Fatal(err)
+	}
+	var dormant int
+	if err = p.QueryRowContext(ctx, "SELECT count(*) FROM rule_task WHERE due_at IS NULL").Scan(&dormant); err != nil || dormant != 102 {
+		t.Fatalf("dormant tasks=%d err=%v", dormant, err)
 	}
 	policy.Consecutive = 0
 	invalid, err := json.Marshal(policy)
@@ -291,14 +293,21 @@ func TestTickPagesAndRetriesBeforeFailedDevice(t *testing.T) {
 	if _, err = p.ExecContext(ctx, "UPDATE device SET last_time=? WHERE device_id=75", time.Now().UTC().Add(-time.Hour)); err != nil {
 		t.Fatal(err)
 	}
-	if err = e.Tick(ctx); err == nil || e.After != 49 {
-		t.Fatalf("failed device skipped: after=%d err=%v", e.After, err)
+	if err = e.Tick(ctx); err == nil {
+		t.Fatal("invalid policy did not fail")
+	}
+	var pending bool
+	if err = p.QueryRowContext(ctx, "SELECT due_at IS NOT NULL FROM rule_task WHERE device_id=50").Scan(&pending); err != nil || !pending {
+		t.Fatal("failed task lost", pending, err)
 	}
 	if _, err = p.ExecContext(ctx, "UPDATE rule_policy SET payload=? WHERE device_id=50", json.RawMessage(payload)); err != nil {
 		t.Fatal(err)
 	}
-	if err = e.Tick(ctx); err != nil || e.After != 102 {
-		t.Fatalf("retry after=%d err=%v", e.After, err)
+	if err = e.Tick(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = p.QueryRowContext(ctx, "SELECT due_at IS NOT NULL FROM rule_task WHERE device_id=50").Scan(&pending); err != nil || pending {
+		t.Fatal("retry did not finish", pending, err)
 	}
 	var count int
 	if err = p.QueryRowContext(ctx, "SELECT count(*) FROM rule_state").Scan(&count); err != nil || count != 1 {

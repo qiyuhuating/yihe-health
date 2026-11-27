@@ -109,7 +109,8 @@ const canRetry = computed(() => !dialog.value.reconciled || Boolean(
 
 let stopPolling: (() => void) | undefined
 const reads = createLatestRead(
-  (query: { page: number; pageSize: number; state: string }, signal: AbortSignal) => requestClient.post<CareListResponse>('api/v1/care/incidents', query, { signal }),
+  (query: { page: number; pageSize: number; state: string; revision: number }, signal: AbortSignal) =>
+    requestClient.post<CareListResponse>('api/v1/care/incidents', { page: query.page, pageSize: query.pageSize, state: query.state }, { signal }),
   ({data}, query) => {
     if (!Array.isArray(data.items) || !Number.isInteger(data.total) || data.total < 0 || !['supervisor','caregiver','auditor'].includes(data.duty) || !Number.isInteger(data.actorId)) throw new Error('invalid care response')
     const lastPage = Math.max(1, Math.ceil(data.total / pageSize))
@@ -129,10 +130,10 @@ const reads = createLatestRead(
     error.value = readErrorMessage(cause, '照护任务暂时无法加载')
   },
   value => { loading.value = value },
-  { key: query => `${query.state}:${query.page}:${query.pageSize}` }
+  { key: query => `${query.state}:${query.page}:${query.pageSize}:${query.revision}` }
 )
 function load () {
-  return reads.run({page:page.value,pageSize,state:scope.value})
+  return reads.run({page:page.value,pageSize,state:scope.value,revision:store.state.alertRevision})
 }
 function changePage (value: number) { page.value = value; void load() }
 function changeScope () { page.value = 1; void load() }

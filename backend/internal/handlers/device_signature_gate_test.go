@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -88,7 +89,19 @@ func TestDeviceSignatureGateRejectsNonceReplay(t *testing.T) {
 	h := testHandler(t, db)
 	body := map[string]any{"deviceNo": "WATCH001", "secret": testSecret}
 	nonce := "heartbeat-replay-0123456789"
-	first := serveDeviceGate(h, signedTestRequest(t, "/api/v1/device/heartbeat", body, nonce, time.Now()))
+	expected, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := httptest.NewRecorder()
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, err := io.ReadAll(r.Body)
+		if err != nil || !bytes.Equal(raw, expected) {
+			t.Fatal("verified request body changed")
+		}
+		_, _ = w.Write([]byte("reached"))
+	})
+	h.EnforceDeviceSignatures(next).ServeHTTP(first, signedTestRequest(t, "/api/v1/device/heartbeat", body, nonce, time.Now()))
 	if first.Code != http.StatusOK {
 		t.Fatalf("signed heartbeat rejected: %d %s", first.Code, first.Body.String())
 	}

@@ -13,7 +13,7 @@ use watch_sim::{
     device::DeviceSession,
     discovery,
     physio::Physiology,
-    protocol::{Credentials, Platform, ReportPayload},
+    protocol::{Credentials, HealthSample, Platform, ReportPayload},
     rng::Pcg32,
     scenario::{Scenario, Timeline},
     transport::Client,
@@ -229,6 +229,7 @@ fn run() -> Result<(), String> {
     let run_id = uuid::Uuid::new_v4().simple().to_string();
     let mut record_ids = [String::with_capacity(64), String::with_capacity(64)];
     let mut sequence = 0u64;
+    let mut health_retry_at = std::time::Instant::now();
     let mut day = watch_sim::now_unix() / 86400;
     loop {
         if stopped.load(Ordering::Relaxed) {
@@ -319,7 +320,33 @@ fn run() -> Result<(), String> {
                 Err(e) => return Err(e.message()),
             }
         }
-        if c.health_samples && pending_falls.is_empty() && pending_sos.is_none() {
+        // Only the explicit pre-transaction admission rejection is retried here.
+        // Keep the original sample IDs; never create a second batch while pending.
+        if let Some(session) = session.as_mut() {
+            if !session.queue().is_empty()
+                && pending_falls.is_empty()
+                && pending_sos.is_none()
+                && std::time::Instant::now() >= health_retry_at
+            {
+                match session.flush() {
+                    Ok(_) => {}
+                    Err(e) if e.is_health_write_busy() && !once => {
+                        health_retry_at = std::time::Instant::now()
+                            + Duration::from_millis(
+                                1000 + (uuid::Uuid::new_v4().as_u128() % 4001) as u64,
+                            );
+                    }
+                    Err(e) => return Err(e.message()),
+                }
+            }
+        }
+        if c.health_samples
+            && pending_falls.is_empty()
+            && pending_sos.is_none()
+            && session
+                .as_ref()
+                .is_none_or(|session| session.queue().is_empty())
+        {
             sequence += 1;
             let at = watch_sim::format_utc(now);
             let start = watch_sim::format_utc(day * 86400);
@@ -332,9 +359,29 @@ fn run() -> Result<(), String> {
                 watch_sim::protocol::SampleRef::steps(&record_ids[1], device, v.steps, &start, &at),
             ];
             if let Some(session) = session.as_mut() {
-                session
-                    .send_sample_views(&samples)
-                    .map_err(|e| e.message())?;
+                match session.send_sample_views(&samples) {
+                    Ok(_) => {}
+                    Err(e) if e.is_health_write_busy() && !once => {
+                        session
+                            .enqueue([
+                                HealthSample::heart_rate(record_ids[0].clone(), device, v.hr, &at),
+                                HealthSample::steps(
+                                    record_ids[1].clone(),
+                                    device,
+                                    v.steps,
+                                    &start,
+                                    &at,
+                                ),
+                            ])
+                            .map_err(|e| e.message())?;
+                        health_retry_at = std::time::Instant::now()
+                            + Duration::from_millis(
+                                1000 + (uuid::Uuid::new_v4().as_u128() % 4001) as u64,
+                            );
+                        eprintln!("{}; health samples retained for retry", e.message());
+                    }
+                    Err(e) => return Err(e.message()),
+                }
             }
             if let Some(local) = local.as_mut() {
                 local.health_samples(&samples)?;
@@ -382,6 +429,12 @@ fn run() -> Result<(), String> {
         timeline.tick(c.interval as f64, &mut rng);
     }
     if let Some(session) = session.as_ref() {
+        if !session.queue().is_empty() {
+            return Err(format!(
+                "Stopped with {} unacknowledged health samples",
+                session.queue().len()
+            ));
+        }
         println!(
             "已结束：请求 {}，成功 {}，业务拒绝 {}，通信失败 {}",
             session.stats.requests, session.stats.ok, session.stats.rejected, session.stats.failed

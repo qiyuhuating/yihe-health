@@ -29,7 +29,7 @@ func BenchmarkRegistryHTTP(b *testing.B) {
 func BenchmarkRegistryScrape(b *testing.B) {
 	r := New()
 	for i := range 100 {
-		r.observeHTTP(fmt.Sprintf(`route="route%d",method="GET",status="200"`, i), .125)
+		r.observeHTTP(httpLabels{fmt.Sprintf("route%d", i), "GET", 200}, .125)
 	}
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	b.ReportAllocs()

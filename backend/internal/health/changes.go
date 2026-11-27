@@ -20,7 +20,7 @@ type ChangesPage struct {
 // ListChanges reads one extra revision to determine whether more changes remain.
 func ListChanges(ctx context.Context, store db.RowsQuerier, residentID, after int64, limit int, box *securestore.Box) (ChangesPage, error) {
 	rows, err := store.QueryContext(ctx,
-		`SELECT revision,sample_id,payload,payload_cipher FROM health_change WHERE old_id=? AND revision>? ORDER BY revision LIMIT ?`,
+		`SELECT revision,LOWER(HEX(sample_id)),payload,payload_cipher FROM health_change WHERE old_id=? AND revision>? ORDER BY revision LIMIT ?`,
 		residentID, after, limit+1)
 	if err != nil {
 		return ChangesPage{}, err

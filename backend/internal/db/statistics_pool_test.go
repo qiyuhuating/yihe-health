@@ -2,9 +2,10 @@ package db_test
 
 import (
 	"context"
-	"yihe-care/internal/db/dbtest"
+	"database/sql"
 	"testing"
 	"time"
+	"yihe-care/internal/db/dbtest"
 )
 
 func TestMySQLStatisticsPoolIsolation(t *testing.T) {
@@ -35,4 +36,63 @@ func TestMySQLStatisticsPoolIsolation(t *testing.T) {
 	if err := d.QueryRowContext(ctx, "SELECT 1").Scan(&n); err != nil || n != 1 {
 		t.Fatal("business pool blocked by statistics", err)
 	}
+}
+
+func TestStatisticsPoolRepeatableReadWithoutRedundantSet(t *testing.T) {
+	t.Setenv("MYSQL_STATISTICS_MAX_CONNS", "2")
+	t.Setenv("MYSQL_STMT_CACHE_SIZE", "32")
+	d := dbtest.Fixture(t)
+	ctx := t.Context()
+	conn, err := d.StatisticsPool().Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	options := func() uint64 {
+		t.Helper()
+		var name string
+		var count uint64
+		if err := conn.QueryRowContext(ctx, "SHOW SESSION STATUS LIKE 'Com_set_option'").Scan(&name, &count); err != nil {
+			t.Fatal(err)
+		}
+		return count
+	}
+	if _, err := d.ExecContext(ctx, "CREATE TABLE stats_isolation_probe(id INT PRIMARY KEY,v INT)"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.ExecContext(ctx, "INSERT INTO stats_isolation_probe VALUES(1,1)"); err != nil {
+		t.Fatal(err)
+	}
+	check := func(level sql.IsolationLevel, first, second int, delta uint64) {
+		t.Helper()
+		before := options()
+		tx, err := conn.BeginTx(ctx, &sql.TxOptions{Isolation: level})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback()
+		var v int
+		if err = tx.QueryRowContext(ctx, "SELECT v FROM stats_isolation_probe WHERE id=1").Scan(&v); err != nil || v != first {
+			t.Fatal(v, err)
+		}
+		if _, err = d.ExecContext(ctx, "UPDATE stats_isolation_probe SET v=v+1 WHERE id=1"); err != nil {
+			t.Fatal(err)
+		}
+		if err = tx.QueryRowContext(ctx, "SELECT v FROM stats_isolation_probe WHERE id=1").Scan(&v); err != nil || v != second {
+			t.Fatal("wrong transaction visibility", v, err)
+		}
+		if err = tx.Commit(); err != nil {
+			t.Fatal(err)
+		}
+		if actual := options() - before; actual != delta {
+			t.Fatalf("per-transaction SET count %d, want %d", actual, delta)
+		}
+	}
+	check(sql.LevelRepeatableRead, 1, 1, 0)
+	check(sql.LevelReadCommitted, 2, 3, 1)
+	check(sql.LevelRepeatableRead, 3, 3, 0)
+	if _, err = conn.ExecContext(ctx, "SET SESSION transaction_isolation='READ-COMMITTED'"); err != nil {
+		t.Fatal(err)
+	}
+	check(sql.LevelRepeatableRead, 4, 4, 1)
 }
