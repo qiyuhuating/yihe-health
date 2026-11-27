@@ -3,10 +3,10 @@ package auth_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"yihe-care/internal/auth"
-	"yihe-care/internal/session"
 	"testing"
 	"time"
+	"yihe-care/internal/auth"
+	"yihe-care/internal/session"
 )
 
 func TestLogoutRoleAccess(t *testing.T) {

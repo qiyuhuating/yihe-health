@@ -1,8 +1,8 @@
 package main
 
 import (
-	"yihe-care/internal/config"
 	"testing"
+	"yihe-care/internal/config"
 )
 
 func TestDesktopBootstrapToken(t *testing.T) {

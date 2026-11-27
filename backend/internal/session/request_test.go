@@ -3,9 +3,9 @@ package session_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"yihe-care/internal/session"
 	"testing"
 	"time"
+	"yihe-care/internal/session"
 )
 
 func sessionRequest(id string) *http.Request {
