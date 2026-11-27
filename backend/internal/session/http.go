@@ -32,27 +32,54 @@ func ClearCookie(w http.ResponseWriter, secure bool) {
 
 type requestKey struct{ store *Store }
 
+type requestMiss struct {
+	id  string
+	err error
+}
+
 // FromRequest 从请求 cookie 取会话；同一请求内复用已验证结果。
 // Like gorilla/sessions' request registry, this context is local to the request:
 // https://github.com/gorilla/sessions/blob/main/sessions.go
 // A new request always reloads storage, so replica revocations remain visible.
 func (s *Store) FromRequest(r *http.Request) *Session {
-	if r.Context().Err() != nil {
-		return nil
+	sess, _ := s.LookupRequest(r)
+	return sess
+}
+
+// LookupRequest shares the complete verification result within one request,
+// including misses and storage failures. New requests always consult the
+// authoritative store; a changed cookie or store never reuses the result.
+func (s *Store) LookupRequest(r *http.Request) (*Session, error) {
+	if err := r.Context().Err(); err != nil {
+		return nil, err
 	}
 	c, err := r.Cookie(CookieName)
 	if err != nil || !validCookieID(c.Value) {
-		return nil
+		return nil, nil
 	}
 	key := requestKey{s}
-	if sess, ok := r.Context().Value(key).(*Session); ok && sess.ID == c.Value && !time.Now().After(sess.ExpiresAt) {
-		return sess
+	switch result := r.Context().Value(key).(type) {
+	case *Session:
+		if result.ID == c.Value {
+			if time.Now().After(result.ExpiresAt) {
+				return nil, nil
+			}
+			return result, nil
+		}
+	case requestMiss:
+		if result.id == c.Value {
+			return nil, result.err
+		}
 	}
-	sess := s.GetContext(r.Context(), c.Value)
-	if sess != nil {
-		*r = *r.WithContext(context.WithValue(r.Context(), key, sess))
+	sess, err := s.lookup(r.Context(), c.Value)
+	// Preserve the existing allocation profile for valid sessions. Only
+	// an unsuccessful lookup needs a separate cookie-bound result.
+	var cached any = sess
+	if sess == nil {
+		cached = requestMiss{c.Value, err}
 	}
-	return sess
+	*r = *r.WithContext(context.WithValue(r.Context(), key, cached))
+	return sess, err
 }
 
 // All issued IDs are exactly 32 random bytes encoded as lowercase hex.

@@ -40,13 +40,11 @@ func (h *Handler) MountLocalLogout(mux *http.ServeMux) {
 // sessionInfo 处理 GET /api/v1/auth/session：公开；无会话则建匿名会话。
 func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
-	ctx := r.Context()
-	var hasUsers bool
-	if internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
+	sess, err := h.Sessions.LookupRequest(r)
+	if err != nil {
+		response.JSON(w, http.StatusServiceUnavailable, map[string]any{"message": "会话存储不可用"})
 		return
 	}
-
-	sess := h.Sessions.FromRequest(r)
 	if sess == nil {
 		release, ok := admitAnonymousSession()
 		if !ok {
@@ -54,7 +52,14 @@ func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer release()
-		sess = h.Sessions.CreateContext(r.Context(), session.Principal{})
+	}
+	ctx := r.Context()
+	var hasUsers bool
+	if internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
+		return
+	}
+	if sess == nil {
+		sess = h.Sessions.CreateContext(ctx, session.Principal{})
 		if sess == nil {
 			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
 			return

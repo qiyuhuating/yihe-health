@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"yihe-care/internal/observability"
@@ -36,7 +37,7 @@ func (d *databaseStore) create(ctx context.Context, sess *Session) bool {
 	return err == nil
 }
 
-func (d *databaseStore) get(ctx context.Context, id string) *Session {
+func (d *databaseStore) get(ctx context.Context, id string) (*Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, operationTimeout)
 	defer cancel()
 	var sealed, role string
@@ -46,8 +47,11 @@ func (d *databaseStore) get(ctx context.Context, id string) *Session {
 	queryErr := d.db.QueryRowContext(ctx, "SELECT s.payload,s.role,s.actor_id,f.generation FROM web_session s LEFT JOIN auth_factor f ON f.role=s.role AND f.actor_id=s.actor_id AND f.enabled=true WHERE s.id_hash=? AND s.expires_at>UTC_TIMESTAMP(6)", idHash(id)).Scan(&sealed, &role, &actorID, &generation)
 	observability.Default.Add("yihe_session_lookup_seconds_total", time.Since(queryStart).Seconds())
 	observability.Default.Add("yihe_session_lookup_total", 1)
+	if errors.Is(queryErr, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if queryErr != nil {
-		return nil
+		return nil, queryErr
 	}
 	decodeStart := time.Now()
 	plain, err := d.box.OpenBytes(sealed, "session")
@@ -57,13 +61,19 @@ func (d *databaseStore) get(ctx context.Context, id string) *Session {
 		decodeErr = json.Unmarshal(plain, &sess)
 	}
 	observability.Default.Add("yihe_session_decode_seconds_total", time.Since(decodeStart).Seconds())
-	if decodeErr != nil || sess.ID != id || time.Now().After(sess.ExpiresAt) || sess.Principal.Role != role || sess.Principal.ID != actorID || ctx.Err() != nil {
-		return nil
+	if decodeErr != nil {
+		return nil, decodeErr
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if sess.ID != id || time.Now().After(sess.ExpiresAt) || sess.Principal.Role != role || sess.Principal.ID != actorID {
+		return nil, nil
 	}
 	if role != "" && generation.String != sess.Principal.FactorGeneration {
-		return nil
+		return nil, nil
 	}
-	return &sess
+	return &sess, nil
 }
 
 func (d *databaseStore) destroy(ctx context.Context, id string) bool {

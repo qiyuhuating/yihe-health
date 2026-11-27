@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
-	"yihe-care/internal/csrf"
 
 	"yihe-care/internal/auth"
+	"yihe-care/internal/csrf"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/securestore"
 	"yihe-care/internal/session"
 )
@@ -75,11 +78,43 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 				<-bootstrapSlots
 			}
 		}()
+		lookups := func() float64 {
+			t.Helper()
+			w := httptest.NewRecorder()
+			observability.Default.ServeHTTP(w, httptest.NewRequest("GET", "/metrics", nil))
+			for _, line := range strings.Split(w.Body.String(), "\n") {
+				if value, ok := strings.CutPrefix(line, "yihe_session_lookup_total "); ok {
+					n, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						t.Fatal(err)
+					}
+					return n
+				}
+			}
+			return 0
+		}
 		w := httptest.NewRecorder()
 		stack.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/auth/session", nil))
 		if w.Code != 429 || len(w.Result().Cookies()) != 0 {
 			t.Fatal("busy bootstrap unexpectedly issued a cookie")
 		}
+		// These are actual DB lookups on the complete HTTP stack, not
+		// mocked query counts. Each fresh request must verify again.
+		const requests = 64
+		before := lookups()
+		for range requests {
+			r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
+			r.AddCookie(&http.Cookie{Name: session.CookieName, Value: strings.Repeat("a", 64)})
+			w := httptest.NewRecorder()
+			stack.ServeHTTP(w, r)
+			if w.Code != 429 || len(w.Result().Cookies()) != 0 {
+				t.Fatal("unknown session escaped admission")
+			}
+		}
+		if got := lookups() - before; got != requests {
+			t.Fatalf("session SQL lookups: %v, expected %d", got, requests)
+		}
+		t.Logf("unknown cookie under bootstrap overload: %d fresh requests, %d SQL lookups", requests, requests)
 		r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
 		r.AddCookie(&http.Cookie{Name: session.CookieName, Value: existing.ID})
 		w = httptest.NewRecorder()
@@ -92,6 +127,24 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 			t.Fatalf("unexpected session allocation: %d %v", count, err)
 		}
 	}()
+	// A failed authenticated-envelope read is not a missing session.
+	// No replacement cookie or database row may be issued on this path.
+	broken := h.Sessions.Create(session.Principal{})
+	if broken == nil {
+		t.Fatal("create fixture session")
+	}
+	mustExec(t, pool, "UPDATE web_session SET payload='invalid-envelope' WHERE id_hash=SHA2(?,256)", broken.ID)
+	r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
+	r.AddCookie(&http.Cookie{Name: session.CookieName, Value: broken.ID})
+	wBroken := httptest.NewRecorder()
+	stack.ServeHTTP(wBroken, r)
+	if wBroken.Code != 503 || len(wBroken.Result().Cookies()) != 0 {
+		t.Fatalf("corrupt session reissued: %d", wBroken.Code)
+	}
+	var rows int
+	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM web_session").Scan(&rows); err != nil || rows != 2 {
+		t.Fatalf("corrupt session created extra rows: %d %v", rows, err)
+	}
 	password := "TestPassword123!"
 	hash, err := auth.Hash(password)
 	if err != nil {
