@@ -120,7 +120,7 @@ func watchDatabase(ctx context.Context, cfg config.Config, sessions *session.Sto
 					runCapabilities: h.RunCapabilities,
 					heartbeats:      h.Heartbeats,
 				})
-				api = limiter.Middleware(csrf.Middleware(sessions, auth.Middleware(sessions, h.EnforceAdminDuty(h.EnforceDeviceSignatures(sensitiveCareAudit(pool, response.Router(mux)))))))
+				api = limiter.Middleware(handlers.AuthenticationAdmission(csrf.Middleware(sessions, auth.Middleware(sessions, h.EnforceAdminDuty(h.EnforceDeviceSignatures(sensitiveCareAudit(pool, response.Router(mux))))))))
 			}
 		}
 		if err == nil {

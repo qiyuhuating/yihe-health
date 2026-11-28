@@ -83,16 +83,10 @@ func (s *Store) CreateContext(ctx context.Context, p Principal) *Session {
 	if ctx.Err() != nil {
 		return nil
 	}
-	id, err := token(32)
+	sess, err := s.newSession(p)
 	if err != nil {
 		return nil
 	}
-	csrf, err := token(32)
-	if err != nil {
-		return nil
-	}
-	now := time.Now()
-	sess := &Session{ID: id, Principal: p, CSRFToken: csrf, CreatedAt: now, ExpiresAt: now.Add(s.ttl)}
 	if database := s.backend(); database != nil {
 		if !database.create(ctx, sess) {
 			return nil
@@ -108,11 +102,32 @@ func (s *Store) CreateContext(ctx context.Context, p Principal) *Session {
 	return sess
 }
 
+func (s *Store) newSession(p Principal) (*Session, error) {
+	id, err := token(32)
+	if err != nil {
+		return nil, err
+	}
+	csrf, err := token(32)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	return &Session{ID: id, Principal: p, CSRFToken: csrf, CreatedAt: now, ExpiresAt: now.Add(s.ttl)}, nil
+}
+
 func (s *Store) Get(id string) *Session { return s.GetContext(context.Background(), id) }
 
 func (s *Store) GetContext(ctx context.Context, id string) *Session {
-	if id == "" || ctx.Err() != nil {
-		return nil
+	sess, _ := s.lookup(ctx, id)
+	return sess
+}
+
+func (s *Store) lookup(ctx context.Context, id string) (*Session, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if id == "" {
+		return nil, nil
 	}
 	if database := s.backend(); database != nil {
 		return database.get(ctx, id)
@@ -120,10 +135,13 @@ func (s *Store) GetContext(ctx context.Context, id string) *Session {
 	s.mu.RLock()
 	sess := s.sessions[id]
 	s.mu.RUnlock()
-	if sess == nil || ctx.Err() != nil || time.Now().After(sess.ExpiresAt) {
-		return nil
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
-	return sess
+	if sess == nil || time.Now().After(sess.ExpiresAt) {
+		return nil, nil
+	}
+	return sess, nil
 }
 
 func (s *Store) Destroy(id string) bool { return s.DestroyContext(context.Background(), id) }

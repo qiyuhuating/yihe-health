@@ -40,6 +40,7 @@ Yihe combines resident records, wearable readings, location alerts, and care tas
 | Notices | Publish announcements and moderate comments with administrator and family visibility controls |
 | Desktop accessibility | Adjust text size and contrast, use keyboard navigation and fullscreen, configure map preferences, and retry failed health-record requests without mistaking failures for empty data; administrators manage two-factor authentication in the header settings |
 | Network risk controls | Retain per-IP and account failure budgets; add independent IPv6 network budgets for login and invitation failures without treating a single failure on a shared network as abuse |
+| Authentication resource protection | Independently bound login and session requests, serialize concurrent attempts for the same account within each process, rate-limit anonymous session creation, and return 429 with retry guidance on overload |
 
 **Typical workflow:** create a resident record → link family members → bind a watch → receive data → handle an alert task → obtain independent review. Families see only their linked residents; server-side permissions govern staff operations.
 

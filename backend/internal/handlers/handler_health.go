@@ -10,6 +10,7 @@ import (
 	"yihe-care/internal/devicecredential"
 	"yihe-care/internal/deviceworkflow"
 	"yihe-care/internal/health"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/response"
 )
 
@@ -61,7 +62,11 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	ctx := r.Context()
-	if !h.healthWrites.acquire(ctx, req.DeviceNo) {
+	trace := observability.TransactionTraceFrom(ctx)
+	start := trace.Start()
+	acquired := h.healthWrites.acquire(ctx, req.DeviceNo)
+	trace.End("admission", start)
+	if !acquired {
 		healthWriteBusy(w)
 		return
 	}
@@ -74,6 +79,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// This read is advisory: the locked device row still authorizes every
 	// write. Resolve the owner before BEGIN so conflicting devices can queue
 	// without holding transaction connections.
+	start = trace.Start()
 	var d *healthDevice
 	if !lateDeviceLock {
 		d = h.healthHints.get(req.DeviceNo, req.Secret, req.BindingVersion, time.Now())
@@ -111,7 +117,10 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	}
 	expectedOwner, expectedDevice := *d.OldID, d.ID
 	batch.PrepareOwner(health.Owner{OldID: expectedOwner, DeviceID: &d.ID, Epoch: d.HealthEpoch})
+	trace.End("authenticate_prepare", start)
+	start = trace.Start()
 	admitted = h.healthWrites.claimOwner(ctx, req.DeviceNo, expectedOwner)
+	trace.End("owner_admission", start)
 	if !admitted {
 		healthWriteBusy(w)
 		return
@@ -126,7 +135,9 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 			return
 		}
 	} else {
+		start = trace.Start()
 		tx, err = h.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+		trace.End("pool_begin", start)
 	}
 	if internalError(w, err) {
 		return
@@ -138,6 +149,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// In experimental late-lock mode, perform the expensive sample write
 	// under the owner-clock lock before locking the device row. Revalidate the
 	// full device binding under FOR UPDATE before committing anything.
+	start = trace.Start()
 	if !lateDeviceLock {
 		if hinted {
 			// Resolve by the current natural key, not a potentially recycled ID.
@@ -153,6 +165,8 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 			return
 		}
 	}
+	trace.End("bound_device_lock", start)
+	start = trace.Start()
 	if d.No != req.DeviceNo {
 		hwFail(w, "DEVICE_AUTH_FAILED", "设备号或密钥不正确，或设备已停用")
 		return
@@ -219,11 +233,18 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	if err = touchHealthDevice(ctx, tx, d.ID, time.Now()); internalError(w, err) {
 		return
 	}
-	if err = tx.Commit(); internalError(w, err) {
+	trace.End("business_sql", start)
+	start = trace.Start()
+	err = tx.Commit()
+	trace.End("commit", start)
+	if internalError(w, err) {
 		return
 	}
+	start = trace.Start()
 	if priority {
-		// Return the explicit connection before advancing the derived projection.
+		// COMMIT released the physical device lock. Let SOS proceed now,
+		// but retain the upload's owner slot until projection publication.
+		h.healthWrites.finishTransaction(req.DeviceNo)
 		conn.Close()
 	}
 	committed = true
@@ -233,6 +254,7 @@ func (h *Handler) healthBatchWithLockOrder(w http.ResponseWriter, r *http.Reques
 	// Enqueue derived work before releasing the owner domain so local commits
 	// preserve order. The worker never holds a DB connection or a write slot.
 	h.advanceCoreAfterCommit(owner, &batch, req.Samples)
+	trace.End("post_commit_projection", start)
 	h.healthWrites.release(req.DeviceNo)
 	admitted = false
 	// This is a write acknowledgement, not the client's read cursor.

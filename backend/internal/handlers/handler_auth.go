@@ -4,6 +4,7 @@ package handlers
 import (
 	"context"
 	"crypto/subtle"
+	"database/sql"
 	"errors"
 	"net/http"
 	"os"
@@ -39,15 +40,42 @@ func (h *Handler) MountLocalLogout(mux *http.ServeMux) {
 
 // sessionInfo 处理 GET /api/v1/auth/session：公开；无会话则建匿名会话。
 func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	var hasUsers bool
-	if internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
+	w.Header().Set("Cache-Control", "no-store")
+	sess, err := h.Sessions.LookupRequest(r)
+	if err != nil {
+		response.JSON(w, http.StatusServiceUnavailable, map[string]any{"message": "会话存储不可用"})
 		return
 	}
-
-	sess := h.Sessions.FromRequest(r)
 	if sess == nil {
-		sess = h.Sessions.CreateContext(r.Context(), session.Principal{})
+		release, ok := admitAnonymousSession()
+		if !ok {
+			authenticationBusy(w, "yihe_auth_bootstrap_busy_total")
+			return
+		}
+		defer release()
+	}
+	ctx := r.Context()
+	var adminDuty string
+	var adminActive bool
+	if sess != nil && sess.Principal.Role == auth.RoleAdmin {
+		// An active administrator row also proves the installation has
+		// users. Reuse only the profile gate's current-request decision.
+		if access, ok := ctx.Value(sessionProfileAccessKey{h}).(sessionProfileAccess); ok && access.actor == sess.Principal.ID {
+			adminDuty, adminActive = access.duty, true
+		} else {
+			var err error
+			adminDuty, adminActive, err = carerepo.AccountAccess(ctx, h.DB, sess.Principal.ID)
+			if internalError(w, err) {
+				return
+			}
+		}
+	}
+	hasUsers := adminActive
+	if !hasUsers && internalError(w, h.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM users LIMIT 1)").Scan(&hasUsers)) {
+		return
+	}
+	if sess == nil {
+		sess = h.Sessions.CreateContext(ctx, session.Principal{})
 		if sess == nil {
 			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
 			return
@@ -63,15 +91,11 @@ func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 			"oldId": p.OldID, "displayName": p.DisplayName,
 		}
 		if p.Role == auth.RoleAdmin {
-			duty, active, err := carerepo.AccountAccess(ctx, h.DB, p.ID)
-			if internalError(w, err) {
-				return
-			}
-			if !active {
+			if !adminActive {
 				authenticated = false
 				account = map[string]any{}
 			} else {
-				account["duty"] = duty
+				account["duty"] = adminDuty
 			}
 		}
 	}
@@ -86,6 +110,7 @@ func (h *Handler) sessionInfo(w http.ResponseWriter, r *http.Request) {
 
 // login 处理 POST /api/v1/auth/login：公开；先查 users（管理员），再查 family（家属）。
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	m, ok := bodyMap(w, r)
 	if !ok {
 		return
@@ -97,6 +122,11 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !accountLogins.acquire(phone) {
+		authenticationBusy(w, "yihe_auth_account_busy_total")
+		return
+	}
+	defer accountLogins.release(phone)
 	if decision := h.Risk.BeforeLogin(h.clientIP(r), phone); !decision.Allowed() {
 		h.Risk.RecordDenied(h.clientIP(r), phone, "login_restricted", r.UserAgent(),
 			r.Header.Get("Sec-CH-UA-Model"), r.Header.Get("X-App-Device-ID"))
@@ -128,22 +158,27 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 // renewSession 登录建会话：销毁请求 cookie 带来的旧会话（防 session fixation），建新会话并写 cookie。
 func (h *Handler) renewSession(w http.ResponseWriter, r *http.Request, p session.Principal) bool {
 	p.FactorGeneration, _ = r.Context().Value(factorGenerationKey{}).(string)
-	if c, err := r.Cookie(session.CookieName); err == nil && c.Value != "" {
-		if !h.Sessions.DestroyContext(r.Context(), c.Value) {
-			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
-			return false
+	var oldID string
+	if c, err := r.Cookie(session.CookieName); err == nil {
+		oldID = c.Value
+	}
+	var auditErr error
+	var audit func(context.Context, *sql.Tx) error
+	if h.DB != nil {
+		audit = func(ctx context.Context, tx *sql.Tx) error {
+			auditErr = h.loginAuditTx(r.WithContext(ctx), p.Phone, p.Role, p.ID, "success", tx)
+			return auditErr
 		}
 	}
-	sess := h.Sessions.CreateContext(r.Context(), p)
-	if sess == nil {
-		response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
-		return false
-	}
-	if h.DB != nil && h.loginAudit(r, p.Phone, p.Role, p.ID, "success") != nil {
-		// The new session has already been persisted. Compensate even if the
-		// request was cancelled; the store still imposes its three-second bound.
-		h.Sessions.DestroyContext(context.WithoutCancel(r.Context()), sess.ID)
-		response.Error500(w, ref())
+	sess, err := h.Sessions.RotateContext(r.Context(), oldID, p, audit)
+	if err != nil {
+		if errors.Is(err, session.ErrSessionChanged) {
+			response.Error(w, http.StatusForbidden, "CSRF_REJECTED", "会话已变化，请刷新页面后重试")
+		} else if auditErr != nil {
+			response.Error500(w, ref())
+		} else {
+			response.JSON(w, 503, map[string]any{"message": "会话存储不可用"})
+		}
 		return false
 	}
 	session.SetCookie(w, sess.ID, h.CookieSecure)
@@ -168,9 +203,16 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 
 // setup 处理 POST /api/v1/setup：公开 + 桌面 token；一次性初始化管理员账号。
 func (h *Handler) setup(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	if !h.checkDesktopToken(w, r) {
 		return
 	}
+	release, ok := tryAdmission(loginAdmission())
+	if !ok {
+		authenticationBusy(w, "yihe_auth_setup_busy_total")
+		return
+	}
+	defer release()
 	m, ok := bodyMap(w, r)
 	if !ok {
 		return

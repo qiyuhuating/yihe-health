@@ -31,6 +31,26 @@ func TestFromRequestReusesOnlyCurrentRequest(t *testing.T) {
 	}
 }
 
+func TestFromRequestMissIsOnlyRequestLocal(t *testing.T) {
+	store := session.NewStore(time.Hour)
+	t.Cleanup(store.Close)
+	peer := session.NewStore(time.Hour)
+	t.Cleanup(peer.Close)
+	sess := peer.Create(session.Principal{Role: "ADMIN", ID: 1})
+	r := sessionRequest(sess.ID)
+	if got, err := store.LookupRequest(r); got != nil || err != nil {
+		t.Fatal("missing cookie unexpectedly resolved")
+	}
+	if peer.FromRequest(r) != sess {
+		t.Fatal("miss leaked across store")
+	}
+	valid := store.Create(session.Principal{})
+	r.Header.Set("Cookie", session.CookieName+"="+valid.ID)
+	if store.FromRequest(r) != valid {
+		t.Fatal("miss leaked across cookie")
+	}
+}
+
 func TestFromRequestChecksStoreCookieAndExpiry(t *testing.T) {
 	store := session.NewStore(time.Hour)
 	t.Cleanup(store.Close)

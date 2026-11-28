@@ -5,9 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 
 	"yihe-care/internal/auth"
+	"yihe-care/internal/csrf"
+	"yihe-care/internal/observability"
 	"yihe-care/internal/securestore"
 	"yihe-care/internal/session"
 )
@@ -22,6 +27,124 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.Box = box
+	h.Sessions.UseDatabase(pool.DB, box)
+	mux := http.NewServeMux()
+	h.routeAuth(mux)
+	stack := AuthenticationAdmission(csrf.Middleware(h.Sessions, auth.Middleware(h.Sessions, mux)))
+	callLogin := func(body map[string]any) *httptest.ResponseRecorder {
+		t.Helper()
+		bootstrap := httptest.NewRecorder()
+		stack.ServeHTTP(bootstrap, httptest.NewRequest("GET", "/api/v1/auth/session", nil))
+		if bootstrap.Code != 200 || bootstrap.Header().Get("Cache-Control") != "no-store" {
+			t.Fatalf("bootstrap %d: %s", bootstrap.Code, bootstrap.Body.String())
+		}
+		var info struct{ CSRFToken string }
+		if err := json.Unmarshal(bootstrap.Body.Bytes(), &info); err != nil || info.CSRFToken == "" {
+			t.Fatalf("bootstrap csrf: %v", err)
+		}
+		cookies := bootstrap.Result().Cookies()
+		if len(cookies) != 1 {
+			t.Fatal("missing anonymous session")
+		}
+		payload, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(payload))
+		r.AddCookie(cookies[0])
+		r.Header.Set(csrf.HeaderName, info.CSRFToken)
+		w := httptest.NewRecorder()
+		stack.ServeHTTP(w, r)
+		if w.Header().Get("Cache-Control") != "no-store" {
+			t.Fatal("login cache policy missing")
+		}
+		if w.Code == 200 && h.Sessions.Get(cookies[0].Value) != nil {
+			t.Fatal("old anonymous cookie was not revoked")
+		}
+		return w
+	}
+	// A busy anonymous writer must not deny an existing valid session
+	// or allocate a persistent session for a rejected bootstrap.
+	existing := h.Sessions.Create(session.Principal{})
+	if existing == nil {
+		t.Fatal("existing session not created")
+	}
+	for range cap(bootstrapSlots) {
+		bootstrapSlots <- struct{}{}
+	}
+	func() {
+		defer func() {
+			for range cap(bootstrapSlots) {
+				<-bootstrapSlots
+			}
+		}()
+		lookups := func() float64 {
+			t.Helper()
+			w := httptest.NewRecorder()
+			observability.Default.ServeHTTP(w, httptest.NewRequest("GET", "/metrics", nil))
+			for _, line := range strings.Split(w.Body.String(), "\n") {
+				if value, ok := strings.CutPrefix(line, "yihe_session_lookup_total "); ok {
+					n, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						t.Fatal(err)
+					}
+					return n
+				}
+			}
+			return 0
+		}
+		w := httptest.NewRecorder()
+		stack.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/auth/session", nil))
+		if w.Code != 429 || len(w.Result().Cookies()) != 0 {
+			t.Fatal("busy bootstrap unexpectedly issued a cookie")
+		}
+		// These are actual DB lookups on the complete HTTP stack, not
+		// mocked query counts. Each fresh request must verify again.
+		const requests = 64
+		before := lookups()
+		for range requests {
+			r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
+			r.AddCookie(&http.Cookie{Name: session.CookieName, Value: strings.Repeat("a", 64)})
+			w := httptest.NewRecorder()
+			stack.ServeHTTP(w, r)
+			if w.Code != 429 || len(w.Result().Cookies()) != 0 {
+				t.Fatal("unknown session escaped admission")
+			}
+		}
+		if got := lookups() - before; got != requests {
+			t.Fatalf("session SQL lookups: %v, expected %d", got, requests)
+		}
+		t.Logf("unknown cookie under bootstrap overload: %d fresh requests, %d SQL lookups", requests, requests)
+		r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
+		r.AddCookie(&http.Cookie{Name: session.CookieName, Value: existing.ID})
+		w = httptest.NewRecorder()
+		stack.ServeHTTP(w, r)
+		if w.Code != 200 || len(w.Result().Cookies()) != 0 {
+			t.Fatal("existing session blocked by bootstrap congestion")
+		}
+		var count int
+		if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM web_session").Scan(&count); err != nil || count != 1 {
+			t.Fatalf("unexpected session allocation: %d %v", count, err)
+		}
+	}()
+	// A failed authenticated-envelope read is not a missing session.
+	// No replacement cookie or database row may be issued on this path.
+	broken := h.Sessions.Create(session.Principal{})
+	if broken == nil {
+		t.Fatal("create fixture session")
+	}
+	mustExec(t, pool, "UPDATE web_session SET payload='invalid-envelope' WHERE id_hash=SHA2(?,256)", broken.ID)
+	r := httptest.NewRequest("GET", "/api/v1/auth/session", nil)
+	r.AddCookie(&http.Cookie{Name: session.CookieName, Value: broken.ID})
+	wBroken := httptest.NewRecorder()
+	stack.ServeHTTP(wBroken, r)
+	if wBroken.Code != 503 || len(wBroken.Result().Cookies()) != 0 {
+		t.Fatalf("corrupt session reissued: %d", wBroken.Code)
+	}
+	var rows int
+	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM web_session").Scan(&rows); err != nil || rows != 2 {
+		t.Fatalf("corrupt session created extra rows: %d %v", rows, err)
+	}
 	password := "TestPassword123!"
 	hash, err := auth.Hash(password)
 	if err != nil {
@@ -39,7 +162,7 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 		{"family", "13800000002", auth.RoleFamily, 3},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			w := callAPI(h.login, map[string]any{"phone": tc.phone, "password": password})
+			w := callLogin(map[string]any{"phone": tc.phone, "password": password})
 			if w.Code != http.StatusOK {
 				t.Fatalf("login: HTTP %d: %s", w.Code, w.Body.String())
 			}
@@ -61,7 +184,19 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 		})
 	}
 
-	w := callAPI(h.login, map[string]any{"phone": "13800000001", "password": "IncorrectPassword123"})
+	// A second request for a currently admitted account is rejected
+	// without replacing the existing session or verifying the password.
+	if !accountLogins.acquire("13800000001") {
+		t.Fatal("fixture account unexpectedly busy")
+	}
+	func() {
+		defer accountLogins.release("13800000001")
+		busy := callLogin(map[string]any{"phone": "13800000001", "password": password})
+		if busy.Code != http.StatusTooManyRequests || len(busy.Result().Cookies()) != 0 {
+			t.Fatalf("parallel login was not rejected: %d", busy.Code)
+		}
+	}()
+	w := callLogin(map[string]any{"phone": "13800000001", "password": "IncorrectPassword123"})
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("wrong credentials should return HTTP 401, got %d: %s", w.Code, w.Body.String())
 	}
@@ -77,7 +212,7 @@ func TestNativeLoginResponseDoesNotExposeAccountDTOs(t *testing.T) {
 	}
 
 	mustExec(t, pool, "INSERT INTO family(family_id,family_name,family_phone,family_password) VALUES(4,'未关联','13800000004',?)", hash)
-	unlinked := callAPI(h.login, map[string]any{"phone": "13800000004", "password": password})
+	unlinked := callLogin(map[string]any{"phone": "13800000004", "password": password})
 	if unlinked.Code != http.StatusForbidden {
 		t.Fatalf("unlinked family: HTTP %d: %s", unlinked.Code, unlinked.Body.String())
 	}
