@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,6 +40,14 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	const batchSize = 64
 	const requests = 200
 	authMix := os.Getenv("MIXED_SOS_AUTH") == "1"
+	fixed := os.Getenv("MIXED_FIXED_ARRIVALS") == "1"
+	feedback := os.Getenv("MIXED_COMMIT_FEEDBACK") == "1"
+	if feedback && !fixed {
+		t.Fatal("feedback comparison requires fixed arrivals")
+	}
+	if fixed && !authMix {
+		t.Fatal("fixed arrivals require mixed auth")
+	}
 	pool := testDatabase(t)
 	seedDevice(t, pool)
 	for i := 2; i <= workers; i++ {
@@ -85,8 +94,9 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 		mux.HandleFunc("/sos", h.deviceSos)
 	}
 	var phaseMu sync.Mutex
+	controller := mixedCommitController{admission: &h.healthWrites, enabled: feedback}
 	phases := make(map[string][]float64)
-	if os.Getenv("MIXED_TRACE_PHASES") == "1" {
+	if fixed || os.Getenv("MIXED_TRACE_PHASES") == "1" {
 		next := app
 		app = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			lane := ""
@@ -104,6 +114,9 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 					key := lane + "." + stage
 					phases[key] = append(phases[key], float64(elapsed)/float64(time.Millisecond))
 					phaseMu.Unlock()
+					if fixed && lane == "health" {
+						controller.observe(stage, elapsed)
+					}
 				})
 				r = r.WithContext(ctx)
 			}
@@ -153,6 +166,7 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	var mu sync.Mutex
 	var healthMS, sosMS, profileMS, loginMS []float64
 	var rejected, profileRejected, loginRejected int
+	var offered, dropped, sosOffered, sosDropped int
 	var firstErr error
 	fail := func(e error) {
 		mu.Lock()
@@ -168,7 +182,18 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	if authMix {
 		before = readMixedDBSnapshot(t, pool.DB)
 	}
+	var binlogBefore binlogPosition
+	if fixed {
+		binlogBefore = readRotationBinlogPosition(t, pool.DB)
+	}
 	start := time.Now()
+	scheduleStart := start.Add(250 * time.Millisecond)
+	feedbackCtx, stopFeedback := context.WithCancel(t.Context())
+	defer stopFeedback()
+	var feedbackWG sync.WaitGroup
+	if fixed {
+		feedbackWG.Go(func() { controller.run(feedbackCtx, pool.DB) })
+	}
 	if authMix {
 		// Fixed closed-loop workload: two continuous authenticated profile
 		// readers and one repeated real password/CSRF/session lifecycle.
@@ -263,62 +288,121 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 			}
 		})
 	}
-	for w := 1; w <= workers; w++ {
-		writers.Add(1)
-		go func(w int) {
-			defer writers.Done()
-			device := fmt.Sprintf("WATCH%03d", w)
-			for v := 1; ; {
-				select {
-				case <-stop:
-					return
-				default:
-				}
-				samples := make([]health.Sample, batchSize)
-				for i := range samples {
-					samples[i] = health.Sample{RecordID: fmt.Sprintf("mixed-%d-%d", w, i), Source: "synthetic", SourceDevice: device, Metric: "heart_rate", Unit: "count/min", Value: health.Number(72), Start: at, End: at, Version: int64(v)}
-				}
-				ms, status, err := send("/batch", map[string]any{"deviceNo": device, "secret": testSecret, "bindingVersion": 1, "samples": samples})
-				if err != nil {
-					fail(err)
-					return
-				}
+	if fixed {
+		// Fixed per-device arrival clocks, bounded queues and independent
+		// producers. A slow response cannot silently reduce offered load.
+		const healthPeriod = 100 * time.Millisecond
+		const healthOffers = requests / 2 * 120 / 100
+		for w := 1; w <= workers; w++ {
+			writers.Go(func() {
+				device := fmt.Sprintf("WATCH%03d", w)
+				o, d := mixedFixedArrivals(t.Context(), scheduleStart.Add(time.Duration(w-1)*healthPeriod/time.Duration(workers)), healthPeriod, healthOffers, func(v int, scheduled time.Time) {
+					samples := make([]health.Sample, batchSize)
+					for i := range samples {
+						samples[i] = health.Sample{RecordID: fmt.Sprintf("mixed-%d-%d", w, i), Source: "synthetic", SourceDevice: device, Metric: "heart_rate", Unit: "count/min", Value: health.Number(72), Start: at, End: at, Version: int64(v)}
+					}
+					_, status, err := send("/batch", map[string]any{"deviceNo": device, "secret": testSecret, "bindingVersion": 1, "samples": samples})
+					ms := float64(time.Since(scheduled)) / float64(time.Millisecond)
+					if err != nil {
+						fail(err)
+						return
+					}
+					mu.Lock()
+					defer mu.Unlock()
+					if status == 503 {
+						rejected++
+					} else {
+						healthMS = append(healthMS, ms)
+					}
+				})
 				mu.Lock()
-				if status == 503 {
-					rejected++
-				} else {
-					healthMS = append(healthMS, ms)
-					v++
-				}
+				offered += o
+				dropped += d
 				mu.Unlock()
-				if status == 503 {
+			})
+		}
+	}
+	const sosPeriod = 120 * time.Millisecond
+	var emergency sync.WaitGroup
+	if fixed {
+		for w := 1; w <= 2; w++ {
+			emergency.Go(func() {
+				o, d := mixedFixedArrivals(t.Context(), scheduleStart.Add(time.Duration(w-1)*sosPeriod/2), sosPeriod, requests/2, func(i int, scheduled time.Time) {
+					_, status, err := send("/sos", map[string]any{"deviceNo": fmt.Sprintf("WATCH%03d", w), "secret": testSecret, "bindingVersion": 1, "requestId": fmt.Sprintf("mixed-sos-%d-%d", w, i)})
+					if err != nil || status != 200 {
+						fail(fmt.Errorf("SOS status=%d: %v", status, err))
+						return
+					}
+					mu.Lock()
+					sosMS = append(sosMS, float64(time.Since(scheduled))/float64(time.Millisecond))
+					mu.Unlock()
+				})
+				mu.Lock()
+				sosOffered += o
+				sosDropped += d
+				mu.Unlock()
+			})
+		}
+	} else {
+		for w := 1; w <= workers; w++ {
+			writers.Add(1)
+			go func(w int) {
+				defer writers.Done()
+				device := fmt.Sprintf("WATCH%03d", w)
+				for v := 1; ; {
+					select {
+					case <-stop:
+						return
+					default:
+					}
+					samples := make([]health.Sample, batchSize)
+					for i := range samples {
+						samples[i] = health.Sample{RecordID: fmt.Sprintf("mixed-%d-%d", w, i), Source: "synthetic", SourceDevice: device, Metric: "heart_rate", Unit: "count/min", Value: health.Number(72), Start: at, End: at, Version: int64(v)}
+					}
+					ms, status, err := send("/batch", map[string]any{"deviceNo": device, "secret": testSecret, "bindingVersion": 1, "samples": samples})
+					if err != nil {
+						fail(err)
+						return
+					}
+					mu.Lock()
+					if status == 503 {
+						rejected++
+					} else {
+						healthMS = append(healthMS, ms)
+						v++
+					}
+					mu.Unlock()
+					if status == 503 {
+						time.Sleep(10 * time.Millisecond)
+					}
+				}
+			}(w)
+		}
+		time.Sleep(250 * time.Millisecond)
+		for w := 1; w <= 2; w++ {
+			emergency.Add(1)
+			go func(w int) {
+				defer emergency.Done()
+				for i := 0; i < requests/2; i++ {
+					ms, status, err := send("/sos", map[string]any{"deviceNo": fmt.Sprintf("WATCH%03d", w), "secret": testSecret, "bindingVersion": 1, "requestId": fmt.Sprintf("mixed-sos-%d-%d", w, i)})
+					if err != nil || status != 200 {
+						fail(fmt.Errorf("SOS status=%d: %v", status, err))
+						return
+					}
+					mu.Lock()
+					sosMS = append(sosMS, ms)
+					mu.Unlock()
 					time.Sleep(10 * time.Millisecond)
 				}
-			}
-		}(w)
+			}(w)
+		}
 	}
-	time.Sleep(250 * time.Millisecond)
-	var emergency sync.WaitGroup
-	for w := 1; w <= 2; w++ {
-		emergency.Add(1)
-		go func(w int) {
-			defer emergency.Done()
-			for i := 0; i < requests/2; i++ {
-				ms, status, err := send("/sos", map[string]any{"deviceNo": fmt.Sprintf("WATCH%03d", w), "secret": testSecret, "bindingVersion": 1, "requestId": fmt.Sprintf("mixed-sos-%d-%d", w, i)})
-				if err != nil || status != 200 {
-					fail(fmt.Errorf("SOS status=%d: %v", status, err))
-					return
-				}
-				mu.Lock()
-				sosMS = append(sosMS, ms)
-				mu.Unlock()
-				time.Sleep(10 * time.Millisecond)
-			}
-		}(w)
-	}
+
 	emergency.Wait()
 	close(stop)
 	writers.Wait()
+	stopFeedback()
+	feedbackWG.Wait()
 	elapsed := time.Since(start).Seconds()
 	if authMix {
 		after = readMixedDBSnapshot(t, pool.DB)
@@ -329,11 +413,22 @@ func TestMixedSOSLatencyAB(t *testing.T) {
 	if firstErr != nil {
 		t.Fatal(firstErr)
 	}
-	if len(sosMS) != requests || len(healthMS) == 0 {
+	if fixed {
+		binlogAfter := readRotationBinlogPosition(t, pool.DB)
+		if binlogBefore.file != binlogAfter.file || binlogAfter.pos < binlogBefore.pos {
+			t.Fatal("binlog rotated during measured interval")
+		}
+		t.Logf("FIXED_BINLOG bytes=%d", binlogAfter.pos-binlogBefore.pos)
+		if offered != workers*(requests/2*120/100) || offered != len(healthMS)+rejected+dropped || sosOffered != requests || sosOffered != len(sosMS)+sosDropped {
+			t.Fatalf("fixed arrival accounting: health=%d success=%d rejected=%d dropped=%d SOS=%d success=%d dropped=%d", offered, len(healthMS), rejected, dropped, sosOffered, len(sosMS), sosDropped)
+		}
+		t.Logf("FIXED offered=%d completed=%d rejected=%d queue_dropped=%d sos_offered=%d sos_dropped=%d feedback=%v changes=%v", offered, len(healthMS), rejected, dropped, sosOffered, sosDropped, feedback, controller.changes)
+	}
+	if (!fixed && len(sosMS) != requests) || len(sosMS) == 0 || len(healthMS) == 0 {
 		t.Fatalf("missing work: SOS=%d health=%d", len(sosMS), len(healthMS))
 	}
 	var incidents, changes int
-	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM care_incident").Scan(&incidents); err != nil || incidents != requests {
+	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM care_incident").Scan(&incidents); err != nil || incidents != len(sosMS) {
 		t.Fatalf("durable incidents=%d err=%v", incidents, err)
 	}
 	if err := pool.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM health_change").Scan(&changes); err != nil || changes != len(healthMS)*batchSize {
