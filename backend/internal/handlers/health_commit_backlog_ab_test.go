@@ -20,7 +20,7 @@ import (
 // acknowledges all members after the single durable commit.
 func TestHealthBacklogCommitGrouping(t *testing.T) {
 	if os.Getenv("YIHE_HEALTH_BACKLOG_AB") != "1" {
-		t.Skip("isolated group commit comparison")
+		t.Skip("opt-in: set YIHE_HEALTH_BACKLOG_AB=1 for isolated backlog commit comparison")
 	}
 	greedy := os.Getenv("YIHE_HEALTH_BACKLOG_GREEDY") == "1"
 	pool := testDatabase(t)

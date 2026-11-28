@@ -67,7 +67,7 @@ func TestAdminSessionProfileAuthorization(t *testing.T) {
 // not assertions in normal CI. Timings exclude fixture setup and warmup.
 func TestProfileComparison(t *testing.T) {
 	if os.Getenv("YIHE_PROFILE_AB") != "1" {
-		t.Skip("isolated comparison only")
+		t.Skip("opt-in: set YIHE_PROFILE_AB=1 for isolated profile comparison")
 	}
 	pool := testDatabase(t)
 	h := testHandler(t, pool)

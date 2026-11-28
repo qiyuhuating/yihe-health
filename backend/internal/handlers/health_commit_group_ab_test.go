@@ -20,7 +20,7 @@ import (
 // acknowledges all members after the single durable commit.
 func TestHealthDurableCommitGrouping(t *testing.T) {
 	if os.Getenv("YIHE_HEALTH_GROUP_AB") != "1" {
-		t.Skip("isolated group commit comparison")
+		t.Skip("opt-in: set YIHE_HEALTH_GROUP_AB=1 for isolated durable commit comparison")
 	}
 	pool := testDatabase(t)
 	seedDevice(t, pool)

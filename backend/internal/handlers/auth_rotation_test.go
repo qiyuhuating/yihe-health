@@ -139,7 +139,7 @@ func rotationXIDs(t *testing.T, db *sql.DB, before, after binlogPosition) int {
 // Use exclusively with a disposable binlog-enabled MySQL server.
 func TestSessionRotationCommitComparison(t *testing.T) {
 	if os.Getenv("YIHE_ROTATION_AB") != "1" {
-		t.Skip("isolated rotation comparison")
+		t.Skip("opt-in: set YIHE_ROTATION_AB=1 for isolated session rotation comparison")
 	}
 	pool := testDatabase(t)
 	seedCareAdminDuty(t, pool, 41, "supervisor")
