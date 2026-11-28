@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" class="general-settings-dialog" title="常规设置" width="min(520px, 94vw)" append-to-body>
+  <el-dialog v-model="visible" class="general-settings-dialog" title="常规设置" width="min(520px, 94vw)" append-to-body destroy-on-close :close-on-click-modal="false">
     <section class="settings-group">
       <h3>显示与操作</h3>
       <div class="setting"><label for="setting-large-text">大字模式</label><el-switch id="setting-large-text" :model-value="largeText" @change="updateLargeText" /></div>
@@ -9,6 +9,9 @@
       <div class="setting"><span>WebView 空载帧调度</span><strong>{{ frameHz == null ? (probing ? '采样中…' : '未测得') : '约 ' + frameHz + ' FPS' }}</strong></div>
       <p class="hint" role="status">{{ refreshAdvice }}</p>
       <el-button plain :loading="probing" @click="probe">重新检测显示性能</el-button>
+    </section>
+    <section v-if="authState.account?.role === 'ADMIN'" class="settings-group account-security">
+      <SecurityPanel />
     </section>
     <section class="settings-group">
       <h3>位置地图</h3>
@@ -41,6 +44,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { isTauri } from '@tauri-apps/api/core'
+import { authState } from '../auth'
+import SecurityPanel from './SecurityPanel.vue'
 import { mapPreferences, saveMapPreferences, resetMapPreferences } from '../utils/mapProviders'
 import { hostMonitorHz, sampleWebViewHz } from '../utils/displayRefresh'
 import { useTextSizePreference } from '../composables/useTextSizePreference'
@@ -95,9 +100,10 @@ defineExpose({ open })
 <style scoped>
 .settings-group { display: grid; gap: 12px; padding: 8px 0 22px; }
 .settings-group + .settings-group { border-top: 1px solid var(--care-border); padding-top: 20px; }
-.settings-group h3 { margin: 0; font-size: 18px; }
-.setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 42px; }
-.hint { margin: 0; color: var(--care-text-muted); font-size: 13px; line-height: 1.7; }
+.account-security :deep(.security-panel) { max-width: none; margin: 0; padding: 0; border: 0; box-shadow: none; }
+.settings-group h3 { margin: 0; color: var(--care-heading); font-size: 18px; }
+.setting { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: var(--care-target-min); }
+.hint { margin: 0; color: var(--care-text-muted); font-size: 14px; line-height: 1.7; }
 </style>
 
 <style>

@@ -2,12 +2,11 @@
   <section class="care-inbox" aria-labelledby="care-inbox-title" :aria-busy="loading">
     <div class="care-inbox-heading">
       <div><h2 id="care-inbox-title">{{ scope === 'verified' ? '已复核的照护任务' : '需要接手的照护任务' }}</h2><p>求助已接收不等于通知送达；只有人工接单及复核才会结束任务。</p></div>
-      <div class="care-inbox-tools"><label for="care-task-scope">任务范围</label><el-select id="care-task-scope" v-model="scope" :disabled="saving" @change="changeScope"><el-option label="待复核任务" value="active"/><el-option label="已复核任务" value="verified"/></el-select><el-button plain :disabled="saving" @click="load">刷新任务</el-button></div>
+      <div class="care-inbox-tools"><label for="care-task-scope">任务范围</label><el-select id="care-task-scope" v-model="scope" :disabled="saving" @change="changeScope"><el-option label="待复核任务" value="active"/><el-option label="已复核任务" value="verified"/></el-select><el-button plain :aria-busy="loading" :disabled="saving" @click="load">刷新任务</el-button></div>
     </div>
-    <CareOperationsPanel />
     <p v-if="loading && !tasks.length" role="status" class="care-loading">正在读取照护任务…（可继续刷新或切换分页）</p>
     <p v-if="error" role="alert" class="care-error">{{ error }}</p>
-    <p v-else-if="!loading && !tasks.length" class="care-empty">{{ scope === 'verified' ? '当前没有已复核任务。' : '当前没有查询到待处理任务。请继续检查设备与服务状态。' }}</p>
+    <div v-else-if="!loading && !tasks.length" class="care-empty care-inbox-empty" role="status"><img src="/static/img/care-courtyard-illustration.webp" alt="" width="112" height="84" loading="lazy" decoding="async"><p>{{ scope === 'verified' ? '当前没有已复核任务。' : '当前没有查询到待处理任务。请继续检查设备与服务状态。' }}</p></div>
     <p v-if="duty === 'auditor'" class="care-empty">当前为审计员岗位，可查看任务与履历。</p>
     <div v-if="tasks.length" class="care-task-list">
       <article v-for="task in tasks" :key="task.id" class="care-task" :class="{ overdue: task.state !== 'verified' && isOverdue(task), urgent: priorityLabel(task) === 'P0 紧急' }">
@@ -30,9 +29,10 @@
       </article>
     </div>
     <el-pagination v-if="!error && total > pageSize" :current-page="page" :page-size="pageSize" :total="total" :disabled="saving" layout="total, prev, pager, next" @current-change="changePage" />
+    <CareOperationsPanel />
     <el-dialog v-model="history.visible" title="照护事件履历" width="min(600px, 94vw)" append-to-body @close="historyReads.cancel">
-      <p v-if="history.loading">正在读取记录…</p>
-      <p v-if="history.error" role="alert">{{ history.error }}</p>
+      <p v-if="history.loading" role="status">正在读取记录…</p>
+      <p v-if="history.error" role="alert" class="care-error">{{ history.error }}</p>
       <ol v-if="!history.loading && !history.error" class="care-history">
         <li v-for="(event, index) in history.events" :key="index">
           <strong>{{ event.action }}</strong> · {{ localTime(event.createdAt) }}
@@ -115,8 +115,6 @@ const reads = createLatestRead(
     if (!Array.isArray(data.items) || !Number.isInteger(data.total) || data.total < 0 || !['supervisor','caregiver','auditor'].includes(data.duty) || !Number.isInteger(data.actorId)) throw new Error('invalid care response')
     const lastPage = Math.max(1, Math.ceil(data.total / pageSize))
     if (query.page > lastPage) { page.value = lastPage; void load(); return }
-    // Polling often returns identical task data. Keep the old array identity
-    // so the task cards do not re-render every time an idle dashboard polls.
     const snapshot = JSON.stringify(data.items)
     if (snapshot !== lastTaskSnapshot) {
       tasks.value = data.items
@@ -180,7 +178,6 @@ async function submit () {
     if (data.returnCode !== '1111') throw new Error('transition rejected')
     dialog.value.visible = false
     error.value = ''
-    // Never reuse a list snapshot that started before the committed write.
     reads.cancel()
     store.notifyAlertsChanged()
     await load()
@@ -190,7 +187,6 @@ async function submit () {
     const status = (cause as { response?: { status?: number } } | null)?.response?.status
     const outcome = transportOutcome(cause)
     if (status === 409 || status === 403 || outcome === 'timeout' || outcome === 'network') {
-      // Reconcile from the server without replaying the mutation or losing the note.
       await reconcile()
     }
   } finally {saving.value = false}
@@ -212,32 +208,38 @@ onBeforeUnmount(() => {
 })
 </script>
 <style scoped>
-.care-inbox{margin-bottom:24px;padding:24px;border:1px solid var(--care-border);border-radius:16px;background:#fff;box-shadow:var(--care-shadow-sm)}
-.care-inbox-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}
-.care-inbox-heading h2{font-size:20px;font-weight:600;margin:0;color:var(--care-primary)}
-.care-inbox-heading p{margin:6px 0 0;color:var(--care-text-muted);font-size:14px}
-.care-inbox-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.care-inbox-tools .el-select{width:160px}
-.care-inbox :deep(.el-pagination){margin-top:18px;max-width:100%;overflow-x:auto}
-.care-task-list{display:grid;gap:12px}
-.care-task{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;background:#f8faf6;border:1px solid var(--care-border);border-radius:12px;transition:border-color var(--care-motion-fast) var(--care-ease),background-color var(--care-motion-fast) var(--care-ease)}
-.care-task:hover{border-color:var(--care-neutral-border);background:#f4f8f1}
-.care-task.overdue,.care-task.urgent{border-left:4px solid var(--care-danger);background:#fff7f5;border-color:var(--care-danger-border)}
-.care-priority{display:inline-block;padding:1px 8px;border-radius:999px;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
-.care-priority.priority-p0{background:var(--care-danger-bg);color:var(--care-danger)}
-.care-priority.priority-p1{background:var(--care-warning-bg);color:#91651c}
-.care-priority.priority-normal{background:var(--care-neutral-bg);color:var(--care-text-muted)}
-.care-task-main{display:grid;gap:4px;min-width:0}
-.care-task-main strong{color:var(--care-text)}
-.care-next-step{font-weight:600;color:var(--care-primary)!important}
-.care-task-main span,.care-task-main small{color:var(--care-text-muted)}
-.care-task-actions{display:flex;gap:8px;flex-wrap:wrap}
-.care-loading{margin:10px 0;color:var(--care-text-muted);font-size:14px}
-.care-error{color:var(--care-danger)}
-.care-history{list-style:decimal;padding-left:24px}
-.care-history li{padding:10px 0;border-bottom:1px solid #e5ebe7}
-.care-history small{display:block;color:#64756c}
-.care-history p{margin:4px 0;color:var(--care-text)}
-.care-empty{color:var(--care-text-muted)}
-@media(max-width:700px){.care-inbox-heading,.care-task{align-items:stretch;flex-direction:column}}
+.care-inbox { margin-bottom: 24px; padding: 24px; border: 1px solid var(--care-border); border-radius: var(--care-panel-radius); background: var(--care-surface); }
+.care-inbox-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+.care-inbox-heading h2 { font-size: var(--care-section-title); font-weight: 600; margin: 0; color: var(--care-heading); }
+.care-inbox-heading p { margin: 6px 0 0; color: var(--care-text-muted); font-size: 15px; max-width: 38em; }
+.care-inbox-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.care-inbox-tools .el-select { width: 160px; }
+.care-inbox :deep(.el-pagination) { margin-top: 18px; max-width: 100%; overflow-x: auto; }
+.care-task-list { display: grid; gap: 12px; }
+.care-task { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--care-surface-subtle); border: 1px solid var(--care-border); border-radius: 12px; transition: border-color var(--care-motion-fast) var(--care-ease), background-color var(--care-motion-fast) var(--care-ease); }
+.care-task:focus-within { border-color: var(--care-neutral-border); }
+.care-task.overdue, .care-task.urgent { background: var(--care-danger-bg); }
+.care-priority { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.care-priority.priority-p0 { background: var(--care-danger-bg); color: var(--care-danger); }
+.care-priority.priority-p1 { background: var(--care-warning-bg); color: var(--care-warning-strong); }
+.care-priority.priority-normal { background: var(--care-neutral-bg); color: var(--care-text-muted); }
+.care-task-main { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.care-task-main > strong { color: var(--care-heading); font-size: 17px; font-weight: 600; }
+.care-next-step { font-weight: 600; color: var(--care-primary) !important; }
+.care-task-main span, .care-task-main small { color: var(--care-text-muted); }
+.care-task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.care-task-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.care-loading { margin: 10px 0; color: var(--care-text-muted); font-size: 14px; }
+.care-error { color: var(--care-danger); }
+.care-history { list-style: decimal; padding-left: 24px; }
+.care-history li { padding: 10px 0; border-bottom: 1px solid var(--care-border-subtle); }
+.care-history small { display: block; color: var(--care-text-muted); }
+.care-history p { margin: 4px 0; color: var(--care-text); }
+.care-empty { color: var(--care-text-muted); }
+.care-inbox-empty { display: flex; align-items: center; gap: var(--care-space-4); padding: 0; }
+.care-inbox-empty img { flex: 0 0 auto; object-fit: contain; }
+.care-inbox-empty p { margin: 0; max-width: 42em; }
+@media (max-width: 480px) { .care-inbox-empty img { width: 80px; height: 60px; } }
+@media (max-width: 700px) { .care-inbox { padding: var(--care-space-4); } .care-inbox-heading, .care-task { align-items: stretch; flex-direction: column; } }
+:global(html.large-text) .care-inbox-heading p, :global(html.large-text) .care-task-main small { font-size: 18px; }
 </style>

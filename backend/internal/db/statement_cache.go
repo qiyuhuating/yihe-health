@@ -178,6 +178,15 @@ func (c *statementConn) clearStatements() error {
 	return first
 }
 func (c *statementConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+	// These fixed transaction-local controls do not change session parsing
+	// or isolation defaults. Preserve prepared handles across each durable
+	// telemetry item; arbitrary or parameterized SQL stays on the normal path.
+	if len(args) == 0 {
+		switch query {
+		case "SAVEPOINT telemetry_inbox_item", "ROLLBACK TO SAVEPOINT telemetry_inbox_item", "RELEASE SAVEPOINT telemetry_inbox_item":
+			return c.mysqlWireConn.ExecContext(ctx, query, args)
+		}
+	}
 	if !sessionNeutralSQL(query) {
 		c.sessionIsolation = driver.IsolationLevel(sql.LevelDefault)
 	}

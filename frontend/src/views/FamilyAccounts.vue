@@ -9,6 +9,7 @@
           <el-input id="search-family"
             placeholder="按家属姓名查找"
             v-model="searchText"
+            clearable
             class="input-with-select">
             <template #append><el-button aria-label="查询家属姓名"
               

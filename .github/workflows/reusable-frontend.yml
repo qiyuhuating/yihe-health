@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
+        shell: bash
         working-directory: frontend
     steps:
       - name: Checkout
@@ -23,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: "24"
+          node-version: "26"
           cache: npm
           cache-dependency-path: |
             frontend/package-lock.json
@@ -71,23 +72,28 @@ jobs:
         run: |
           set -o pipefail
           npm run build 2>&1 | tee ../evidence/ci/frontend/build.txt
+          node scripts/check-precompressed-assets.mjs
 
       - name: Audit frontend dependencies
-        env:
-          POWERSHELL_TELEMETRY_OPTOUT: '1'
-        shell: pwsh
         run: |
-          $reportPath = '../evidence/ci/frontend/npm-audit.json'
-          npm audit --audit-level=high --json > $reportPath
-          $auditExit = $LASTEXITCODE
-          if ($auditExit -ne 0) {
-            $report = Get-Content -Raw $reportPath | ConvertFrom-Json -AsHashtable
-            $report.vulnerabilities.Values | ForEach-Object { $_.via } |
-              Where-Object { $_ -is [System.Collections.IDictionary] -and $_.severity -in 'high', 'critical' } |
-              Sort-Object -Property { $_.source } -Unique |
-              ForEach-Object { Write-Host "$($_.severity) $($_.dependency) $($_.url)" }
-          }
-          exit $auditExit
+          report=../evidence/ci/frontend/npm-audit.json
+          mkdir -p "$(dirname "$report")"
+          audit_status=0
+          npm audit --audit-level=high --json > "$report" || audit_status=$?
+          if (( audit_status != 0 )); then
+            node --input-type=commonjs -e '
+              const report = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
+              const seen = new Set();
+              for (const { via = [] } of Object.values(report.vulnerabilities ?? {})) {
+                for (const item of via) {
+                  if (!item || typeof item !== "object" || !["high", "critical"].includes(item.severity) || seen.has(item.source)) continue;
+                  seen.add(item.source);
+                  console.log(item.severity, item.dependency, item.url);
+                }
+              }
+            ' "$report"
+          fi
+          exit "$audit_status"
 
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

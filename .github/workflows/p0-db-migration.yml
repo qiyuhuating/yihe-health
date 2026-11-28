@@ -13,6 +13,9 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     services:
       mysql:
         image: mysql:8.4

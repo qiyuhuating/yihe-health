@@ -1,6 +1,10 @@
 package risk
 
-import "testing"
+import (
+	"strings"
+	"testing"
+	"unicode/utf8"
+)
 
 func TestIdentifyDevice(t *testing.T) {
 	cases := []struct{ ua, hint, typ, os, browser, model string }{
@@ -23,5 +27,42 @@ func TestEventRetainsDevice(t *testing.T) {
 	history, _ := m.History(1)
 	if len(history) != 1 || history[0].Device.Model != "Pixel 8" || history[0].Account == "13812345678" {
 		t.Fatalf("unexpected event: %+v", history)
+	}
+}
+
+func TestDeviceAuditReportsMissingAndInvalidWithoutTrust(t *testing.T) {
+	for _, tc := range []struct{ hint, source string }{
+		{"", "not-provided"},
+		{"   ", "not-provided"},
+		{"bad", "invalid-format"},
+		{"invalid<script>", "invalid-format"},
+		{strings.Repeat("a", 129), "invalid-format"},
+		{"appScoped_123456789012", "app-reported"},
+	} {
+		d := IdentifyDevice("", "", tc.hint)
+		if d.HardwareSource != tc.source {
+			t.Fatalf("status=%q want %q", d.HardwareSource, tc.source)
+		}
+		if tc.source != "app-reported" && d.HardwareID != "" {
+			t.Fatal("invalid or missing identifier retained")
+		}
+	}
+	m := New()
+	m.FailedLogin("192.0.2.1", "13812345678", "")
+	events, _ := m.History(1)
+	if len(events) != 1 || events[0].Device.HardwareSource != "not-provided" {
+		t.Fatal("missing metadata status not recorded")
+	}
+}
+
+func TestDeviceAuditTextBoundedAndValid(t *testing.T) {
+	ua := "Windows\x00\n\u202e" + strings.Repeat("界", 200)
+	d := IdentifyDevice(ua)
+	if !utf8.ValidString(d.UserAgent) || len(d.UserAgent) > 512 ||
+		strings.ContainsAny(d.UserAgent, "\x00\n\u202e") {
+		t.Fatal("unsafe audit text")
+	}
+	if got := cleanModel("Model\u202e123"); got != "" {
+		t.Fatal("invisible formatting accepted in model")
 	}
 }

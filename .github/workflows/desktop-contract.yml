@@ -34,7 +34,7 @@ jobs:
     name: Check Tauri native Windows code
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Prepare compile-only backend hash and sidecar placeholder
         shell: pwsh
         run: |
@@ -43,4 +43,7 @@ jobs:
           [IO.File]::WriteAllBytes((Join-Path $PWD 'desktop/binaries/yihe-server-x86_64-pc-windows-msvc.exe'), [byte[]]@(0))
       - name: Check native Tauri code against locked dependencies
         shell: pwsh
-        run: cargo check --manifest-path desktop/Cargo.toml --locked
+        run: |
+          rustup toolchain install 1.100.0 --profile minimal --no-self-update
+          if ($LASTEXITCODE) { throw 'Rust toolchain setup failed' }
+          cargo +1.100.0 check --manifest-path desktop/Cargo.toml --locked

@@ -38,7 +38,8 @@
 | 位置与异常处理 | 查看设备报告的位置、SOS 和告警，识别最后上报时间，避免将历史位置误认为实时定位 |
 | 照护协作 | 对告警工单接单、记录处置与升级，并由具备权限的其他主管复核 |
 | 机构公告 | 发布通知、管理评论，按管理端和家属端权限展示 |
-| 桌面使用体验 | 支持字号调节、键盘操作、全屏和窄屏布局；可在设置中调整显示与地图偏好 |
+| 桌面使用体验 | 支持字号调节、高对比度、键盘操作、全屏和窄屏布局；可调整地图偏好；健康记录区分加载失败与无数据，并支持重试；管理员可在顶部设置中管理双因素认证 |
+| 网络风控 | 保留 IP 与账号失败预算，增加独立的 IPv6 网段登录和邀请码失败预算；正常共享网络不因单次失败封禁 |
 
 **典型流程：** 建立长者档案 → 关联家属 → 登记并绑定手表 → 接收上报 → 处理告警工单 → 独立复核。家属仅能查看获授权的长者信息，岗位权限由服务端执行。
 
@@ -74,7 +75,7 @@
 
 数据库连接失败时仍可能打开界面，但登录和业务写入不可用。图片及健康相关数据存储在 MySQL 中，备份必须包含 BLOB 和用于解密的密钥。旧 PostgreSQL/S3 部署的迁移必须停写、备份并按 [MySQL 单库迁移手册](docs/MYSQL_ONLY_MIGRATION.md) 操作，系统不会自动迁移旧数据。
 
-可选设置 `MYSQL_STATISTICS_MAX_CONNS`（0–64，默认 0）为健康统计启用同一 MySQL 主库的独立连接池，避免统计事务耗尽原有业务连接。部署时须按每个实例的 20 个业务连接、1 个探活连接、配置的统计连接以及 `MYSQL_SOS_MAX_CONNS`（0–8，默认 0）独立求助连接预算核算 MySQL 总连接数。健康批量上报在每个服务实例最多允许 8 个并发写事务、8 个连接池外等候请求（最多 200 ms），超限返回 HTTP 503 和 Retry-After，客户端须保留待上传记录。Compose 可用 `MYSQL_REDO_LOG_CAPACITY` 指定 redo 容量（默认 1 GiB）；高写入负载可按磁盘与恢复目标评估 4 GiB，保留同步刷盘。
+可选设置 `MYSQL_STATISTICS_MAX_CONNS`（0–64，默认 0）为健康统计启用同一 MySQL 主库的独立连接池，避免统计事务耗尽原有业务连接。部署时须按每个实例的 `MYSQL_MAX_OPEN_CONNS`（1–64，默认 20）个业务连接、1 个探活连接、配置的统计连接以及 `MYSQL_SOS_MAX_CONNS`（0–8，默认 0）独立求助连接预算核算 MySQL 总连接数。健康批量上报在每个服务实例最多允许 8 个并发写事务、8 个连接池外等候请求（最多 200 ms），超限返回 HTTP 503 和 Retry-After，客户端须保留待上传记录。Compose 可用 `MYSQL_REDO_LOG_CAPACITY` 指定 redo 容量（默认 1 GiB）；高写入负载可按磁盘与恢复目标评估 4 GiB，保留同步刷盘。
 
 健康上报按设备串行准入，仍保留每实例 8 个活动槽和 8 个等候槽。可选的 YIHE_SOS_PRIORITY=1 在 SOS 通过凭据校验后暂停同设备的新上传，并临时将全局健康写入预算降至 6；等待期间不占用 SQL 连接。该选项默认关闭，仅适合经本地负载验证后启用。
 
@@ -84,9 +85,9 @@
 
 如需在本地启动完整服务栈，安装 Docker Compose 与 Python 3，在仓库根目录运行：
 
-```powershell
-python scripts/start-platform.py
-python scripts/bootstrap-admin.py
+```bash
+python3 scripts/start-platform.py
+python3 scripts/bootstrap-admin.py
 ```
 
 脚本启动 MySQL 8.4、Go API、Nginx 和监控，默认工作台地址为 `http://127.0.0.1:8080`，Prometheus 为 `http://127.0.0.1:9090`，均仅绑定本地回环地址。`deploy/secrets/`、`deploy/platform.env` 与 MySQL 数据卷需要妥善备份。不要将本地默认配置直接暴露到公网。
@@ -114,11 +115,18 @@ MySQL 8.4 是**唯一生产业务数据库**，保存档案、会话、告警、
 
 ## 开发与构建
 
-当前主分支为 `main`。完整构建要求：**PowerShell 7、Node.js（`^20.19.0 || >=22.12.0`）、Go 1.27.4、Rust（最低 1.100.0）**；Windows 桌面打包还需 MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。
+当前主分支为 `main`。Linux VPS 和 Windows WSL（包括 Codex）默认使用 Bash；通用开发要求 Node.js 26.x、Go 1.27.4，Rust 模块使用 Rust 1.100.0 或更高版本。WSL 建议将源码放在 Linux 文件系统（如 `~/projects`），避免在 `/mnt/c` 下安装大量依赖。
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/qiyuhuating/yihe-health.git
+cd yihe-health
+```
+
+Windows 原生 Tauri/NSIS 打包需在 Windows 环境使用 PowerShell 7、MSVC C++ Build Tools 和 Windows SDK，详见 [构建指南](docs/BUILD.md)。在 Windows 原生工作区的仓库根目录执行：
 
 ```powershell
-git clone https://github.com/qiyuhuating/yihe-health.git
-Set-Location yihe-health
 ./desktop/validate-version.ps1
 ./desktop/build.ps1
 ```
@@ -127,19 +135,12 @@ Set-Location yihe-health
 
 常用的变更相关验证：
 
-```powershell
-Push-Location backend
-go test -count=1 ./...
-go vet ./...
-Pop-Location
-
-Push-Location frontend
-npm ci
-npm run typecheck
-npm test
-npm run build
-Pop-Location
+```bash
+(cd backend && go test -count=1 ./... && go vet ./...)
+(cd frontend && npm ci && npm run typecheck && npm test && npm run build)
 ```
+
+生产前端构建为适合压缩的文本资源生成 Brotli-11 `.br` 文件，Go 静态服务在客户端支持 Brotli 时直接提供预压缩文件；原始文件和 gzip 回退仍保留。这会略微增加构建产物体积。
 
 数据库集成和竞态测试使用**隔离测试库** `TEST_MYSQL_DSN`；未配置时部分测试会跳过。HarmonyOS 原生编译、实体手表、短信网关、生产迁移及长时间运行须独立验收，不应因基础 CI 通过就视为已覆盖。测试范围见 [测试指南](docs/TESTING.md)。
 

@@ -19,6 +19,9 @@ jobs:
   go-static:
     name: Go static checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 20
     steps:
       - name: Checkout exact PR head

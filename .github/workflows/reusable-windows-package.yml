@@ -60,7 +60,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
-          node-version: '24'
+          node-version: '26'
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5
         with:
           go-version: '1.27.4'
@@ -71,8 +71,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force evidence/ci/windows-desktop | Out-Null
           git rev-parse HEAD | Set-Content evidence/ci/windows-desktop/source-sha.txt
-          rustup toolchain install stable --profile minimal --no-self-update
+          rustup toolchain install 1.100.0 --profile minimal --no-self-update
           if ($LASTEXITCODE) { throw 'Rust toolchain setup failed' }
+          $env:RUSTUP_TOOLCHAIN = '1.100.0'
+          'RUSTUP_TOOLCHAIN=1.100.0' >> $env:GITHUB_ENV
           rustc --version | Set-Content evidence/ci/windows-desktop/rust-version.txt
           ./desktop/build.ps1 *>&1 | Tee-Object evidence/ci/windows-desktop/build.log
           python ./desktop/build-fontless.py *>&1 | Tee-Object evidence/ci/windows-desktop/fontless.log

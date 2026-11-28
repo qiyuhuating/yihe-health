@@ -230,3 +230,35 @@ func TestParameterlessDMLPreservesPlans(t *testing.T) {
 		t.Fatal("DDL retained plans", w)
 	}
 }
+
+func TestStatementCacheRetainsPlansAcrossTelemetrySavepoints(t *testing.T) {
+	w := &cacheTestWire{}
+	c := cacheForTest(w, 2)
+	c.sessionIsolation = driver.IsolationLevel(sql.LevelReadCommitted)
+	ctx := t.Context()
+	args := []driver.NamedValue{{Ordinal: 1, Value: int64(1)}}
+	const insert = "INSERT INTO t VALUES(?)"
+	for _, q := range []string{
+		"SAVEPOINT telemetry_inbox_item",
+		"ROLLBACK TO SAVEPOINT telemetry_inbox_item",
+		"RELEASE SAVEPOINT telemetry_inbox_item",
+	} {
+		if _, err := c.ExecContext(ctx, insert, args); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := c.ExecContext(ctx, q, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if w.prepared != 1 || w.closed != 0 || w.executed != 3 || w.direct != 3 ||
+		c.sessionIsolation != driver.IsolationLevel(sql.LevelReadCommitted) {
+		t.Fatal("savepoint discarded prepared handles or session isolation", w)
+	}
+	// The optimization is deliberately restricted to the exact internal SQL.
+	if _, err := c.ExecContext(ctx, "SET sql_mode=?", args); err != nil {
+		t.Fatal(err)
+	}
+	if len(c.plans) != 0 || w.closed != 1 || c.sessionIsolation != driver.IsolationLevel(sql.LevelDefault) {
+		t.Fatal("session mutation did not invalidate cache", w)
+	}
+}

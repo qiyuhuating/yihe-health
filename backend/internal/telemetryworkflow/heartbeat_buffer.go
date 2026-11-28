@@ -137,19 +137,36 @@ func (b *HeartbeatBuffer) requeue(items []heartbeatState) {
 	}
 }
 
+const heartbeatPrefix = "UPDATE device d JOIN ("
+const heartbeatFirst = "SELECT CAST(? AS SIGNED) device_id,CAST(? AS SIGNED) binding_epoch,CAST(? AS DATETIME(6)) seen_at,CAST(? AS SIGNED) battery,CAST(? AS CHAR(20)) app_version"
+const heartbeatMore = " UNION ALL SELECT CAST(? AS SIGNED),CAST(? AS SIGNED),CAST(? AS DATETIME(6)),CAST(? AS SIGNED),CAST(? AS CHAR(20))"
+
+// Filter stale observations before SET; multi-table UPDATE assignment order is unspecified.
+const heartbeatSuffix = ") h ON h.device_id=d.device_id SET d.last_time=GREATEST(COALESCE(d.last_time,h.seen_at),h.seen_at),d.last_online_at=GREATEST(COALESCE(d.last_online_at,h.seen_at),h.seen_at),d.battery=COALESCE(h.battery,d.battery),d.app_version=COALESCE(h.app_version,d.app_version) WHERE d.health_epoch=h.binding_epoch AND h.seen_at>=COALESCE(d.last_online_at,h.seen_at)"
+
+var heartbeatSingleSQL = sync.OnceValue(func() string { return buildHeartbeatBatchSQL(1) })
+var heartbeatFullSQL = sync.OnceValue(func() string { return buildHeartbeatBatchSQL(heartbeatFlushBatch) })
+
 func heartbeatBatchSQL(count int) string {
-	var q strings.Builder
-	q.Grow(256 + count*64)
-	q.WriteString("UPDATE device d JOIN (")
-	for i := 0; i < count; i++ {
-		if i == 0 {
-			q.WriteString("SELECT CAST(? AS SIGNED) device_id,CAST(? AS SIGNED) binding_epoch,CAST(? AS DATETIME(6)) seen_at,CAST(? AS SIGNED) battery,CAST(? AS CHAR(20)) app_version")
-		} else {
-			q.WriteString(" UNION ALL SELECT CAST(? AS SIGNED),CAST(? AS SIGNED),CAST(? AS DATETIME(6)),CAST(? AS SIGNED),CAST(? AS CHAR(20))")
-		}
+	switch count {
+	case 1:
+		return heartbeatSingleSQL()
+	case heartbeatFlushBatch:
+		return heartbeatFullSQL()
+	default:
+		return buildHeartbeatBatchSQL(count)
 	}
-	// Filter stale observations before SET; multi-table UPDATE assignment order is unspecified.
-	q.WriteString(") h ON h.device_id=d.device_id SET d.last_time=GREATEST(COALESCE(d.last_time,h.seen_at),h.seen_at),d.last_online_at=GREATEST(COALESCE(d.last_online_at,h.seen_at),h.seen_at),d.battery=COALESCE(h.battery,d.battery),d.app_version=COALESCE(h.app_version,d.app_version) WHERE d.health_epoch=h.binding_epoch AND h.seen_at>=COALESCE(d.last_online_at,h.seen_at)")
+}
+
+func buildHeartbeatBatchSQL(count int) string {
+	var q strings.Builder
+	q.Grow(len(heartbeatPrefix) + len(heartbeatSuffix) + len(heartbeatFirst) + (count-1)*len(heartbeatMore))
+	q.WriteString(heartbeatPrefix)
+	q.WriteString(heartbeatFirst)
+	for i := 1; i < count; i++ {
+		q.WriteString(heartbeatMore)
+	}
+	q.WriteString(heartbeatSuffix)
 	return q.String()
 }
 
